@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>grafia concisă</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fbfcfd; --ink: #1c2733; --muted: #5d6b79;
+    --rule: #d5dde5; --accent: #1f5f8b; --unknown: #a4570a;
+    --off-bg: #5d6b79; --off-ink: #a9b4bf;
+    --serif: "Literata", Georgia, "Times New Roman", serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #141a20; --ink: #e4e9ee; --muted: #9aa7b3;
+            --rule: #2c3743; --accent: #7fb6de; --unknown: #e3a25c;
+            --off-bg: #3a4552; --off-ink: #808c98; }
+  }
+  * { box-sizing: border-box; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  body { margin: 0; background: var(--paper); color: var(--ink);
+         font: 18px/1.6 var(--serif); }
+  main { max-width: 46rem; margin: 0 auto; padding: 3rem 1.25rem 2rem; }
+  h1 { font-size: 2.6rem; font-weight: 600; line-height: 1.1; margin: 0 0 .4rem; }
+  h1 span { color: var(--accent); }
+  .lede { color: var(--muted); margin: 0 0 2rem; }
+  /* the select and #go share column 1, so the button is as wide as the select */
+  .bar { display: grid; grid-template-columns: auto 1fr auto; align-items: center;
+         column-gap: .75rem; row-gap: .5rem; margin: 1rem 0; }
+  #mode { grid-column: 1; grid-row: 1; width: 100%; }
+  #switches { grid-column: 2 / -1; grid-row: 1; display: flex; flex-wrap: wrap; column-gap: 1.25rem; }
+  #go { grid-column: 1; grid-row: 2; width: 100%; }
+  #copy { grid-column: 3; grid-row: 2; }
+  #status { grid-column: 1 / 3; grid-row: 3; }
+  #copy-status { grid-column: 3; grid-row: 3; justify-self: end; }
+  textarea, output {
+    display: block; width: 100%; min-height: 9rem; padding: .9rem 1rem;
+    font: inherit; color: inherit; background: transparent;
+    border: 1px solid var(--rule); border-radius: 4px; white-space: pre-wrap;
+  }
+  textarea { resize: vertical; }
+  textarea:focus-visible, button:focus-visible, select:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+  button, select { font: inherit; font-size: 1rem; padding: .4rem .9rem;
+                   border-radius: 4px; cursor: pointer; }
+  button { background: var(--accent); color: var(--paper); border: 1px solid var(--accent); }
+  button.quiet { background: transparent; color: var(--accent); }
+  select { background: transparent; color: var(--ink); border: 1px solid var(--rule);
+           padding-inline: .3rem; }
+  #switches { font-size: 1rem; }
+  #switches [hidden] { display: none; }
+  label input { accent-color: var(--accent); margin-right: .35rem; }
+  .unknown, .unknown button { text-decoration: underline dotted var(--unknown) 2px; text-underline-offset: 4px; }
+  /* homograph: a two-position switch on a dark-grey track; the active spelling
+     sits on the text area's background, the rejected one is light grey on the
+     track; a click on it switches */
+  .alts { display: inline-flex; gap: 2px; padding: 2px; margin: 0 .1em;
+          background: var(--off-bg); border-radius: 999px; line-height: 1.3; }
+  .alts button { font: inherit; background: none; color: var(--off-ink); border: 0;
+                 border-radius: 999px; padding: 0 .45em; cursor: pointer; }
+  .alts button[aria-pressed="true"] { background: var(--paper); color: var(--ink); cursor: default; }
+  .alts button[aria-pressed="false"]:hover { color: var(--paper); }
+  .fn { color: var(--muted); font-size: .7em; margin-left: .1em; }
+  #notes { color: var(--muted); font-size: .9rem; margin: .75rem 0 0; padding-left: 1.5rem; }
+  .note { color: var(--muted); font-size: .9rem; }
+  footer { max-width: 46rem; margin: 0 auto; padding: 1rem 1.25rem 3rem;
+           color: var(--muted); font-size: .85rem; border-top: 1px solid var(--rule); }
+  footer a { color: inherit; }
+</style>
+</head>
+<body>
+<main>
+  <h1>grafia <span>concisă</span></h1>
+  <p class="lede">ie → ẹ, ia → ė, ea → ē, oa → ō, oriunde cele două vocale stau în aceeași silabă.</p>
+
+  <label for="input" class="sr">Text</label>
+  <textarea id="input" placeholder="Scrieți sau lipiți un text…" autofocus></textarea>
+
+  <div class="bar">
+    <select id="mode" aria-label="Direcție">
+      <option value="convert">Standard → concis</option>
+      <option value="revert">Concis → standard</option>
+    </select>
+    <span id="switches">
+      <label id="ai-switch"><input type="checkbox" id="ai" checked> î</label>
+      <label><input type="checkbox" id="ee"> -ee → -eẹ</label>
+    </span>
+    <button id="go">Convertește</button>
+    <button id="copy" class="quiet" disabled>Copiază</button>
+    <span id="status" class="note" role="status"></span>
+    <span id="copy-status" class="note" role="status"></span>
+  </div>
+
+  <output id="output" for="input" aria-live="polite"></output>
+  <ol id="notes" hidden></ol>
+</main>
+<footer>
+  Silabație: <a href="https://dexonline.ro">dexonline.ro</a>, licență GPL.
+  Cuvintele subliniate punctat nu sunt în bază și au fost convertite doar prin reguli.
+  Cuvintele cu două citiri (două silabații posibile) apar cu ambele variante.
+</footer>
+<script>
+  const $ = (id) => document.getElementById(id);
+  const input = $("input"), output = $("output"), status = $("status"), notes = $("notes"), copyStatus = $("copy-status");
+
+  async function run() {
+    const mode = $("mode").value;
+    status.textContent = "";
+    copyStatus.textContent = "";
+    try {
+      const res = await fetch(`/api/${mode}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: input.value, ee: $("ee").checked, ai: $("ai").checked }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Eroare ${res.status}`);
+      output.replaceChildren();
+      notes.replaceChildren();
+      const stems = [];  // unknown -eele/-eelor words, one footnote per stem
+      let homographs = 0;
+      for (const seg of data.segments || [{ t: data.text }]) {
+        if (seg.alts) {
+          homographs++;
+          const group = switcher(seg.alts);
+          output.append(group);
+          const m = seg.unknown?.toLowerCase().match(/^(.*)ee(le|lor)$/);
+          if (seg.unknown) {
+            group.classList.add("unknown");
+            group.title = "Negăsit în bază: convertit doar prin reguli";
+          }
+          if (m) {
+            if (!stems.includes(m[1])) stems.push(m[1]);
+            const sup = document.createElement("sup");
+            sup.className = "fn";
+            sup.textContent = stems.indexOf(m[1]) + 1;
+            output.append(sup);
+          }
+        } else if (seg.unknown) {
+          const s = document.createElement("span");
+          s.className = "unknown";
+          s.title = "Negăsit în bază: convertit doar prin reguli";
+          s.textContent = seg.t;
+          output.append(s);
+        } else {
+          output.append(seg.t);
+        }
+      }
+      for (const s of stems) {
+        const li = document.createElement("li");
+        const word = (text) => Object.assign(document.createElement("i"), { textContent: text });
+        li.append("Dacă singularul e ", word(`${s}ee`), ", alege forma ", word(`${s}eile/lor`), ". ",
+                  "Dacă e ", word(`${s}eu`), ", alege ", word(`${s}eẹle/lor`), ".");
+        notes.append(li);
+      }
+      notes.hidden = !stems.length;
+      const n = (data.unknown || []).length;
+      status.textContent = [
+        n && `${n} ${n === 1 ? "cuvînt negăsit" : "cuvinte negăsite"}`,
+        homographs && `${homographs} ${homographs === 1 ? "cuvînt" : "cuvinte"} cu două citiri`,
+      ].filter(Boolean).join(" · ");
+      $("copy").disabled = !data.text;
+    } catch (e) {
+      status.textContent = `Conversia a eșuat: ${e.message}`;
+    }
+  }
+
+  // A homograph's spellings as a switch: the first is active, a click on an
+  // inactive one (light grey on the grey track) makes it the active one.
+  function switcher(options) {
+    const group = document.createElement("span");
+    group.className = "alts";
+    group.setAttribute("role", "group");
+    group.setAttribute("aria-label", `Variante: ${options.join(" sau ")}`);
+    for (const [i, text] of options.entries()) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = text;
+      b.setAttribute("aria-pressed", String(i === 0));
+      b.title = "Clic pentru a alege această variantă";
+      b.addEventListener("click", () => {
+        for (const other of group.children) other.setAttribute("aria-pressed", String(other === b));
+      });
+      group.append(b);
+    }
+    return group;
+  }
+
+  // The output text with only the active spelling of each homograph, no footnote marks.
+  function activeText() {
+    let text = "";
+    for (const node of output.childNodes) {
+      if (node.classList?.contains("fn")) continue;
+      text += node.classList?.contains("alts")
+        ? node.querySelector('[aria-pressed="true"]').textContent
+        : node.textContent;
+    }
+    return text;
+  }
+
+  // -ee also says how a revert's input was written; î applies to convert only
+  const syncSwitches = () => { $("ai-switch").hidden = $("mode").value !== "convert"; };
+  $("mode").addEventListener("change", syncSwitches);
+  syncSwitches();  // the browser may restore the mode on reload
+  $("go").addEventListener("click", run);
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) run();
+  });
+  // navigator.clipboard exists only on HTTPS or localhost (Safari on an iPhone
+  // over plain HTTP has none), so fall back to copying a selected textarea.
+  function copyBySelection(text) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.setAttribute("readonly", "");  // no on-screen keyboard on iOS
+    ta.style.cssText = "position: fixed; top: 0; left: 0; opacity: 0; font-size: 16px;";
+    document.body.append(ta);
+    ta.select();
+    ta.setSelectionRange(0, text.length);  // iOS ignores select()
+    const ok = document.execCommand("copy");
+    ta.remove();
+    if (!ok) throw new Error("execCommand");
+  }
+
+  $("copy").addEventListener("click", async () => {
+    const text = activeText();
+    try {
+      if (navigator.clipboard) await navigator.clipboard.writeText(text);
+      else copyBySelection(text);
+      copyStatus.textContent = "Copiat";
+    } catch {
+      copyStatus.textContent = "Copierea a eșuat";
+    }
+  });
+</script>
+</body>
+</html>

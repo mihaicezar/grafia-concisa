@@ -1,0 +1,7 @@
+.venv
+**/__pycache__
+*.sqlite.tmp
+*.sql
+*.sql.gz
+.git
+data/

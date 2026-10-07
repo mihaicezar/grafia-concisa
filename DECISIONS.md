@@ -1,0 +1,75 @@
+# grafia concisă — settled decisions
+
+This file is the log of closed decisions: what was decided, when, and why, with a pointer to where `concise-writing-spec.md` spells out the resulting rule. The mechanics (suffixes, lists, tables) live only in the spec.
+
+**Precedence.** These decisions are the authority on intent; the spec implements them in full. A disagreement between the two is a defect, fixed in the spec in the same change. Reopen a decision only on purpose, and record the change here with its date.
+
+## Naming
+- The project is always named "grafia concisă" (slug `grafia-concisa`), never "scriere concisă".
+- The future offline mobile apps are named conciDEX.
+
+## Core rule (spec: *Rule*)
+- **Concision applies whenever no hiatus is involved.** Both vowels of ie/ia/ea/oa in one syllable → ẹ/ė/ē/ō. A hiatus is never converted.
+- **2026-09: stress dropped.** The June 1, 2026 plan made stress a condition for ia/ea/oa. Syllabification alone decides.
+- **No special cases after palatal consonants.** The base rule already handles ce/ci/ge/gi and stress-shifted derivatives (*ceasornic*, *ceainărie*).
+- **Overlapping digraphs** are scanned left to right without overlap (*leoarcă* → *leōrcă*, *ploaie* → *plōẹ*).
+- **2026-10-06: the verbal suffix -ează/-ească after a hiatus i is written -ėză/-ėscă** (*studiază* → *studiėză* ← *stu-di-a*, *sfiască* → *sfiėscă* ← *sfi-i*). **Why:** the suffix should never show a bare a, but an e form, as in the other persons (*studiez*, *sfiesc*). Spec: the suffix table under *Syllabification source*.
+  - **2026-10-06, reopened the same day:** the adjectives in -iesc follow the same rule (*fiască* → *fiėscă*, *fiasca* → *fiėsca* ← *fi-esc*). It was first limited to verbs.
+
+## Homographs (spec: *Homographs*)
+- **2026-09-29: a word form can have more than one correct spelling.** This replaces the earlier principle of one output per form (*"No ambiguous forms"*).
+  - **Why:** some spellings can't be decided from the word alone: *ia* is the verb *lua* or the articulated *ie*; *miază* is noon or myiasis; *curie*; *bielă*.
+  - Every form keeps one default; the others are offered on a switch in the UI.
+  - **Only backed spellings count** (explicit, dexonline or partial syllabification). A spelling from rules alone is taken to be a rules error, not a second reading.
+  - **2026-10-06: an ambiguity with the -ėză/-ėscă suffix shows both spellings.** When one record of a form gives the suffix -ėză/-ėscă/-ėsca, all its spellings count, even from rules alone (*liază*: the noun, or the verb *lia*, *liėză*). **Why:** the suffix rule applies to verbs and adjectives only, and the form alone does not say which it is.
+- The optional -ee rule keeps one output per form, except for unknown words (see below).
+
+## Syllabification (spec: *Syllabification source*)
+- **Source: dexonline.** **2026-09-27:** dexonline always prevails over the rules, which only fill in what it does not cover.
+- **2026-09-27: partial syllabifications are used.** **Why:** dexonline syllabifies completely only about 5% of the lemmas with ie/ia/ea/oa, and many of the rest are partial.
+- **2026-09-27: rule-based fallback syllabifier.** This reverses the earlier deferral. The rules are knowingly incomplete and will be refined over time.
+- **2026-09-27: Cezar's explicit syllabifications** (`rules.SYLLABIFICATIONS`) beat both dexonline and the rules (*neant* `ne-ant`). Since 2026-09-29, an entry may give several readings (*miază*: noon, the default, and myiasis).
+- *ideea* is syllabified *i-de-ea* only, never *i-de-e-a*.
+- **Inflected forms derive their cuts from the lemma.** **Why:** dexonline often gives no syllabification for inflected forms, especially articulated nouns. The derivation is a heuristic: on 2026-09-24 it agreed with the forms' own dexonline syllabification in 337 of 338 cases (the exception: *cheflie* ← *che-fliu*).
+  - A form that is itself a headword uses its own syllabification, which is why the noun *ploaie* beats the verb form of *ploua*.
+  - **2026-10-05: a lemma's hiatus after o or e is not inherited by its forms.** **Why:** o and e diphthongize as a matter of course in Romanian, so a hiatus in the root says nothing about the form (*(să) ploaie* ← *plo-ua* is *plōẹ*). Only an i keeps the lemma's cut.
+
+### Fallback rules, 2026-09-27 (spec: the fallback table)
+- **ie hiatus in -ient/-ienț** (*client*, *experiență*). The one dexonline conflict is *farniente*.
+- **ia and ie**:
+  - medial *ia* after a consonant is a hiatus (the *-ia\** endings: *apropiat*), except in native stems (*chiar*, *piatră*, *viață*);
+  - medial *ie* after a labial or palatal consonant is a diphthong (*fier*, *piept*), but long infinitives in *-iere* are a hiatus (*copiere*), except the native *miere*, *fiere*, *piere*;
+  - **2026-10-06:** so are the adjectives in *-iesc* after a consonant (*zap-ci-esc*, *su-ru-gi-esc*): the e goes to the next syllable;
+  - *-iabil* and *-eabil* are a hiatus (*fiabil*, *agreabil*);
+  - if the *-iu* version of a word exists, its ie/ia is a hiatus (*argintie* ← *argintiu*);
+  - *prieten* is *pri-e-ten*.
+- **ea is a hiatus in neologisms** (*real*, *nuclear*, *creat*), chosen from dexonline's own syllabifications. Native words stay diphthongs (*deal*, *beat*, *-eală*).
+- **Prefixes are recognized by checking that the rest is a known, frequent word** (*re-abilitat*; not *neam*, *autoare*). *prea* + a word stays one syllable (*preacurat*). co- is included, and its false hits are fixed by explicit syllabifications (*coastă*). *bi-* counts as a prefix (*bi-e-nal*).
+- **2026-10-05: final -ii after a consonant is a hiatus in verb infinitives only** (*sfi-i*, *pri-i*; not *copii*). **Why:** dexonline syllabifies none of the -ii verbs, and without the cut their forms came out as diphthongs (*sfiește*, *priască* are *sfi-eș-te*, *pri-as-că*).
+
+## Optional -ee rule (spec: *Optional rule: final -ee*)
+- **A separate switch, default off.** Word-final *-ee* is read as *-eie* and written *-eẹ* (*idee* → *ideẹ*), and the forms of *-ee* lemmas follow the *femeie* pattern (*ideea* → *ideė*, *ideei* → *ideii*).
+  - **2026-10-04:** extended to the articulated plurals in *-eele*/*-eelor* (*orhideile*; *bombeẹle* ← *bombeu*); to the *-uri* plurals of *-eu* lemmas longer than 4 letters (*bombeuri* → *bombeẹ*; not *pneuri*); to articulated *-eea* and genitive *-eei* beyond *-ee* lemmas (*spontaneė*, *Andreė*, *Galileii*), except the pronouns *aceea*, *ceea*, *oareceea*.
+- If one spelling is both a singular and a plural, the singular reading wins.
+
+## â → î (spec: *Optional rule: â → î*)
+- **2026-10-06: â is written î, except in words with the root *român*/*rumân*** (*câine* → *cîine*; *român*, *aromân*, *rumânesc* keep â). A separate switch, default on.
+  - **Why:** â and î write the same sound.
+
+## Unknown words (spec: *Unknown words*)
+- **2026-09-27:** a word with a candidate digraph that is missing from the database goes through the fallback rules and is flagged. Before, it passed through unchanged.
+- **2026-10-04:** with the -ee switch on, an unknown word in *-eei* or *-eele*/*-eelor* is first tied to a known lemma, which gives one spelling (*Andreei* ← *Andreea*, *bombeele* ← *bombeu*). If no lemma is found, the word gets both spellings on the homograph switch, the *-eele* case with a footnote to help choose.
+- **2026-10-06:** an unknown form of an *-iesc* adjective is tied to its lemma and derived from it (*harabagiasca* → *harabagiėsca* ← *harabagiesc*). **Why:** dexonline lists some of these adjectives with no forms, and the rules alone would miss both the hiatus and the suffix rule.
+
+## Reverse conversion (spec: *Reverse conversion*)
+- Concise → standard is currently a plain character map. The `/api/revert` endpoint and the round-trip test are kept for now.
+- **2026-10-06:** the ė of a final -iėză/-iėscă/-iėsca reverts to a, so the suffix rule stays reversible (*studiėză* → *studiază*). The only conflicts are *fiiască*, *fiiasca* (*fiėscă*, *fiėsca*), which revert to *fiască*, *fiasca*.
+- **2026-10-06: î is left unchanged**, so â is not restored after the â → î rule (*cîine* stays *cîine*).
+- **2026-10-07: with the -ee switch on, revert undoes the -ee rule by lookup** (*orhideẹ* → *orhidee*). When several forms give the same spelling, a DEX-MDA-DOOM form wins (a definition from MDA\*, DEX\*, NODEX\* or DOOM\*: *aleẹ* → *alee*, not *aleie*), then a plural in -ee beats one in -euri when both are DEX-MDA-DOOM (*apogeẹ* → *apogee*). **Why:** the variants outside DEX-MDA-DOOM (*aleie*, *chee*, Scriban only) are not the current word. Unknown words keep the character map.
+  - **2026-10-07, extended the same day:** DOOM\* counts too (DEX-MDA-DOOM).
+  - **2026-10-07, the same day:** only a definition of its own counts (the word is its headword), not a mention in another word's definition (*acneie*, under *coș* in MDA2). The forms still tied after both criteria are all offered on the homograph switch (*bordeẹ*: *bordeie* or *bordee*). **Why:** both are current words, and the text alone does not say which one was meant.
+- It is not guaranteed to stay deterministic.
+
+## Licensing
+- dexonline data is GPL, and attribution is required in the web app and in the mobile apps.
+- The mobile apps are planned as open source, with ads only to cover the Apple developer fees. This is GPL-compatible as long as the attribution is kept.
