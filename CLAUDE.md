@@ -30,7 +30,4 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
 - Keep the dexonline attribution (GPL) in the UI.
 
 ## Open tasks
-1. Refine the fallback syllabifier (`rules._rule_cut`). dexonline prevails wherever it has data. Known gaps among the lemmas decided by rules alone (2026-09-27):
-   - the `IA_DIPHTHONG` stem list is to be reviewed by Cezar. Missing so far: *chiajna*, *obială*; *rachiar* is caught wrongly;
-   - `EA_HIATUS` covers only the ea neologisms found in dexonline data. Extend it as new cases appear.
-2. Homographs (101 forms, 2026-10-05) are offered as a switch. Review the defaults: a headword decided by rules beats a form derived from a dexonline lemma. That puts the wrong spelling first in *coagulat*, *beatific* and *sovietizare*.
+1. Refine the fallback syllabifier (`rules._rule_cut`). dexonline prevails wherever it has data. `IA_DIPHTHONG`, `EA_HIATUS`, `IE_HIATUS` and `OA_HIATUS` were reviewed by Cezar on 2026-10-09 against dexonline's own syllabifications of similar words. Extend them as new cases appear.

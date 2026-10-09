@@ -21,7 +21,7 @@ A word form may have more than one correct concise spelling. It always has one d
 
 A headword uses its own syllabification. Any other inflected form takes its cuts from its lemma's syllabification (see the derivation table below).
 
-A lemma's syllabification is Cezar's explicit one when listed (`rules.SYLLABIFICATIONS`: *neant* `ne-ant`, *coastă* `coas-tă`, ...; an entry may list several readings, the first being the default: *ie* `i-e` / `ie`, *miază* `mia-ză` / `mi-a-ză`), otherwise dexonline's hyphenation completed by fallback rules:
+A lemma's syllabification is Cezar's explicit one when listed (`rules.SYLLABIFICATIONS`: *neant* `ne-ant`, *coastă* `coas-tă`, *mielea* `mi-e-lea`, *înfieri* `în-fi-e-ri`, *răspieri* `răs-pie-ri`, ...; an entry may list several readings, the first being the default: *ie* `i-e` / `ie`, *miază* `mia-ză` / `mi-a-ză`, *vier* `vier` / `vi-er`), otherwise dexonline's hyphenation completed by fallback rules. A form listed there takes all its spellings from there, whatever its lemma: *piei* is only *pẹi* (not also *piei* ← *pia* `pi-a`).
 
 - **dexonline hyphenation.** Only the first variant is used. It may be complete (`fa-mi-li-e`), a word end (`-li-e`), a word start (`a-ce-tal-`) or a word interior (`-pioa-`). Inside the span it covers, its cuts always prevail over the rules. A hyphenation that does not fit the word is ignored.
 - **Fallback rules.** Everywhere else, the rules place only cuts between two vowels, since grafia concisă uses no other cuts. The rules are known to be incomplete and will be refined:
@@ -34,22 +34,24 @@ A lemma's syllabification is Cezar's explicit one when listed (`rules.SYLLABIFIC
 | e-a, i-a, i-e, o-a | after a prefix (re-, pre-, ne-, tele-, co-, semi-, anti-, multi-, auto-, micro-, macro-, foto-, pseudo-, bio-, neo-, radio-, aero-, agro-, electro-, hidro-, termo-, geo-, proto-, socio-, psiho-, stereo-) when the rest is a known word: a form of a lowercase dexonline lexeme with frequency ≥ 0.9, of at least 4 letters | hiatus | *re-abilitat*, *ne-adevărat*, *auto-analiză* (not *neam*, *neagră*, *autoare*; *prea-curat* is *prea* + *curat*); *co-activ* (the false hits of co- are fixed in `rules.SYLLABIFICATIONS`: *coastă*, *coardă*, *coacere*, *coacăț*) |
 | i-e | prefix bi- before en | hiatus | *bienal* (not *biet*) |
 | i-i | word-final, after a consonant, in a verb infinitive | hiatus | *sfi-i*, *pri-i*, so *sfiește*, *priască* keep i-e/i-a (not the plural *copii*) |
-| ea | neologism endings and stems (`rules.EA_HIATUS`): final -eal (not after c/g/d/b), -nuclear/-linear/-hlear/-balnear, -creat/-laureat/-lineat/-nucleat and similar, reali-/ideali-/boreal/cereal | hiatus | *real*, *leal*, *boreal*, *nuclear*, *linear*, *alineat*, *realizat*, *cereale* (not *deal*, *Ardeal*, *beat*, *asear*, *greșeală*) |
+| ea | neologism endings and stems (`rules.EA_HIATUS`): final -eal (not after c/g/d/b), -linear/-hlear/-balnear, -laureat/-lineat/-nucleat and similar, nuclear-, creat-, reac(t/ț)-, steat-, meandr-, aleat-, beatif-, reali-/ideali-/boreal/cereal | hiatus | *real*, *leal*, *boreal*, *nuclear*, *denuclearizat*, *linear*, *alineat*, *creator*, *pancreatic*, *reactor*, *reacție*, *steatoză*, *meandru*, *aleator*, *beatific*, *realizat*, *cereale* (not *deal*, *Ardeal*, *beat*, *asear*, *greșeală*) |
+| oa | neologism stems and endings (`rules.OA_HIATUS`): coagul-, coabit-, coaliț-/coaliz-, final -zoar | hiatus | *coagulat*, *coabita*, *coaliție*, *coalizat*, *protozoar*, *cazoar* (not *mozoară*) |
 | ie, ia | word start, or after a vowel (ă, î included) | diphthong | *iarbă*, *femeie*, *tăia*, *tăiere*, *înmuiere* |
 | ie, ia | word-final, after a consonant | hiatus | *familie*, *vie*, *istoria* |
 | ia | medial, after a consonant (the -ia\* endings) | hiatus | *apropiat*, *pian*, *social*, *specializat*, *glaciar*, *variare* |
-| ia | same, in native stems (`rules.IA_DIPHTHONG`) | diphthong | *chiar*, *piatră*, *biată*, *viață*, *amiază*, *ghiață*, *maghiar*, *Caragiale* |
-| ia | final -iare after p/b/f/v/m or c/g/ch/gh (like -iere) | diphthong | *fiare* (like *fiere*) |
+| ia | same, in native stems (`rules.IA_DIPHTHONG`) | diphthong | *chiar*, *piatră*, *biată*, *viață*, *amiază*, *ghiață*, *maghiar*, *Caragiale*, *chiajna*, *obială* (not *liturghiar*, *eleghiacesc*, *schiagramă*, *Gorghias*, *Miaulis*, *microbial*) |
+| ia | final -iare after p/b/f/v/m or c/g/ch/gh, in a word that is no long infinitive (see below) | diphthong | *fiare* (like *fiere*) |
 | ie | medial, after p/b/f/v/m or c/g/ch/gh | diphthong | *fier*, *piept*, *pieptene* |
-| ie | same, in -bier, final -iesc (adjectives) and final -iere (long infinitives) | hiatus | *bărbier*, *zapciesc*, *surugiesc*, *copiere*, *apreciere*, *veghiere* (not *miere*, *înmiere*, *fiere*, *piere*: `rules.IERE_DIPHTHONG`) |
+| ie | same, in neologism stems and endings (`rules.IE_HIATUS`: gien, pieton, cviet, societ, soviet, vien, miel + o/in/it/ie, -ietor/-ietoare, bier neither word-initial nor after z/s), in final -ier/-ieră after a vowel and a consonant, final -iesc (adjectives) and final -iere/-ierea/-ieri/-ierii/-ierile/-ierilor (long infinitives; after a vowel it is a diphthong, see above: *tăiere*) | hiatus | *igienă*, *pieton*, *sovietism*, *cvietism*, *vienez*, *mielită*, *poliomielită*, *așchietor*, *bărbierit*, *corăbierie*, *bărbier*, *plumier*, *banchier*, *genunchier*, *legumieră*, *zapciesc*, *surugiesc*, *copiere*, *apreciere*, *veghiere*, *învierea*, *aprecierilor* (not *miel*, *mielușor*, *zbiera*, *fier*, *zbier*; not *miere*, *înmiere*, *fiere*, *piere* and their forms (*mierea*, *pieri*): `rules.IERE_DIPHTHONG`) |
 | ie | medial, after another consonant | hiatus | *prieten*, *cartier* |
 | anything else (ea, oa, ...) | anywhere | diphthong | *seară*, *soare* |
 
 When several records produce the same form, the default spelling is chosen by priority (the other spellings become alternatives, see *Homographs*):
-1. A headword beats a derived form.
-2. An explicit syllabification beats dexonline, and a lemma syllabified completely by dexonline beats a partial one.
-3. A partial one beats rules only.
-4. Otherwise the first record wins.
+1. Any record beats one of a long infinitive in -iare (see below).
+2. A syllabification backed by an explicit, dexonline or partial one beats rules alone, even for a headword: *agreare* is *agreare* (← *agrea* `a-gre-a`), not the headword *agreare* by rules (*agrēre*).
+3. A headword beats a derived form.
+4. An explicit syllabification beats dexonline, and a lemma syllabified completely by dexonline beats a partial one.
+5. Otherwise the first record wins.
 
 Cuts are derived from the lemma one vowel pair at a time:
 
@@ -67,6 +69,8 @@ The suffix -ează/-ească of verbs and adjectives after a hiatus i (written -az�
 | lemma + -ză | ends in a hiatus i-a (a verb of the first conjugation) | *studiază* → *studiėză* (← *stu-di-a*), *pliază* → *pliėză*, *înfiază* → *înfiėză*, *remaniază* → *remaniėză* |
 | lemma minus final i + -ască | ends in a hiatus i-i (a verb of the fourth conjugation) | *sfiască* → *sfiėscă* (← *sfi-i*), *priască* → *priėscă* |
 | lemma minus -esc + -ască, -asca | ends in a hiatus i-esc (an adjective) | *fiască* → *fiėscă*, *fiasca* → *fiėsca* (← *fi-esc*), *pustiască* → *pustiėscă* |
+
+A long infinitive in -iare is not standard and is written in its -iere form, which then follows the rules for -iere: *apreciare* → *apreciere*, *apreciarea* → *aprecierē*, *tăiare* → *tăẹre*. In its forms, the last -iar-/-iăr- becomes -ier-: *apreciărilor* → *aprecierilor*. A long infinitive is a lemma in -iare that dexonline lists in lowercase as a feminine noun or unclassified (model F, T or IL), except *fiare* and *mobiliare* (`rules.IARE_KEPT`). A form that another lemma also gives keeps that lemma's spelling: *conciliare* (the adjective *conciliar*), *copiare* (the noun *copiar*). The -iere spelling is then no alternative on the homograph switch.
 
 ## Optional rule: final -ee (switch, default off)
 
@@ -103,7 +107,8 @@ A form whose records give different spellings is a homograph. Examples:
 - *ie*: *ie* (the blouse, *i-e*) or *ẹ* (the adverb);
 - *miază*: *mėză* (noon, *mia-ză*) or *miază* (myiasis, *mi-a-ză*);
 - *curie*: *curẹ* or *curie*;
-- *liază*: *liază* (the noun) or *liėză* (the verb *lia*).
+- *liază*: *liază* (the noun) or *liėză* (the verb *lia*);
+- *vier*: *vẹr* (the boar, *vier*) or *vier* (păzitor de vie, *vi-er*).
 
 The default is the spelling chosen by the priority above. The others are stored in `forms.alternatives` and returned with it: in `segments[].alts` from `/api/convert` and in `alternatives` from `/api/lookup`, the default first in both. A spelling counts only when an explicit, dexonline or partial syllabification backs it, except that when one record gives the suffix -ėză/-ėscă/-ėsca (see *Syllabification source*), all the form's spellings count. `rules.SYLLABIFICATIONS` may give several readings for one word; the first is the default.
 
@@ -133,11 +138,11 @@ A word in -eele/-eelor:
 - Final -ele/-elor is replaced by -u. If that gives a lemma in -eu from the database (`eu_lemmas`), the word is its plural, with one spelling: *bombeele* → *bombeẹle* (← *bombeu*, whose dexonline plural is *bombeuri*).
 - Otherwise it gets two spellings, as the plural of an -ee lemma (*coloboleile*, *coloboleilor*, the default) or of an -eu lemma (*coloboleẹle*, *coloboleẹlor*). They are shown as a homograph switch, with a footnote using the word's stem: „Dacă singularul e *colobolee*, alege forma *coloboleile/lor*. Dacă singularul e *coloboleu*, alege forma *coloboleẹle/lor*.”
 
-Words with no candidate digraph are never looked up.
+Words with no candidate digraph and no iăr are never looked up.
 
 ## Reverse conversion
 
-Concise → standard is currently a character map (ẹ→ie, ė→ia, ē→ea, ō→oa), except that the ė of a word-final -iėză/-iėscă/-iėsca reverts to a (*studiėză* → *studiază*, *sfiėscă* → *sfiască*, *fiėsca* → *fiasca*). This holds only under the current rules and is not a guaranteed property. It is inexact for *fiiască*, *fiiasca* → *fiėscă*, *fiėsca*, which revert to *fiască*, *fiasca*. î is left unchanged, so â is not restored after the â → î rule (*cîine* stays *cîine*).
+Concise → standard is currently a character map (ẹ→ie, ė→ia, ē→ea, ō→oa), except that the ė of a word-final -iėză/-iėscă/-iėsca reverts to a (*studiėză* → *studiază*, *sfiėscă* → *sfiască*, *fiėsca* → *fiasca*). This holds only under the current rules and is not a guaranteed property. It is inexact for *fiiască*, *fiiasca* → *fiėscă*, *fiėsca*, which revert to *fiască*, *fiasca*. A long infinitive in -iare is not restored: *apreciere* stays *apreciere*. î is left unchanged, so â is not restored after the â → î rule (*cîine* stays *cîine*).
 
 With the -ee switch on, the input is read as written with the -ee rule. A word is first looked up among the spellings the rule gives to database forms (`ee_revert`), and reverts to the form it came from: *orhideẹ* → *orhidee*, *orhideile* → *orhideele*, *ideė* → *ideea*, *bombeẹle* → *bombeurile* (dexonline has no *bombeele*). Several dexonline forms may give the same spelling, by the rule or unchanged (*zeii*: the form *zeii*, or *zeei* by the rule). They are narrowed down in two steps:
 1. a form of a DEX-MDA-DOOM lexeme beats one without. The lexeme needs a definition of its own (its headword) from MDA\*, DEX\*, NODEX\* or DOOM\*; a mention in another word's definition does not count. *aleẹ* → *alee* (not *aleie*, Scriban only), *cheẹ* → *cheie* (not *chee*), *acneẹ* → *acnee* (*acneie* is only mentioned under *coș* in MDA2);
@@ -156,4 +161,4 @@ Any other word, unknown ones included, goes through the character map (*femeẹ*
 - `iesc_lemmas(lemma, reference)`: every normalized lemma in -iesc and its syllabification (*harabagi-esc*), for unknown forms of -iesc adjectives (see *Unknown words*).
 - `ee_revert(concise, form, alternatives)`: a spelling with the -ee rule, the form it reverts to and the other forms of a tie (space-separated, or NULL), only where the character map alone is not the answer (see *Reverse conversion*).
 
-`forms` stores only forms that can differ: those containing ie/ia/ea/oa or ending in -ee, -eea, -eei, -eele, -eelor, -euri, -eurile or -eurilor. The pipeline input per inflected form is: the form, its lemma, the lemma's dexonline hyphenation (complete, partial or empty), the number (S/P), whether the lemma is a verb (dexonline model V or VT), and whether it is DEX-MDA-DOOM: it has an active definition of its own (whose headword is the lexeme) from a source whose short name starts with MDA, DEX, NODEX or DOOM (MDA2, DEX '09, NODEX, DOOM 3, ...; not the internal *dexonline*).
+`forms` stores only forms that can differ: those containing ie/ia/ea/oa or iăr, or ending in -ee, -eea, -eei, -eele, -eelor, -euri, -eurile or -eurilor. The pipeline input per inflected form is: the form, its lemma, the lemma's dexonline hyphenation (complete, partial or empty), the number (S/P), whether the lemma is a verb (dexonline model V or VT), whether it is a lowercase feminine noun or unclassified (model F, T or IL; for long infinitives in -iare), and whether it is DEX-MDA-DOOM: it has an active definition of its own (whose headword is the lexeme) from a source whose short name starts with MDA, DEX, NODEX or DOOM (MDA2, DEX '09, NODEX, DOOM 3, ...; not the internal *dexonline*).

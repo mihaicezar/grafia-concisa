@@ -12,6 +12,8 @@ from grafia_concisa.rules import (
     concise_ee,
     concise_from_reference,
     concise_from_syllables,
+    iere_spelling,
+    long_infinitive,
     revert_text,
     syllabify,
 )
@@ -150,12 +152,19 @@ SYLLABIFY = [
     ("alineat", "", "aline-at", "rules"),
     ("realizat", "", "re-alizat", "rules"),
     ("cereale", "", "cere-ale", "rules"),
+    ("denuclearizat", "", "denucle-arizat", "rules"),
+    ("pancreatic", "", "pancre-atic", "rules"),
+    ("reactor", "", "re-actor", "rules"),
+    ("aleator", "", "ale-ator", "rules"),
     ("deal", "", "deal", "rules"),                          # ...not native words
     ("podbeal", "", "podbeal", "rules"),
     ("beat", "", "beat", "rules"),
     ("asear", "", "asear", "rules"),
     ("dogoreală", "", "dogoreală", "rules"),
     ("bianual", "", "bi-anual", "rules"),
+    ("coagulat", "", "co-agulat", "rules"),                 # oa: OA_HIATUS neologisms
+    ("protozoar", "", "protozo-ar", "rules"),
+    ("mozoară", "", "mozoară", "rules"),
     ("biet", "", "biet", "rules"),
     ("biată", "", "biată", "rules"),                        # IA_DIPHTHONG stem
     ("fiabil", "", "fi-abil", "rules"),                     # -iabil, -eabil: hiatus
@@ -165,16 +174,31 @@ SYLLABIFY = [
     ("miere", "", "miere", "rules"),                        # ...except IERE_DIPHTHONG
     ("înmiere", "", "înmiere", "rules"),
     ("xerocopiere", "", "xerocopi-ere", "rules"),
+    ("învierea", "", "învi-erea", "rules"),                 # articulated: -ierea
+    ("mierea", "", "mierea", "rules"),
+    ("copierilor", "", "copi-erilor", "rules"),             # ...and all its endings
+    ("pieri", "", "pieri", "rules"),                        # (piere: IERE_DIPHTHONG)
+    ("schierea", "", "schi-erea", "rules"),
     ("tăiere", "", "tăiere", "rules"),                      # vowel + -iere: diphthong
     ("înmuiere", "", "înmuiere", "rules"),
-    ("bărbier", "", "bărbi-er", "rules"),                   # except -bier...
+    ("bărbier", "", "bărbi-er", "rules"),                   # except final -ier/-ieră after
+    ("plumier", "", "plumi-er", "rules"),                   # a vowel and a consonant...
+    ("legumieră", "", "legumi-eră", "rules"),
+    ("zbier", "", "zbier", "rules"),                        # (not fier, zbier)
+    ("bărbierit", "", "bărbi-erit", "rules"),               # ...IE_HIATUS stems...
+    ("zbieret", "", "zbieret", "rules"),
+    ("igienă", "", "igi-enă", "rules"),
+    ("mielită", "", "mi-elită", "rules"),
+    ("miel", "", "miel", "rules"),
+    ("așchietor", "", "așchi-etor", "rules"),
+    ("sovietism", "", "sovi-etism", "rules"),
     ("zapciesc", "", "zapci-esc", "rules"),                 # ...and adjectives in -iesc
     ("surugiesc", "", "surugi-esc", "rules"),
     ("ciocoiesc", "", "ciocoiesc", "rules"),                # (after a vowel: diphthong)
     ("apropiat", "", "apropi-at", "rules"),                 # medial ia after a consonant:
     ("pian", "", "pi-an", "rules"),                         # hiatus (-ia* endings)
     ("deviant", "", "devi-ant", "rules"),
-    ("fiare", "", "fiare", "rules"),                        # -iare like -iere after p/b/f/v/m, c/g
+    ("fiare", "", "fiare", "rules"),                        # final -iare after p/b/f/v/m, c/g
     ("variare", "", "vari-are", "rules"),                   # ...but not after other consonants
     ("specializat", "", "speci-alizat", "rules"),
     ("îmbiat", "", "îmbi-at", "rules"),
@@ -184,6 +208,12 @@ SYLLABIFY = [
     ("piatră", "", "piatră", "rules"),
     ("amiază", "", "amiază", "rules"),
     ("maghiar", "", "maghiar", "rules"),
+    ("chiajna", "", "chiajna", "rules"),
+    ("obială", "", "obială", "rules"),
+    ("microbial", "", "microbi-al", "rules"),
+    ("schiagramă", "", "schi-agramă", "rules"),
+    ("liturghiar", "", "liturghi-ar", "rules"),
+    ("eleghiacesc", "", "eleghi-acesc", "rules"),
     ("miază", "mi-a-ză", "mia-ză", "manual"),
     ("cartier", "", "carti-er", "rules"),                   # -tier: after t anyway
     ("reabilitat", "", "re-abilitat", "rules"),             # prefix + known word
@@ -196,6 +226,8 @@ SYLLABIFY = [
     ("coace", "", "coace", "rules"),                        # rest too short
     ("coactiv", "", "co-activ", "rules"),                   # co- prefix
     ("neant", "", "ne-ant", "manual"),                      # SYLLABIFICATIONS beat all
+    ("mielea", "", "mi-e-lea", "manual"),
+    ("răspieri", "", "răs-pie-ri", "manual"),
     ("coastă", "", "coas-tă", "manual"),
     ("coastă", "co-as-tă", "coas-tă", "manual"),
 ]
@@ -211,6 +243,12 @@ HOMOGRAPH_RECORDS = [
     ("trepied", "trepied", "tre-pi-ed", "S"),  # ...dexonline: hiatus
     ("liază", "liază", "li-a-ză", "S"),    # noun...
     ("liază", "lia", "", "S", "V"),        # ...or verb: -ėză, both spellings count
+    ("piei", "piei", "", "S"),             # SYLLABIFICATIONS: piei...
+    ("piei", "pia", "pi-a", "S"),          # ...so no other lemma adds a spelling
+    ("vier", "vier", "", "S"),             # SYLLABIFICATIONS: vier, vi-er
+    ("vierul", "vier", "", "S"),
+    ("agreare", "agreare", "", "S"),       # a headword by rules alone...
+    ("agreare", "agrea", "a-gre-a", "S", "V"),  # ...loses to a backed derived form
 ]
 # ...and (word, all spellings, default first). No alternatives: [].
 HOMOGRAPHS = [
@@ -220,6 +258,20 @@ HOMOGRAPHS = [
     ("miază", ["mėză", "miază"]),          # noon (default), myiasis
     ("trepied", []),                       # a rules-only spelling is no alternative...
     ("liază", ["liază", "liėză"]),         # ...except one with -ėză/-ėscă
+    ("piei", []),                          # SYLLABIFICATIONS: the form's only spelling
+    ("vier", ["vẹr", "vier"]),             # the boar (default), păzitor de vie
+    ("vierul", ["vẹrul", "vierul"]),
+    ("agreare", []),                       # the rules-only agrēre is no alternative
+]
+# Long infinitives in -iare (flag F) are written -iere: records for the test DB.
+LONG_INFINITIVE_RECORDS = [
+    ("apreciarea", "apreciare", "a-pre-ci-a-re", "S", "F"),
+    ("apreciărilor", "apreciare", "a-pre-ci-a-re", "P", "F"),
+    ("tăiarea", "tăiare", "", "S", "F"),
+    ("fiare", "fiare", "", "S", "F"),      # rules.IARE_KEPT: no long infinitive
+    ("variare", "variare", "", "S"),       # no flag F: no long infinitive
+    ("conciliare", "conciliare", "", "S", "F"),  # loses to any other record...
+    ("conciliare", "conciliar", "", "P"),        # ...the adjective
 ]
 
 # Unknown words with the -ee switch: (word, all spellings, default first).
@@ -334,7 +386,11 @@ TEXTS = [
     ("zzeele zzeelor", True, "zzeile zzeilor", ["zzeele", "zzeelor"]),
     ("Câinele mâncă, CÂND?", False, "Cîinele mîncă, CÎND?", []),  # â -> î, on by default
     ("Pâinea și soarele", False, "Pîinē și sōrele", []),
-    ("zzâia", False, "zzîė", ["zzâia"]),                           # unknown words too
+    ("zzâia", False, "zzîė", ["zzâia"]),
+    ("zziăr", False, "zziăr", []),                                 # iăr alone: nothing to change                           # unknown words too
+    ("Apreciarea apreciărilor, tăiarea", False, "Aprecierē aprecierilor, tăẹrē", []),
+    ("fiare, variare, piei, conciliare", False, "fėre, variare, pẹi, conciliare", []),
+    ("agreare", False, "agreare", []),                             # backed beats rules alone
     ("Român, ROMÂNESC, aromână, dacoromân, rumân, rumânesc", False,  # root român/rumân: â kept
      "Român, ROMÂNESC, aromână, dacoromân, rumân, rumânesc", []),
     ("Câinele, pâinea", False, "Câinele, pâinē", [], False),       # switch off
@@ -370,6 +426,7 @@ class Suite(unittest.TestCase):
             + [(f, lemma.replace("-", ""), lemma, n) for f, lemma, n, _ in EE_WORDS]
             + HOMOGRAPH_RECORDS
             + EE_REVERT_RECORDS
+            + LONG_INFINITIVE_RECORDS
             + LEMMAS,
         )
         cls.client = create_app(cls.db).test_client()
@@ -431,9 +488,12 @@ class Suite(unittest.TestCase):
         with sqlite3.connect(self.db) as c:
             rows = c.execute("SELECT form, concise_form FROM forms").fetchall()
         self.assertTrue(rows)
+        # a form of a long infinitive in -iare may revert to its -iere spelling
+        long_inf = {r[0] for r in LONG_INFINITIVE_RECORDS if "F" in r[4:] and long_infinitive(r[1])}
         for form, concise in rows:
             with self.subTest(form):
-                self.assertEqual(revert_text(concise), form)
+                allowed = (form, iere_spelling(form)) if form in long_inf else (form,)
+                self.assertIn(revert_text(concise), allowed)
 
     def test_lookup(self):
         r = self.post("/api/lookup", {"words": ["Soare", "casa", "zzoa", "Câine", "român"]}).get_json()

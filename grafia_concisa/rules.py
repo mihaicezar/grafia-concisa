@@ -22,6 +22,9 @@ When one spelling is both a singular and a plural, the singular wins.
 Optional rule "ai" (switch, on by default): â is written î, except in words
 with the root român/rumân (câine -> cîine; român, aromân, rumânesc unchanged).
 
+Long infinitives in -iare are not standard: a form of one is written as the
+-iere form, with its cuts (apreciare -> apreciere, apreciărilor -> aprecierilor).
+
 Apart from the -ee rule, a form with two syllabifications has two spellings
 (a homograph: ia = the verb lua or the articulated ie). One is the default,
 the other an alternative the user can switch to.
@@ -39,7 +42,8 @@ HIATUS_SUFFIX = re.compile(r"(?<=i)ė(?=(ză|scă|sca)$)", re.IGNORECASE)
 A_KEPT = re.compile(r"r[ou]mân", re.IGNORECASE)
 _A_TO_I = str.maketrans("âÂ", "îÎ")
 
-CANDIDATE = re.compile("|".join(DIGRAPHS))
+DIGRAPH = re.compile("|".join(DIGRAPHS))
+CANDIDATE = re.compile(DIGRAPH.pattern + "|iăr")  # iăr: apreciări -> aprecieri
 EE_FINAL = re.compile(r"(ee(a|i|le|lor)?|euri(le|lor)?)$")  # forms the -ee rule may change
 EURI = re.compile(r"euri(le|lor)?$")  # -euri plurals, which the -ee rule writes -eẹ, like -ee
 # Every spelling the -ee rule gives ends so (ideẹ, bombeẹle, ideė, ideii, orhideile, logorei)
@@ -65,24 +69,35 @@ IENT = re.compile(r"ien[tț](?:[aăei]|$)")
 # Medial ia after a consonant is a hiatus (the -ia* endings: apropiat, social,
 # specializat), except in these native stems (chiar, biată, piatră, amiază).
 IA_DIPHTHONG = re.compile(
-    r"chiar(?!e)|chiab|chiag|chiaun|unchiaș"   # not -chiare (trunchiare)
-    r"|(?<!n)ghia(?![tnl]|re)"                  # not unghiar, -ghiat, -ghian, -ghial, -ghiare
+    r"chiar(?!e)|chiab|(?<!s)chiag|chiaun|unchiaș"   # not -chiare (trunchiare), schiagrafie
+    r"|(?<!n)(?<!litur)(?<!^gor)ghia(?![tnl]|re|ce)"  # not unghiar, -ghiat, -ghian, -ghial,
+                                                      # -ghiare, liturghiar, Gorghias, eleghiacesc
     r"|^biat(?!l)|(?<!hi)piatr|viaț(?!i)"       # not biatlon, hipiatric, deviație
-    r"|(?:^|[aă])miaz(?!m)|(?<!e)miau"          # not distomiază, miazmă, semiautomat
-    r"|megiaș|caragial|barcian|vianu$"
+    r"|(?:^|[aă])miaz(?!m)|(?<!e)miau(?!l)"     # not distomiază, miazmă, semiautomat, Miaulis
+    r"|megiaș|caragial|barcian|vianu$|chiajn|^obial"
 )
 # ea is a hiatus in these neologism endings and stems (real, nuclear, creat,
 # realizat); native deal, beat, asear, greșeală stay diphthongs.
 EA_HIATUS = re.compile(
     r"(?<![cgdb])eal$"                                    # real, leal, boreal; not deal, podbeal
-    r"|(?:nucl|lin|hl|baln)ear$"                          # nuclear, linear, cohlear, balnear
-    r"|(?:cr|gr|aur|or|lin|cl|un|ct|id|al|pl)eat$"        # creat, laureat, alineat, nucleat
+    r"|(?:lin|hl|baln)ear$|nuclear"                       # linear, cohlear, balnear, nuclearizat
+    r"|(?:gr|aur|or|lin|cl|un|ct|id|al|pl)eat$|creat"     # laureat, alineat, nucleat, creator
     r"|(?:real|ideal)i|boreal|cereal"                     # realizat, idealist, cereale
+    r"|reac[tț]|steat|meandr|aleat|beatif"                # reactor, reacție, steatoză, aleator
 )
-# Final -iere after p/b/f/v/m or c/g/ch/gh is a hiatus (long infinitives: copiere,
-# apreciere), except in these native words. After a vowel it is a diphthong anyway
-# (tăiere, înmuiere).
+# Medial ie after p/b/f/v/m or c/g/ch/gh is a hiatus in these neologism stems and
+# endings (igienă, pieton, sovietic, mielită, așchietor, bărbierit; not zbiera, miel, mielușor).
+IE_HIATUS = re.compile(r"gien|pieton|cviet|societ|soviet|vien|miel(?:o|in|it|ie)|ietoa?r|(?<=[^zs])bier")
+# oa is a hiatus in these neologism stems and endings (coagulat, coaliție, protozoar).
+OA_HIATUS = re.compile(r"coagul|coabit|coali[tțz]|zoar$")
+# A long infinitive in -iere after p/b/f/v/m or c/g/ch/gh is a hiatus in all its forms
+# (copiere, învierea, aprecierilor), except in these native words and their forms
+# (mierea, pieri). After a vowel it is a diphthong anyway (tăiere, înmuiere).
+IERE_ENDINGS = ("e", "ea", "i", "ii", "ile", "ilor")  # after -ier: -iere, -ierea, -ieri, ...
 IERE_DIPHTHONG = frozenset({"miere", "înmiere", "fiere", "piere"})
+# Lemmas in -iare that are no long infinitives (fiare: s.f. pl.; mobiliare: s.n.)
+IARE_KEPT = frozenset({"fiare", "mobiliare"})
+_IAR = re.compile(r"(.*i-?)[aă](-?r)")  # the last -iar-/-iăr- of a word
 # Headwords in -eea take -eė with the -ee switch (Niceė, Andreė), except the
 # pronoun aceea and its kin, which keep -eē.
 EEA_UNCHANGED = frozenset({"aceea", "oareceea"})
@@ -95,11 +110,20 @@ PREFIXES = (
     "auto", "micro", "macro", "foto", "pseudo", "bio", "neo", "radio", "aero",
     "agro", "electro", "hidro", "termo", "geo", "proto", "socio", "psiho", "stereo",
 )
-# Syllabifications decided by Cezar. They beat both dexonline and the rules.
+# Syllabifications decided by Cezar. They beat both dexonline and the rules,
+# and for a form they give all its spellings: other lemmas' records add none.
 # Several readings = a homograph: the first is the default, the others are
 # offered as alternatives.
 SYLLABIFICATIONS = {
     "neant": ("ne-ant",),
+    "înfieri": ("în-fi-e-ri",),
+    "mielea": ("mi-e-lea",),  # al mielea, like al miilea
+    "piei": ("piei",),        # not pi-ei (<- pia)
+    "răspieri": ("răs-pie-ri",),  # răspĭér, a -í (a verb, no long infinitive)
+    "vier": ("vier", "vi-er"),     # the boar; păzitor de vie (rare)
+    "vieri": ("vieri", "vi-e-ri"),
+    "viere": ("vi-e-re",),           # the long infinitive (not the boar's vocative)
+    "ia": ("ia", "i-a"),             # the verb lua, the interjection; the articulated ie
     "miază": ("mia-ză", "mi-a-ză"),  # noon (amiază), myiasis
     "ie": ("i-e", "ie"),   # the blouse (articulated ia: i-a); the adverb ie
     # co- + a known word, but not a prefix
@@ -160,6 +184,8 @@ def _rule_cut(word: str, b: int, known: Container[str], verb: bool = False) -> b
       - prefix bi- before en: hiatus (bienal);
       - ea in the EA_HIATUS neologism endings and stems: hiatus (real, nuclear,
         creat, realizat; not deal, beat, greșeală);
+      - oa in the OA_HIATUS neologism stems and endings: hiatus (coagulat,
+        coaliție, protozoar);
       - ii word-final after a consonant, in a verb infinitive: hiatus (sfi-i,
         so sfiește, sfiască keep i-e, i-a; not the plural copii);
       - ie/ia at word start or after a vowel (ă, î included): diphthong
@@ -169,10 +195,13 @@ def _rule_cut(word: str, b: int, known: Container[str], verb: bool = False) -> b
         except in the IA_DIPHTHONG stems (chiar, biată, piatră) and, like
         -iere, final -iare after p/b/f/v/m or c/g/ch/gh (fiare);
       - ie medial after p/b/f/v/m or c/g/ch/gh: diphthong (fier, piept),
-        except -bier (bărbier), the adjectives in -iesc (zapciesc, surugiesc)
-        and final -iere (copiere), though not in IERE_DIPHTHONG (miere,
-        fiere); after other consonants: hiatus
-        (prieten, cartier);
+        except the IE_HIATUS stems (igienă, bărbierit, așchietor), the
+        adjectives in -iesc (zapciesc, surugiesc), final -ier/-ieră after a
+        vowel and a consonant (plumier, legumieră; not fier, zbier) and the
+        long infinitives in -iere with all their endings (copiere, învierea,
+        aprecierilor, schiere), though not in IERE_DIPHTHONG (miere, mierea,
+        pieri);
+        after other consonants: hiatus (prieten, cartier);
       - anything else, including ea and oa: no cut (seară, soare).
     """
     pair = word[b - 1 : b + 1]
@@ -187,7 +216,7 @@ def _rule_cut(word: str, b: int, known: Container[str], verb: bool = False) -> b
         return True
     if b == 2 and word.startswith("bien"):
         return True
-    if pair == "ea" and any(m.start() < b < m.end() for m in EA_HIATUS.finditer(word)):
+    if pair == "ea" and _inside(EA_HIATUS, word, b) or pair == "oa" and _inside(OA_HIATUS, word, b):
         return True
     if verb and pair == "ii" and b + 1 == len(word) and b >= 2 and word[b - 2] not in VOWELS:
         return True
@@ -200,12 +229,32 @@ def _rule_cut(word: str, b: int, known: Container[str], verb: bool = False) -> b
     if pair == "ia":
         if labial_or_palatal and word.endswith("iare") and b == len(word) - 3:
             return False  # like -iere: fiare, fiere
-        return not any(m.start() < b < m.end() for m in IA_DIPHTHONG.finditer(word))
+        return not _inside(IA_DIPHTHONG, word, b)
     if labial_or_palatal:
-        if word.endswith("iere") and b == len(word) - 3:
-            return word not in IERE_DIPHTHONG
-        return word[b - 2 :] == "bier" or word[b - 1 :] == "iesc"
+        if word.startswith("ier", b - 1) and word[b + 2 :] in IERE_ENDINGS:  # copiere, învierea
+            return word[: b + 2] + "e" not in IERE_DIPHTHONG  # not mierea, pieri
+        if word[b - 1 :] in ("ier", "ieră"):  # plumier, legumieră; not fier, zbier
+            return any(c in VOWELS for c in word[: b - 2])
+        return word[b - 1 :] == "iesc" or _inside(IE_HIATUS, word, b)
     return True
+
+
+def _inside(pattern: re.Pattern, word: str, b: int) -> bool:
+    """True if a match of `pattern` in `word` spans the boundary b."""
+    return any(m.start() < b < m.end() for m in pattern.finditer(word))
+
+
+def long_infinitive(lemma: str) -> bool:
+    """True if `lemma`, a feminine noun or unclassified in dexonline, is a long
+    infinitive in -iare (apreciare, tăiare; not fiare). Input normalized."""
+    return lemma.endswith("iare") and lemma not in IARE_KEPT
+
+
+def iere_spelling(word: str) -> str:
+    """The -iere spelling of a long infinitive in -iare, its form or its
+    hyphenation: the last -iar-/-iăr- becomes -ier- (apreciare -> apreciere,
+    apreciărilor -> aprecierilor, a-pre-ci-a-re -> a-pre-ci-e-re)."""
+    return _IAR.sub(r"\1e\2", word, count=1)
 
 
 def syllabify(
@@ -452,7 +501,8 @@ def resolve(
     `lookup` maps normalized forms to (concise_form, concise_ee, alternatives).
     `lookup_known` maps those of the given words that exist to their
     syllabification, '' when not needed (see lemma_candidates, concise_by_rules).
-    Words missing from the database are converted by rules alone (concise_by_rules).
+    Words missing from the database are converted by rules alone (concise_by_rules),
+    and are unknown unless they have no digraph or -ee ending (zziăr: nothing to change).
     """
     rows = lookup(keys) if keys else {}
     candidates = {x for k in keys - rows.keys() for x in lemma_candidates(k)}
@@ -463,7 +513,8 @@ def resolve(
             c, e, alts = rows[k]
             out[k] = ((e if ee and e else c, *alts), False)
         else:
-            out[k] = (concise_by_rules(k, ee, known), True)
+            changeable = DIGRAPH.search(k) is not None or ee and EE_FINAL.search(k) is not None
+            out[k] = (concise_by_rules(k, ee, known), changeable)
     return out
 
 

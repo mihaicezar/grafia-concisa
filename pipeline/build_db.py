@@ -4,7 +4,7 @@ Sources:
   --text FILE   one record per line, tab-separated:
                   form, lemma, lemma hyphenation (complete, partial or empty), number (S/P),
                   then optional flags in any order: V if the lemma is a verb, D if it is
-                  DEX-MDA-DOOM (below)
+                  DEX-MDA-DOOM, F if it is a feminine noun or unclassified (below)
                 e.g. 'ideea\tidee\ti-de-e\tS'. A single column = a syllabified headword.
   --mysql       dexonline MySQL dump loaded locally (needs the `pipeline` extra)
 
@@ -22,18 +22,22 @@ from grafia_concisa.rules import normalize
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# One row per inflected form with six columns:
+# One row per inflected form with seven columns:
 #   form ('ideea'), lemma ('idee'), the lemma's dexonline hyphenation
 #   (complete, partial such as '-li-e', or ''), number ('S' or 'P'),
 #   'V' if the lemma is a verb, else '',
 #   'D' if the lexeme is DEX-MDA-DOOM, else '': it has an active definition of its own
 #   (headword = the lexeme, not just mentioned in another word's definition: acneie
 #   under coș) from a source named MDA*, DEX*, NODEX* or DOOM* (MDA2, DEX '09, NODEX,
-#   DOOM 3; not 'dexonline').
+#   DOOM 3; not 'dexonline'),
+#   'F' if the lexeme is lowercase and of model F, T or IL (a feminine noun or
+#   unclassified), else '': a lemma in -iare is then a long infinitive (apreciare).
 # Partial and missing hyphenations are completed by rules.syllabify.
 SOURCE_QUERY = """
 SELECT f.formNoAccent, l.formNoAccent, IFNULL(l.hyphenations, ''), IF(i.number = 2, 'P', 'S'),
-       IF(l.modelType IN ('V', 'VT'), 'V', ''), IF(dex.lexemeId IS NULL, '', 'D')
+       IF(l.modelType IN ('V', 'VT'), 'V', ''), IF(dex.lexemeId IS NULL, '', 'D'),
+       IF(l.modelType IN ('F', 'T', 'IL') AND l.formNoAccent COLLATE utf8mb4_bin REGEXP '^[a-zăâîșț]',
+          'F', '')
 FROM InflectedForm f
 JOIN Lexeme l ON l.id = f.lexemeId
 JOIN Inflection i ON i.id = f.inflectionId

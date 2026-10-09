@@ -23,7 +23,7 @@ O formă poate avea mai multe grafii concise corecte. Are întotdeauna una impli
 
 Un cuvânt-titlu își folosește propria despărțire. Orice altă formă flexionară își ia tăieturile din despărțirea lemei (vezi tabelul de deducție de mai jos).
 
-Despărțirea unei leme este cea explicită a lui Cezar, dacă există (`rules.SYLLABIFICATIONS`: *neant* `ne-ant`, *coastă* `coas-tă`, ...; o intrare poate avea mai multe citiri, iar prima e cea implicită: *ie* `i-e` / `ie`, *miază* `mia-ză` / `mi-a-ză`). Altfel este despărțirea din dexonline, completată de regulile de rezervă:
+Despărțirea unei leme este cea explicită a lui Cezar, dacă există (`rules.SYLLABIFICATIONS`: *neant* `ne-ant`, *coastă* `coas-tă`, *mielea* `mi-e-lea`, *înfieri* `în-fi-e-ri`, *răspieri* `răs-pie-ri`, ...; o intrare poate avea mai multe citiri, iar prima e cea implicită: *ie* `i-e` / `ie`, *miază* `mia-ză` / `mi-a-ză`, *vier* `vier` / `vi-er`). Altfel este despărțirea din dexonline, completată de regulile de rezervă. O formă trecută acolo își ia toate grafiile de acolo, oricare i-ar fi lema: *piei* e doar *pẹi* (nu și *piei* ← *pia* `pi-a`).
 
 - **Despărțirea din dexonline.** Se folosește doar prima variantă. Poate fi completă (`fa-mi-li-e`), un final de cuvânt (`-li-e`), un început de cuvânt (`a-ce-tal-`) sau un interior de cuvânt (`-pioa-`). În porțiunea pe care o acoperă, tăieturile ei au întotdeauna prioritate față de reguli. O despărțire care nu se potrivește cu cuvântul e ignorată.
 - **Regulile de rezervă.** În rest, regulile pun doar tăieturi între două vocale, pentru că grafia concisă nu folosește altele. Regulile sunt incomplete și vor fi îmbunătățite:
@@ -36,22 +36,24 @@ Despărțirea unei leme este cea explicită a lui Cezar, dacă există (`rules.S
 | e-a, i-a, i-e, o-a | după un prefix (re-, pre-, ne-, tele-, co-, semi-, anti-, multi-, auto-, micro-, macro-, foto-, pseudo-, bio-, neo-, radio-, aero-, agro-, electro-, hidro-, termo-, geo-, proto-, socio-, psiho-, stereo-), când restul e un cuvânt cunoscut: o formă a unei leme dexonline scrise cu literă mică, cu frecvența ≥ 0,9 și de cel puțin 4 litere | hiat | *re-abilitat*, *ne-adevărat*, *auto-analiză* (nu *neam*, *neagră*, *autoare*; *prea-curat* e *prea* + *curat*); *co-activ* (potrivirile greșite ale lui co- sunt corectate în `rules.SYLLABIFICATIONS`: *coastă*, *coardă*, *coacere*, *coacăț*) |
 | i-e | prefixul bi- înainte de en | hiat | *bienal* (nu *biet*) |
 | i-i | la final, după o consoană, într-un infinitiv verbal | hiat | *sfi-i*, *pri-i*, deci *sfiește*, *priască* își păstrează i-e/i-a (nu pluralul *copii*) |
-| ea | terminații și rădăcini neologice (`rules.EA_HIATUS`): -eal final (nu după c/g/d/b), -nuclear/-linear/-hlear/-balnear, -creat/-laureat/-lineat/-nucleat și altele asemănătoare, reali-/ideali-/boreal/cereal | hiat | *real*, *leal*, *boreal*, *nuclear*, *linear*, *alineat*, *realizat*, *cereale* (nu *deal*, *Ardeal*, *beat*, *asear*, *greșeală*) |
+| ea | terminații și rădăcini neologice (`rules.EA_HIATUS`): -eal final (nu după c/g/d/b), -linear/-hlear/-balnear, -laureat/-lineat/-nucleat și altele asemănătoare, nuclear-, creat-, reac(t/ț)-, steat-, meandr-, aleat-, beatif-, reali-/ideali-/boreal/cereal | hiat | *real*, *leal*, *boreal*, *nuclear*, *denuclearizat*, *linear*, *alineat*, *creator*, *pancreatic*, *reactor*, *reacție*, *steatoză*, *meandru*, *aleator*, *beatific*, *realizat*, *cereale* (nu *deal*, *Ardeal*, *beat*, *asear*, *greșeală*) |
+| oa | rădăcini și terminații neologice (`rules.OA_HIATUS`): coagul-, coabit-, coaliț-/coaliz-, -zoar final | hiat | *coagulat*, *coabita*, *coaliție*, *coalizat*, *protozoar*, *cazoar* (nu *mozoară*) |
 | ie, ia | la început de cuvânt sau după o vocală (inclusiv ă, î) | diftong | *iarbă*, *femeie*, *tăia*, *tăiere*, *înmuiere* |
 | ie, ia | la final de cuvânt, după consoană | hiat | *familie*, *vie*, *istoria* |
 | ia | în interior, după consoană (terminațiile -ia\*) | hiat | *apropiat*, *pian*, *social*, *specializat*, *glaciar*, *variare* |
-| ia | la fel, dar în rădăcini native (`rules.IA_DIPHTHONG`) | diftong | *chiar*, *piatră*, *biată*, *viață*, *amiază*, *ghiață*, *maghiar*, *Caragiale* |
-| ia | -iare final după p/b/f/v/m sau c/g/ch/gh (ca -iere) | diftong | *fiare* (ca *fiere*) |
+| ia | la fel, dar în rădăcini native (`rules.IA_DIPHTHONG`) | diftong | *chiar*, *piatră*, *biată*, *viață*, *amiază*, *ghiață*, *maghiar*, *Caragiale*, *chiajna*, *obială* (nu *liturghiar*, *eleghiacesc*, *schiagramă*, *Gorghias*, *Miaulis*, *microbial*) |
+| ia | -iare final după p/b/f/v/m sau c/g/ch/gh, într-un cuvânt care nu e infinitiv lung (vezi mai jos) | diftong | *fiare* (ca *fiere*) |
 | ie | în interior, după p/b/f/v/m sau c/g/ch/gh | diftong | *fier*, *piept*, *pieptene* |
-| ie | la fel, dar în -bier, -iesc final (adjective) și -iere final (infinitive lungi) | hiat | *bărbier*, *zapciesc*, *surugiesc*, *copiere*, *apreciere*, *veghiere* (nu *miere*, *înmiere*, *fiere*, *piere*: `rules.IERE_DIPHTHONG`) |
+| ie | la fel, dar în rădăcini și terminații neologice (`rules.IE_HIATUS`: gien, pieton, cviet, societ, soviet, vien, miel + o/in/it/ie, -ietor/-ietoare, bier care nu e nici la început de cuvânt, nici după z/s), în -ier/-ieră final după o vocală și o consoană, -iesc final (adjective) și -iere/-ierea/-ieri/-ierii/-ierile/-ierilor final (infinitive lungi; după o vocală e diftong, vezi mai sus: *tăiere*) | hiat | *igienă*, *pieton*, *sovietism*, *cvietism*, *vienez*, *mielită*, *poliomielită*, *așchietor*, *bărbierit*, *corăbierie*, *bărbier*, *plumier*, *banchier*, *genunchier*, *legumieră*, *zapciesc*, *surugiesc*, *copiere*, *apreciere*, *veghiere*, *învierea*, *aprecierilor* (nu *miel*, *mielușor*, *zbiera*, *fier*, *zbier*; nu *miere*, *înmiere*, *fiere*, *piere* și formele lor (*mierea*, *pieri*): `rules.IERE_DIPHTHONG`) |
 | ie | în interior, după altă consoană | hiat | *prieten*, *cartier* |
 | orice altceva (ea, oa, ...) | oriunde | diftong | *seară*, *soare* |
 
 Când mai multe înregistrări dau aceeași formă, grafia implicită se alege după prioritate (celelalte grafii devin variante, vezi *Omografe*):
-1. Un cuvânt-titlu bate o formă dedusă.
-2. O despărțire explicită bate dexonline, iar o lemă despărțită complet de dexonline bate una despărțită parțial.
-3. O despărțire parțială bate regulile singure.
-4. Altfel câștigă prima înregistrare.
+1. Orice înregistrare bate una a unui infinitiv lung în -iare (vezi mai jos).
+2. O despărțire susținută de una explicită, din dexonline sau parțială bate regulile singure, chiar și la un cuvânt-titlu: *agreare* e *agreare* (← *agrea* `a-gre-a`), nu cuvântul-titlu *agreare* despărțit prin reguli (*agrēre*).
+3. Un cuvânt-titlu bate o formă dedusă.
+4. O despărțire explicită bate dexonline, iar o lemă despărțită complet de dexonline bate una despărțită parțial.
+5. Altfel câștigă prima înregistrare.
 
 Tăieturile se deduc din lemă pe rând, pentru fiecare pereche de vocale:
 
@@ -69,6 +71,8 @@ Sufixul -ează/-ească al verbelor și adjectivelor după un i în hiat (scris -
 | lema + -ză | se termină în hiatul i-a (verb de conjugarea I) | *studiază* → *studiėză* (← *stu-di-a*), *pliază* → *pliėză*, *înfiază* → *înfiėză*, *remaniază* → *remaniėză* |
 | lema fără i final + -ască | se termină în hiatul i-i (verb de conjugarea a IV-a) | *sfiască* → *sfiėscă* (← *sfi-i*), *priască* → *priėscă* |
 | lema fără -esc + -ască, -asca | se termină în hiatul i-esc (adjectiv) | *fiască* → *fiėscă*, *fiasca* → *fiėsca* (← *fi-esc*), *pustiască* → *pustiėscă* |
+
+Un infinitiv lung în -iare nu e corect și se scrie în forma lui în -iere, care urmează apoi regulile pentru -iere: *apreciare* → *apreciere*, *apreciarea* → *aprecierē*, *tăiare* → *tăẹre*. În formele lui, ultimul -iar-/-iăr- devine -ier-: *apreciărilor* → *aprecierilor*. Un infinitiv lung este o lemă în -iare pe care dexonline o dă cu literă mică, ca substantiv feminin sau neclasificată (modelul F, T sau IL), cu excepția lui *fiare* și *mobiliare* (`rules.IARE_KEPT`). O formă pe care o dă și altă lemă păstrează grafia acelei leme: *conciliare* (adjectivul *conciliar*), *copiare* (substantivul *copiar*). Grafia în -iere nu apare atunci ca variantă pe comutatorul de omografe.
 
 ## Regula opțională pentru -ee (comutator, oprit implicit)
 
@@ -105,7 +109,8 @@ O formă ale cărei înregistrări dau grafii diferite este un omograf. Exemple:
 - *ie*: *ie* (bluza, *i-e*) sau *ẹ* (adverbul);
 - *miază*: *mėză* (amiază, *mia-ză*) sau *miază* (boala, *mi-a-ză*);
 - *curie*: *curẹ* sau *curie*;
-- *liază*: *liază* (substantivul) sau *liėză* (verbul *lia*).
+- *liază*: *liază* (substantivul) sau *liėză* (verbul *lia*);
+- *vier*: *vẹr* (porcul, *vier*) sau *vier* (păzitorul de vie, *vi-er*).
 
 Grafia implicită e cea aleasă după prioritatea de mai sus. Celelalte sunt păstrate în `forms.alternatives` și returnate împreună cu ea: în `segments[].alts` de la `/api/convert` și în `alternatives` de la `/api/lookup`, cu cea implicită prima în ambele. Contează doar o grafie susținută de o despărțire explicită, din dexonline sau parțială, cu o excepție: când o înregistrare dă sufixul -ėză/-ėscă/-ėsca (vezi *Sursa despărțirii în silabe*), contează toate grafiile formei. `rules.SYLLABIFICATIONS` poate da mai multe citiri pentru un cuvânt; prima e cea implicită.
 
@@ -135,11 +140,11 @@ Un cuvânt în -eele/-eelor:
 - -ele/-elor final se înlocuiește cu -u. Dacă rezultă o lemă în -eu din baza de date (`eu_lemmas`), cuvântul e pluralul ei și are o singură grafie: *bombeele* → *bombeẹle* (← *bombeu*, al cărui plural în dexonline este *bombeuri*).
 - Altfel primește două grafii, ca plural al unei leme în -ee (*coloboleile*, *coloboleilor*, implicit) sau al unei leme în -eu (*coloboleẹle*, *coloboleẹlor*). Ele apar pe comutatorul de omografe, cu o notă de subsol care folosește rădăcina cuvântului: „Dacă singularul e *colobolee*, alege forma *coloboleile/lor*. Dacă singularul e *coloboleu*, alege forma *coloboleẹle/lor*.”
 
-Cuvintele fără grup candidat nu sunt căutate deloc.
+Cuvintele fără grup candidat și fără iăr nu sunt căutate deloc.
 
 ## Conversia inversă
 
-Conversia concis → standard este deocamdată o înlocuire de caractere (ẹ→ie, ė→ia, ē→ea, ō→oa), cu excepția lui ė din -iėză/-iėscă/-iėsca final, care redevine a (*studiėză* → *studiază*, *sfiėscă* → *sfiască*, *fiėsca* → *fiasca*). Asta e valabil doar cu regulile actuale și nu e o proprietate garantată. E inexactă pentru *fiiască*, *fiiasca* → *fiėscă*, *fiėsca*, care redevin *fiască*, *fiasca*. î rămâne neschimbat, deci â nu e refăcut după regula â → î (*cîine* rămâne *cîine*).
+Conversia concis → standard este deocamdată o înlocuire de caractere (ẹ→ie, ė→ia, ē→ea, ō→oa), cu excepția lui ė din -iėză/-iėscă/-iėsca final, care redevine a (*studiėză* → *studiază*, *sfiėscă* → *sfiască*, *fiėsca* → *fiasca*). Asta e valabil doar cu regulile actuale și nu e o proprietate garantată. E inexactă pentru *fiiască*, *fiiasca* → *fiėscă*, *fiėsca*, care redevin *fiască*, *fiasca*. Un infinitiv lung în -iare nu e refăcut: *apreciere* rămâne *apreciere*. î rămâne neschimbat, deci â nu e refăcut după regula â → î (*cîine* rămâne *cîine*).
 
 Cu comutatorul -ee pornit, textul e citit ca scris cu regula -ee. Un cuvânt e căutat întâi printre grafiile pe care regula le dă formelor din bază (`ee_revert`) și revine la forma din care provine: *orhideẹ* → *orhidee*, *orhideile* → *orhideele*, *ideė* → *ideea*, *bombeẹle* → *bombeurile* (dexonline nu are *bombeele*). Mai multe forme din dexonline pot da aceeași grafie, prin regulă sau neschimbate (*zeii*: forma *zeii*, sau *zeei* prin regulă). Ele sunt restrânse în doi pași:
 1. o formă a unui lexem DEX-MDA-DOOM bate una fără. Lexemul trebuie să aibă o definiție proprie (al cărei titlu e chiar el) din MDA\*, DEX\*, NODEX\* sau DOOM\*; o mențiune în definiția altui cuvânt nu contează. *aleẹ* → *alee* (nu *aleie*, doar în Scriban), *cheẹ* → *cheie* (nu *chee*), *acneẹ* → *acnee* (*acneie* e doar pomenit la *coș* în MDA2);
@@ -158,4 +163,4 @@ Orice alt cuvânt, inclusiv cele necunoscute, trece prin înlocuirea de caracter
 - `iesc_lemmas(lemma, reference)`: toate lemele normalizate în -iesc și despărțirea lor (*harabagi-esc*), pentru formele necunoscute ale adjectivelor în -iesc (vezi *Cuvinte necunoscute*).
 - `ee_revert(concise, form, alternatives)`: o grafie cu regula -ee, forma la care revine și celelalte forme ale unei egalități (separate prin spațiu, sau NULL), doar unde înlocuirea de caractere singură nu dă răspunsul (vezi *Conversia inversă*).
 
-`forms` păstrează doar formele care pot diferi: cele care conțin ie/ia/ea/oa sau se termină în -ee, -eea, -eei, -eele, -eelor, -euri, -eurile sau -eurilor. Intrarea pipeline-ului pentru fiecare formă flexionară este: forma, lema ei, despărțirea lemei din dexonline (completă, parțială sau goală), numărul (S/P), dacă lema e verb (modelul V sau VT din dexonline) și dacă e DEX-MDA-DOOM: are o definiție activă proprie (al cărei titlu e chiar lexemul) dintr-o sursă al cărei nume scurt începe cu MDA, DEX, NODEX sau DOOM (MDA2, DEX '09, NODEX, DOOM 3, ...; nu dicționarul intern *dexonline*).
+`forms` păstrează doar formele care pot diferi: cele care conțin ie/ia/ea/oa sau iăr, ori se termină în -ee, -eea, -eei, -eele, -eelor, -euri, -eurile sau -eurilor. Intrarea pipeline-ului pentru fiecare formă flexionară este: forma, lema ei, despărțirea lemei din dexonline (completă, parțială sau goală), numărul (S/P), dacă lema e verb (modelul V sau VT din dexonline), dacă e substantiv feminin sau neclasificată, scrisă cu literă mică (modelul F, T sau IL; pentru infinitivele lungi în -iare) și dacă e DEX-MDA-DOOM: are o definiție activă proprie (al cărei titlu e chiar lexemul) dintr-o sursă al cărei nume scurt începe cu MDA, DEX, NODEX sau DOOM (MDA2, DEX '09, NODEX, DOOM 3, ...; nu dicționarul intern *dexonline*).

@@ -6,7 +6,9 @@ A record is (form, lemma, lemma_hyphenation, number, *flags):
   - number: 'P' for plural, anything else singular;
   - flags, in any order (others, '' included, are ignored): 'V' if the lemma is a
     verb; 'D' if it is DEX-MDA-DOOM (a definition of its own in MDA*, DEX*, NODEX*
-    or DOOM*), which picks the form an -ee spelling reverts to.
+    or DOOM*), which picks the form an -ee spelling reverts to; 'F' if it is a
+    lowercase feminine noun or unclassified (dexonline model F, T or IL), which
+    marks a lemma in -iare as a long infinitive (rules.long_infinitive).
 A bare string is a syllabified headword (dev/test input).
 """
 import os
@@ -20,10 +22,13 @@ from .rules import (
     EE_SPELLING,
     EURI,
     HIATUS_SUFFIX,
+    SYLLABIFICATIONS,
     WORD,
     concise_ee,
     concise_from_reference,
     has_candidate,
+    iere_spelling,
+    long_infinitive,
     normalize,
     revert_text,
     syllabify_all,
@@ -70,19 +75,26 @@ def build(
 
     `known`: all normalized dexonline word forms, for the rules' prefix check.
 
-    Only forms that can differ are stored (ie/ia/ea/oa, or final -ee/-eea/-eei/-eele/-eelor/
-    -euri/-eurile/-eurilor).
+    Only forms that can differ are stored (ie/ia/ea/oa/iăr, or final -ee/-eea/-eei/-eele/
+    -eelor/-euri/-eurile/-eurilor).
+    A form of a long infinitive in -iare (flag 'F', rules.long_infinitive) is
+    converted as its -iere spelling (apreciare, apreciări -> apreciere, aprecieri),
+    unless another record gives the same form (conciliare: the adjective conciliar).
+    A form in rules.SYLLABIFICATIONS takes all its spellings from there, whatever
+    its lemma (piei: pẹi only, not also piei <- pia).
     All lemmas in -eu and -ea are stored too (tables eu_lemmas, ea_lemmas), for
     the -ee rule on unknown words: plurals in -eele/-eelor (bombeele <- bombeu)
     and genitives in -eei (Andreei <- Andreea). So are the lemmas in -iesc, with
     their syllabification (iesc_lemmas), for the forms of adjectives missing from
     dexonline (harabagiasca <- harabagi-esc).
-    Base form: a record where the form is the lemma itself (its own
-    syllabification) beats one derived from another lemma, then a lemma
-    syllabified by dexonline beats a partial one, which beats rules only;
-    otherwise the first record wins. The winner is the default spelling; the
-    others become alternatives (see below). -ee form: computed from the final base
-    form; a singular reading beats a plural.
+    Base form: any record beats one of a long infinitive (above); then a record
+    backed by an explicit, dexonline or partial syllabification beats one from
+    rules alone (agreare <- agrea a-gre-a, not the headword agreare by rules);
+    then a record where the form is the lemma itself (its own syllabification)
+    beats one derived from another lemma; then an explicit syllabification beats
+    dexonline, which beats a partial one; otherwise the first record wins. The
+    winner is the default spelling; the others become alternatives (see below).
+    -ee form: computed from the final base form; a singular reading beats a plural.
 
     Alternatives: the other spellings a form gets from its records (a
     homograph: ia = the verb lua or the articulated ie). Only spellings backed
@@ -135,22 +147,34 @@ def build(
                 unchanged[form] = unchanged.get(form, False) or dex
             continue
 
-        if (lemma, hyph, verb) not in references:
-            readings = syllabify_all(lemma, hyph, known, verb)
-            references[lemma, hyph, verb] = [(r, SOURCE_RANK[source]) for r, source in readings]
+        spelled, ref = form, (lemma, hyph, verb)  # the spelling to convert, and its lemma
+        if form in SYLLABIFICATIONS:  # Cezar's syllabification of the form decides
+            ref = (form, "", False)  # the verb flag only matters to the rules
+        elif "F" in flags and long_infinitive(lemma):  # apreciare -> apreciere
+            # only the first hyphenation variant is used (rules._dexonline_cuts)
+            first = hyph.split(",")[0].strip()
+            spelled, ref = iere_spelling(form), (iere_spelling(lemma), iere_spelling(first), verb)
+            stats["long_infinitive"] += 1
+        if ref not in references:
+            readings = syllabify_all(*ref[:2], known, verb)
+            references[ref] = [(r, SOURCE_RANK[source]) for r, source in readings]
             stats[f"lemma_{readings[0][1]}"] += 1
 
-        for reference, rank in references[lemma, hyph, verb]:
-            priority = (form == lemma, rank)
-            concise = concise_from_reference(form, reference)
+        for reference, rank in references[ref]:
+            # a long infinitive loses to any other record (conciliare: the adjective),
+            # and rules alone to a backed syllabification (agreare <- agrea a-gre-a)
+            priority = (spelled == form, rank > SOURCE_RANK["rules"], spelled == ref[0], rank)
+            concise = concise_from_reference(spelled, reference)
             row = rows.get(form)
             if row is None:
                 row = rows[form] = [concise, priority, [], {}, False]
-                stats["derived"] += not priority[0]
+                stats["derived"] += not priority[2]
             elif priority > row[1]:
-                stats["derived"] -= priority[0] and not row[1][0]
+                stats["derived"] += row[1][2] - priority[2]
                 row[0], row[1] = concise, priority
-            row[3][concise] = row[3].get(concise, False) or rank > SOURCE_RANK["rules"]
+            # a long infinitive's -iere spelling changes letters, not cuts: no alternative
+            backed = rank > SOURCE_RANK["rules"] and spelled == form
+            row[3][concise] = row[3].get(concise, False) or backed
         row[4] = row[4] or dex
 
         reading = (number.upper() == "P", lemma)
