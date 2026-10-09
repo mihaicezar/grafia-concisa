@@ -11,6 +11,29 @@ uv run flask --app server/server.py run              # dev server
 docker build -t grafia-concisa . && docker run -p 10000:10000 grafia-concisa
 ```
 
+## Deploying the web app
+
+The web app is not deployed yet. It will be hosted on [GitHub Pages](https://docs.github.com/en/pages), which hosts static sites for free from a public repository. That needs the PWA (phase 3 of [`rust-port-plan.md`](rust-port-plan.md)); until then, the app needs a server.
+
+### Today: the Flask app, in Docker
+
+The page (`server/static/index.html`) sends the text to the Flask API (`server/server.py`), which converts it with `word_db.sqlite`. So GitHub Pages can't host it, but any machine with Docker can run it:
+
+1. Build `word_db.sqlite`: the full one (see *Building the full database from dexonline* below), or the small dev one (`uv run python pipeline/seed_db.py`).
+2. Build the image with `docker build -t grafia-concisa .`. It copies `word_db.sqlite` from the working directory, since the database is not in git.
+3. Run it with `docker run -p 10000:10000 grafia-concisa`, then open <http://localhost:10000>. The container listens on `$PORT` (10000 by default), and `/healthz` answers once the database is readable.
+
+It is not deployed anywhere: the PWA replaces it.
+
+### With the PWA: GitHub Pages
+
+The rules then run in the browser (WASM), so the site is only static files:
+
+1. Once, in the repository's settings: *Pages* → *Build and deployment* → *Source*: **GitHub Actions**.
+2. The data file is built locally by the pipeline and committed as `web/grafia.dat`, since CI has neither MariaDB nor the dexonline dump. After a dexonline update, rebuild it, run the tests and commit it.
+3. On each push to `main`, a GitHub Actions workflow runs `cargo xtask web` and publishes `web/dist/` to GitHub Pages.
+4. The site is then at <https://mihaicezar.github.io/grafia-concisa/>, over HTTPS, which the offline cache (service worker) needs. A custom domain can be set under *Pages*.
+
 ## Building the full database from dexonline
 
 `word_db.sqlite` is built from [dexonline](https://dexonline.ro)'s public database dump. The data is GPL, and the attribution must stay in the UI.

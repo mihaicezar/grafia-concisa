@@ -26,10 +26,10 @@ As of 2026-10-09, none of the build tools is installed yet: no Rust, no MSVC Bui
 Logged in `DECISIONS.md` (*Platforms and stack*), which prevails over this list.
 
 1. **Freeze of the Python rules.** Once Rust matches Python on the full data (the phase 1 gate), `rules.py`, `db.py` and `server/` are frozen.
-   - After that, rule changes go into Rust only. The live Flask site keeps the last Python rules until the PWA replaces it.
-   - These files are deleted in the commit that switches the site, so no deploy breaks.
+   - After that, rule changes go into Rust only. The Flask app is not deployed, so nothing depends on the Python version; it keeps the last Python rules until the PWA replaces it.
+   - These files are deleted when the PWA replaces the Flask app.
    - A rule change made *before* the gate goes into Python first, then Rust, and the gate is rerun.
-2. **Python pipeline.** `load_dexonline.py` and `build_db.py`'s queries stay editable until the Rust pipeline replaces them. They are deleted at the end of phase 2, and the frozen site keeps its last `word_db.sqlite`.
+2. **Python pipeline.** `load_dexonline.py` and `build_db.py`'s queries stay editable until the Rust pipeline replaces them. They are deleted at the end of phase 2, and the frozen Flask app keeps its last `word_db.sqlite`.
 3. **Phase 1 also ports `db.py`'s build logic**, not only `rules.py`. CLAUDE.md first listed only `rules.py`, but `db.py` holds spec rules: the default and alternatives priority and the reverse -ee ranking. The test tables that go through the database (`TEXTS`, `HOMOGRAPHS`, `UNKNOWN_EE`, `REVERTS`, …) also need a built test database.
 4. **The data file format is chosen in phase 2, not phase 3.** The pipeline writes the file, and its constraints (WASM, memory-mapped on iOS) are already known.
 5. **iOS comes before Android**, because Cezar's own phone is an iPhone, so the iOS app can be tested in daily use first.
@@ -38,6 +38,7 @@ Logged in `DECISIONS.md` (*Platforms and stack*), which prevails over this list.
    - Predictions come from `UITextChecker`. The first step of phase 4 is a check on a device that it has Romanian. This closed the open question of where the predictions come from.
    - During development the app is installed on Cezar's own iPhone with a free Apple ID. Apple Developer Program membership is needed only for the first TestFlight or App Store release.
 7. **Android:** the selection is replaced at once when every word has one known spelling. With a homograph or an unknown word, a dialog first shows the same switches as the web page.
+8. **Hosting (2026-10-10):** the PWA goes on GitHub Pages. No site was deployed before it.
 
 ## Target layout
 
@@ -175,8 +176,12 @@ The gate passes when:
   - gzips the data file and stamps the build hash into `sw.js`;
   - writes `web/dist/`.
 - **Tests:** a `wasm-bindgen-test` smoke test under Node converts and reverts some `TEXTS` lines against the seed data. CI builds `web/dist`.
-- **Hosting:** a static HTTPS host on the current site's URL, chosen at the start of the phase (GitHub Pages deployed from CI unless the current host serves static sites).
-- **Switch commit:**
+- **Hosting on GitHub Pages** (decision 8):
+  - once, in the repository settings: *Pages* → *Source*: GitHub Actions; free hosting needs a public repository;
+  - CI has neither MariaDB nor the dexonline dump, so the pipeline's data file is committed (`web/grafia.dat`), and rebuilt and committed after each dexonline update;
+  - a workflow runs `cargo xtask web` on each push to `main` and publishes `web/dist/` with `actions/deploy-pages`;
+  - the site is served under `/grafia-concisa/`, so every URL (manifest, service worker scope, WASM, data file) is relative.
+- **Python removal,** in the commit that adds the Pages workflow:
   - delete `grafia_concisa/`, `server/`, `pyproject.toml`, `uv.lock`, `Dockerfile`, `.dockerignore` and the Python CI job;
   - update CLAUDE.md (*Layout*, *Commands*; the "uv only" rule goes);
   - update README.md;
@@ -269,7 +274,7 @@ If not, the source of predictions goes back to Cezar for a decision. The alterna
 |---|---|
 | 1 | `cargo test --workspace` and `uv run python -m unittest discover -s server` pass. The parity diff on the 2026-10-04 dump is empty (MariaDB on port 3307, then `build_db.py --export`). |
 | 2 | Data file round-trip tests pass. The build from MySQL is byte-identical to the build from the export. `grafia.dat` is within the size targets, and the stats equal Python's. |
-| 3 | The Node smoke test passes. `cargo xtask web`, then serve `web/dist` locally (`npx serve`): convert the `TEXTS` samples, switch a homograph, copy, go offline in devtools and reload. Lighthouse reports the PWA as installable. |
+| 3 | The Node smoke test passes. `cargo xtask web`, then serve `web/dist` locally (`npx serve`): convert the `TEXTS` samples, switch a homograph, copy, go offline in devtools and reload. Lighthouse reports the PWA as installable. The same checks pass on the GitHub Pages URL. |
 | 4 | Sideload a CI build on the iPhone and enable the keyboard without Full Access. Typing "soare " gives "sōre ". "ia " gives "ė " with "ia" in the bar. Romanian completions appear. The memory margin shows in the debug bar. |
 | 5 | The APK builds in CI. On a device or emulator, selecting "soare iarba" in another app's text field replaces it with "sōre ėrba". "ia" opens the dialog with the switch. Read-only text offers copy. |
 
