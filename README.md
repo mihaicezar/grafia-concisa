@@ -73,7 +73,7 @@ How these are turned into spellings is in the spec.
 3. Run the tests.
 4. Compare the build's stats with the previous ones (forms stored, homographs, lemma sources). A large jump points to a change in dexonline's data or schema worth looking at before deploying.
 
-Updates are picked up automatically wherever dexonline's syllabifications changed or new words appeared. Cezar's explicit syllabifications (`rules.SYLLABIFICATIONS`) still prevail.
+Updates are picked up automatically wherever dexonline's syllabifications changed or new words appeared. Cezar's explicit syllabifications (`rules::SYLLABIFICATIONS`) still prevail.
 
 ### Pitfalls
 

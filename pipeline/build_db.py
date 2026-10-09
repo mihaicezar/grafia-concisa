@@ -7,10 +7,13 @@ Sources:
                   DEX-MDA-DOOM, F if it is a feminine noun or unclassified (below)
                 e.g. 'ideea\tidee\ti-de-e\tS'. A single column = a syllabified headword.
   --mysql       dexonline MySQL dump loaded locally (needs the `pipeline` extra)
+  --export DIR  no build: write the MySQL records to DIR/records.tsv (the --text format) and
+                the words the prefix rule may find to DIR/known.txt, for the Rust port's parity check
 
 Usage:
   uv run python pipeline/build_db.py --text forms.txt
   uv run --extra pipeline python pipeline/build_db.py --mysql --user root --port 3306 --database dexonline
+  uv run --extra pipeline python pipeline/build_db.py --export data --port 3307
 """
 import argparse
 import sys
@@ -85,6 +88,18 @@ def from_mysql(args: argparse.Namespace) -> Iterator[Record]:
         yield from cur
 
 
+def export(args: argparse.Namespace) -> None:
+    """The MySQL records as DIR/records.tsv and the known words as DIR/known.txt."""
+    args.export.mkdir(parents=True, exist_ok=True)
+    with (args.export / "records.tsv").open("w", encoding="utf-8", newline="\n") as f:
+        for rec in from_mysql(args):
+            if any("\t" in x or "\n" in x for x in rec):
+                raise ValueError(f"A field holds a tab or a newline: {rec!r}")
+            f.write("\t".join(rec) + "\n")
+    known = "".join(f"{w}\n" for w in sorted(known_forms(args)))
+    (args.export / "known.txt").write_text(known, encoding="utf-8", newline="\n")
+
+
 def _connect(args: argparse.Namespace):
     import mysql.connector
 
@@ -98,6 +113,7 @@ def main() -> int:
     src = p.add_mutually_exclusive_group(required=True)
     src.add_argument("--text", type=Path)
     src.add_argument("--mysql", action="store_true")
+    src.add_argument("--export", type=Path, metavar="DIR")
     p.add_argument("--host", default="localhost")
     p.add_argument("--port", type=int, default=3306)
     p.add_argument("--user", default="root")
@@ -106,6 +122,10 @@ def main() -> int:
     p.add_argument("--out", type=Path, default=ROOT / "word_db.sqlite")
     args = p.parse_args()
 
+    if args.export:
+        export(args)
+        print(f"{args.export}: records.tsv, known.txt")
+        return 0
     if args.text:
         stats = build(args.out, from_text(args.text))
     else:

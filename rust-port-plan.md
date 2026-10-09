@@ -1,5 +1,7 @@
 # grafia concisă — Rust port plan
 
+**Status:** step 0 and phase 1 done on 2026-10-10: Rust matches Python on the 2026-10-04 dump, and the Python rules are frozen.
+
 ## Context
 
 DECISIONS.md (*Platforms and stack*, 2026-10-09) settles the following:

@@ -6,10 +6,10 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
 @concise-writing-spec.md
 
 ## Layout
-- `grafia_concisa/`: shared rules (`rules.py`) and the DB builder (`db.py`). Put rule logic here only.
-- `pipeline/`: `load_dexonline.py` (dexonline dump → local MariaDB), `build_db.py` (MariaDB → `word_db.sqlite`), `seed_db.py` (dev DB, no MySQL)
+- `crates/core/`: the Rust core: rules (`rules.rs`), the DB builder (`build.rs`), lookups and conversion (`lib.rs`), tests (`tests/tables.rs`). Put rule logic here only.
+- `grafia_concisa/`: the Python rules (`rules.py`) and DB builder (`db.py`), frozen since Rust matched them (2026-10-10); they serve the live site until the PWA replaces it
+- `pipeline/`: `load_dexonline.py` (dexonline dump → local MariaDB), `build_db.py` (MariaDB → `word_db.sqlite`, or `--export` for `parity.py`), `seed_db.py` (dev DB, no MySQL), `parity.py` (Python's side of the Rust parity check)
 - `server/`: Flask API (`server.py`), static UI (`static/index.html`), tests (`test_server.py`)
-- `crates/core/`: the Rust core, being ported from `grafia_concisa/` (see `rust-port-plan.md`)
 
 ## Commands
 - Use `uv` only, never `pip`.
@@ -20,10 +20,11 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
   - `uv run python pipeline/load_dexonline.py --download --client <mariadb> --port 3307`: load or update dexonline;
   - `uv run --extra pipeline python pipeline/build_db.py --mysql --host 127.0.0.1 --port 3307 --database dexonline`: build.
 - `uv run flask --app server/server.py run`: dev server.
+- Rust parity check (see `pipeline/parity.py`): `build_db.py --export data`, then `parity.py` and `cargo run --release -p grafia-concisa --example parity`, then `git diff --no-index --stat data/parity/python data/parity/rust`.
 
 ## Conventions
 - Simple over clever, with best practices, and no speculative features.
-- Tests are table-driven: a new case is one line in `WORDS`, `DERIVED`, `SYLLABIFY`, `EE_WORDS`, `TEXTS` or `REVERTS`.
+- Tests are table-driven: a new case is one line in `WORDS`, `DERIVED`, `SYLLABIFY`, `EE_WORDS`, `TEXTS` or `REVERTS` (in `crates/core/tests/tables.rs`).
 - Docs have separate roles:
   - `DECISIONS.md` logs each settled decision: date, principle, why, an example and the spec section. It holds no mechanics, and it is the authority on intent.
   - `concise-writing-spec.md` holds the complete current rules, with no history. A rule change updates it in the same commit; a disagreement with `DECISIONS.md` is fixed there.
@@ -34,9 +35,9 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
 - Commit messages: a one-line subject `type(domain) : summary`, with type one of `feat`, `fix`, `doc`, `chore`, `refactor`, `ci`; then a blank line and a `- ` list of the changes. For a change to the rules, the conversion or the spec, add a blank line, `Rezumat:` and a short `- ` list in Romanian. No line wrapping.
 
 ## Open tasks
-1. Refine the fallback syllabifier (`rules._rule_cut`). dexonline prevails wherever it has data. `IA_DIPHTHONG`, `EA_HIATUS`, `IE_HIATUS` and `OA_HIATUS` were reviewed by Cezar on 2026-10-09 against dexonline's own syllabifications of similar words. Extend them as new cases appear.
+1. Refine the fallback syllabifier (`rules::rule_cut`). dexonline prevails wherever it has data. `IA_DIPHTHONG`, `EA_HIATUS`, `IE_HIATUS` and `OA_HIATUS` were reviewed by Cezar on 2026-10-09 against dexonline's own syllabifications of similar words. Extend them as new cases appear.
 2. Port to Rust (2026-10-09, see *Platforms and stack* in `DECISIONS.md`) following `rust-port-plan.md`, in this order:
-   - the core (all of `rules.py`, and the builder in `db.py`) with the test tables, then check that it matches Python on every form in the database; the Python rules are then frozen;
+   - the core (all of `rules.py`, and the builder in `db.py`) with the test tables, then check that it matches Python on every form in the database; the Python rules are then frozen (done 2026-10-10);
    - the pipeline, and the data file format: it must work in WASM and be memory-mapped on iOS, where keyboards are killed above a few tens of MB;
    - the web as a WASM PWA; the rest of Python is removed when it replaces the site;
    - iOS: one keyboard with two modes and a mode key, with the data file inside the keyboard extension (it can't read the App Group container without Full Access), and predictions from `UITextChecker`. iOS builds need macOS (a cloud CI build is fine); during development they are sideloaded with a free Apple ID;

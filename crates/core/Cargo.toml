@@ -6,3 +6,6 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
+fancy-regex = "0.19.2"
+indexmap = "2.14.2"
+unicode-normalization = "0.1.25"
