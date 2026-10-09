@@ -9,10 +9,12 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
 - `grafia_concisa/`: shared rules (`rules.py`) and the DB builder (`db.py`). Put rule logic here only.
 - `pipeline/`: `load_dexonline.py` (dexonline dump → local MariaDB), `build_db.py` (MariaDB → `word_db.sqlite`), `seed_db.py` (dev DB, no MySQL)
 - `server/`: Flask API (`server.py`), static UI (`static/index.html`), tests (`test_server.py`)
+- `crates/core/`: the Rust core, being ported from `grafia_concisa/` (see `rust-port-plan.md`)
 
 ## Commands
 - Use `uv` only, never `pip`.
 - `uv run python -m unittest discover -s server`: run all tests (must pass before any commit).
+- `cargo test --workspace`: run the Rust tests (must pass before any commit too).
 - `uv run python pipeline/seed_db.py`: build a small dev DB.
 - Full DB: see README.md. A MariaDB server is required: on this machine, a portable one on port 3307; see "This machine" there. Then run:
   - `uv run python pipeline/load_dexonline.py --download --client <mariadb> --port 3307`: load or update dexonline;
