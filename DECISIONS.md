@@ -86,10 +86,19 @@ This file is the log of closed decisions: what was decided, when, and why, with 
 
 ## Platforms and stack
 - **2026-10-09: one Rust core replaces Python.** The rules, conversion, reverse conversion and the pipeline move to Rust. Python stays only as the reference until the Rust port gives the same output for every form in the database, then it is removed. **Why:** the rules must run offline on the web, Android and iOS, and they change often. One implementation called from every platform avoids keeping copies in sync.
+  - **2026-10-09, the same day: once Rust matches Python, the Python rules are frozen** (`rules.py`, `db.py`, `server/`). Rule changes then go into Rust only, and the live site keeps the last Python rules until the PWA replaces it; Python is removed then. **Why:** two implementations would double the work of every rule change, and the site lags only until the PWA ships.
+  - **2026-10-09, the same day: the Python pipeline stays editable until the Rust pipeline replaces it.** **Why:** dexonline's data and the record flags come in through it, and a rule may need a new flag before the Rust pipeline exists.
+  - **2026-10-09, the same day: the first step ports the database builder (`db.py`) along with the rules.** **Why:** how the default spelling, the alternatives and the reverse -ee form are chosen is part of the spec, and most test tables need a built database.
+  - **2026-10-09, the same day: the data file format is chosen with the Rust pipeline**, before the web app. **Why:** the pipeline writes the file, and what it must support (WASM, memory mapping on iOS) is already known.
+  - **2026-10-09, the same day: iOS comes before Android.** **Why:** Cezar's own phone is an iPhone, so the iOS app can be tested in daily use first.
 - **2026-10-09: the website becomes a serverless PWA.** The core runs in the browser as WASM, and the data file is cached for offline use. **Why:** it works offline and needs no server. The download is small (the current database is 1.7 MB with brotli), and the data is GPL anyway.
 - **2026-10-09: Android gets a text processing action** (*grafia concisă* in the text selection menu), not a keyboard. **Why:** it replaces the selected text in place in almost every app, and the user keeps their own keyboard.
+  - **2026-10-09, the same day: the selection is replaced at once when every word has one known spelling.** With a homograph or an unknown word, a dialog first shows the switches, as on the web. **Why:** the usual case stays one tap, and the alternatives are still offered.
 - **2026-10-09: iOS gets a keyboard with two modes** (or two keyboards). One mode converts each word as it is typed and offers Romanian word predictions. The other has the concise letters ẹ, ė, ē, ō and converts nothing. **Why:** iOS has no in-place text processing for other apps, so only a keyboard can write into them.
   - The keyboard never needs Full Access: everything is offline.
+  - **2026-10-09, the same day: one keyboard, with a key that switches modes** and remembers the mode. **Why:** the user keeps one keyboard in the globe rotation, and the word data is loaded only in the converting mode.
+  - **2026-10-09, the same day: the predictions come from `UITextChecker`**, the system's spell-checking lexicon, once a check on a device confirms it has Romanian. **Why:** third-party keyboards don't get the system's predictions, and `UITextChecker` needs no data of our own.
+  - **2026-10-09, the same day: during development the app is installed with a free Apple ID.** The paid Apple Developer Program comes with the first TestFlight or App Store release. **Why:** Apple lets iPhone owners install the apps they develop on their own iPhone.
 - The mobile apps are thin native layers (Kotlin, Swift) over the Rust core.
 - **2026-10-09: possible later targets: Windows and macOS keyboards.** They will use the same Rust core. Not decided yet.
 
