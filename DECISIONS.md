@@ -6,7 +6,6 @@ This file is the log of closed decisions: what was decided, when, and why, with 
 
 ## Naming
 - The project is always named "grafia concisă" (slug `grafia-concisa`), never "scriere concisă".
-- The future offline mobile apps are named conciDEX.
 
 ## Core rule (spec: *Rule*)
 - **Concision applies whenever no hiatus is involved.** Both vowels of ie/ia/ea/oa in one syllable → ẹ/ė/ē/ō. A hiatus is never converted.
@@ -84,6 +83,15 @@ This file is the log of closed decisions: what was decided, when, and why, with 
   - **2026-10-07, extended the same day:** DOOM\* counts too (DEX-MDA-DOOM).
   - **2026-10-07, the same day:** only a definition of its own counts (the word is its headword), not a mention in another word's definition (*acneie*, under *coș* in MDA2). The forms still tied after both criteria are all offered on the homograph switch (*bordeẹ*: *bordeie* or *bordee*). **Why:** both are current words, and the text alone does not say which one was meant.
 - It is not guaranteed to stay deterministic.
+
+## Platforms and stack
+- **2026-10-09: one Rust core replaces Python.** The rules, conversion, reverse conversion and the pipeline move to Rust. Python stays only as the reference until the Rust port gives the same output for every form in the database, then it is removed. **Why:** the rules must run offline on the web, Android and iOS, and they change often. One implementation called from every platform avoids keeping copies in sync.
+- **2026-10-09: the website becomes a serverless PWA.** The core runs in the browser as WASM, and the data file is cached for offline use. **Why:** it works offline and needs no server. The download is small (the current database is 1.7 MB with brotli), and the data is GPL anyway.
+- **2026-10-09: Android gets a text processing action** (*grafia concisă* in the text selection menu), not a keyboard. **Why:** it replaces the selected text in place in almost every app, and the user keeps their own keyboard.
+- **2026-10-09: iOS gets a keyboard with two modes** (or two keyboards). One mode converts each word as it is typed and offers Romanian word predictions. The other has the concise letters ẹ, ė, ē, ō and converts nothing. **Why:** iOS has no in-place text processing for other apps, so only a keyboard can write into them.
+  - The keyboard never needs Full Access: everything is offline.
+- The mobile apps are thin native layers (Kotlin, Swift) over the Rust core.
+- **2026-10-09: possible later targets: Windows and macOS keyboards.** They will use the same Rust core. Not decided yet.
 
 ## Licensing
 - dexonline data is GPL, and attribution is required in the web app and in the mobile apps.
