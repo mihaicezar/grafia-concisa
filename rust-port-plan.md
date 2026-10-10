@@ -1,6 +1,6 @@
 # grafia concisă — Rust port plan
 
-**Status:** step 0 and phases 1 and 2 done on 2026-10-10: Rust matches Python on the 2026-10-04 dump, the Python rules are frozen, and the Rust pipeline has replaced the Python one.
+**Status:** step 0 and phases 1 to 3 done on 2026-10-10: Rust matches Python on the 2026-10-04 dump, the Rust pipeline has replaced the Python one, and the PWA has replaced the Flask app, so Python is gone. The PWA goes live with the first push to `main` once GitHub Pages is enabled; its check on the Pages URL (*Verification*) is still to do.
 
 ## Context
 
@@ -166,7 +166,7 @@ Passed on the 2026-10-04 dump. The parity check also ran once through the data f
 
 ## Phase 3: PWA, and the rest of Python removed
 
-- **`crates/wasm`** (wasm-bindgen + serde-wasm-bindgen): `new Engine(bytes)`, `engine.convert(text, ee, ai)` and `engine.revert(text, ee)`, returning the core's shapes, which are the current API's JSON.
+- **`crates/wasm`** (wasm-bindgen + serde-wasm-bindgen): `new Engine(bytes)`, `engine.convert(text, ee, ai)` and `engine.revert(text, ee)`, returning the core's shapes, which are the current API's JSON. Done, with `engine.date`, which the footer shows; the core's `Conversion`, `Reversion` and `Segment` derive `Serialize`, leaving out empty `alts` and `unknown` as the API did.
 - **`web/`:**
   - `index.html` is moved from `server/static/`. `run()` calls the engine instead of `fetch`, and a status shows while the WASM and data load.
   - Literata (OFL) is self-hosted, so the page works offline.
@@ -180,16 +180,19 @@ Passed on the 2026-10-04 dump. The parity check also ran once through the data f
   - gzips the data file and stamps the build hash into `sw.js`;
   - writes `web/dist/`.
 - **Tests:** a `wasm-bindgen-test` smoke test under Node converts and reverts some `TEXTS` lines against the seed data. CI builds `web/dist`.
+  - Done on the committed `web/grafia.dat` instead of the seed data: it is the file the site ships, so a format change without a rebuilt data file fails the test. `cargo xtask web` also refuses a data file that doesn't open.
+  - The page was checked in headless Edge (puppeteer-core, not committed): load, convert, a homograph switch, copy, unknown words, the -ee footnote, revert, local fonts only, no installability errors, and a reload with the server stopped.
 - **Hosting on GitHub Pages** (decision 8):
   - once, in the repository settings: *Pages* → *Source*: GitHub Actions; free hosting needs a public repository;
   - CI has neither MariaDB nor the dexonline dump, so the pipeline's data file is committed (`web/grafia.dat`), and rebuilt and committed after each dexonline update;
-  - a workflow runs `cargo xtask web` on each push to `main` and publishes `web/dist/` with `actions/deploy-pages`;
+  - a workflow runs `cargo xtask web` on each push to `main` and publishes `web/dist/` with `actions/deploy-pages`; done as a `deploy` job in the CI workflow (`tests.yml` renamed `ci.yml`), after the tests pass;
   - the site is served under `/grafia-concisa/`, so every URL (manifest, service worker scope, WASM, data file) is relative.
 - **Python removal,** in the commit that adds the Pages workflow:
   - delete `grafia_concisa/`, `server/`, `pyproject.toml`, `uv.lock`, `Dockerfile`, `.dockerignore` and the Python CI job;
   - update CLAUDE.md (*Layout*, *Commands*; the "uv only" rule goes);
   - update README.md;
   - in DECISIONS.md, date the removal and replace "the `/api/revert` endpoint … kept for now" (revert is now in the engine, and the round-trip test is in Rust).
+  - Done, and `grafia-pipeline export` replaces `build_db.py --export`, which the snapshot-diff skill still needed: its records build the same data file as `build --mysql`, apart from the date.
 
 ## Phase 4: iOS keyboard
 

@@ -112,7 +112,7 @@ O formă ale cărei înregistrări dau grafii diferite este un omograf. Exemple:
 - *liază*: *liază* (substantivul) sau *liėză* (verbul *lia*);
 - *vier*: *vẹr* (porcul, *vier*) sau *vier* (păzitorul de vie, *vi-er*).
 
-Grafia implicită e cea aleasă după prioritatea de mai sus. Celelalte sunt păstrate în `forms.alternatives` și returnate împreună cu ea: în `segments[].alts` de la `/api/convert` și în `alternatives` de la `/api/lookup`, cu cea implicită prima în ambele. Contează doar o grafie susținută de o despărțire explicită, din dexonline sau parțială, cu o excepție: când o înregistrare dă sufixul -ėză/-ėscă/-ėsca (vezi *Sursa despărțirii în silabe*), contează toate grafiile formei. `rules::SYLLABIFICATIONS` poate da mai multe citiri pentru un cuvânt; prima e cea implicită.
+Grafia implicită e cea aleasă după prioritatea de mai sus. Celelalte sunt păstrate în `forms.alternatives` și returnate împreună cu ea: în `segments[].alts` de la `convert` din nucleu și în `alternatives` de la `lookup`, cu cea implicită prima în ambele. Contează doar o grafie susținută de o despărțire explicită, din dexonline sau parțială, cu o excepție: când o înregistrare dă sufixul -ėză/-ėscă/-ėsca (vezi *Sursa despărțirii în silabe*), contează toate grafiile formei. `rules::SYLLABIFICATIONS` poate da mai multe citiri pentru un cuvânt; prima e cea implicită.
 
 În interfață, toate grafiile unui omograf apar într-un singur comutator, pe un fond gri-închis. Grafia activă stă pe fondul zonei de text, iar celelalte apar gri-deschis pe fondul gri. Un clic pe una o face activă. Copierea ia grafiile active.
 

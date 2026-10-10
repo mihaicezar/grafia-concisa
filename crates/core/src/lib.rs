@@ -1,9 +1,9 @@
 //! grafia concisă: ie/ia/ea/oa in one syllable (no hiatus) are written ẹ/ė/ē/ō.
 //!
-//! The Rust port of `grafia_concisa/` (see `rust-port-plan.md`): `rules` holds the
-//! rules (rules.py), `build` the database builder (db.py), `datafile` the file the
-//! database is shipped in, and this module the lookups and the answers the server
-//! gave (server.py).
+//! `rules` holds the rules, `build` the database builder, `datafile` the file the
+//! database is shipped in, and this module the lookups and the answers the apps
+//! show: `convert`, `revert` and `lookup`. `Conversion` and `Reversion` serialize
+//! to the JSON the web page renders.
 pub mod build;
 pub mod datafile;
 pub mod rules;
@@ -11,6 +11,7 @@ pub mod rules;
 use std::collections::{BTreeSet, HashMap};
 
 use indexmap::IndexMap;
+use serde::Serialize;
 
 pub use datafile::DataFile;
 pub use rules::{Row, Segment};
@@ -65,7 +66,7 @@ impl Default for Options {
 }
 
 /// A converted text: the segments joined, the segments, and the unknown words, sorted.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Conversion {
     pub text: String,
     pub segments: Vec<Segment>,
@@ -88,7 +89,7 @@ pub fn convert(text: &str, dict: &dyn Dictionary, options: Options) -> Conversio
 }
 
 /// A reverted text: the segments joined, and the segments.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct Reversion {
     pub text: String,
     pub segments: Vec<Segment>,

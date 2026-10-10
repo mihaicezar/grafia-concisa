@@ -110,7 +110,7 @@ A form whose records give different spellings is a homograph. Examples:
 - *liază*: *liază* (the noun) or *liėză* (the verb *lia*);
 - *vier*: *vẹr* (the boar, *vier*) or *vier* (păzitor de vie, *vi-er*).
 
-The default is the spelling chosen by the priority above. The others are stored in `forms.alternatives` and returned with it: in `segments[].alts` from `/api/convert` and in `alternatives` from `/api/lookup`, the default first in both. A spelling counts only when an explicit, dexonline or partial syllabification backs it, except that when one record gives the suffix -ėză/-ėscă/-ėsca (see *Syllabification source*), all the form's spellings count. `rules::SYLLABIFICATIONS` may give several readings for one word; the first is the default.
+The default is the spelling chosen by the priority above. The others are stored in `forms.alternatives` and returned with it: in `segments[].alts` from the core's `convert` and in `alternatives` from its `lookup`, the default first in both. A spelling counts only when an explicit, dexonline or partial syllabification backs it, except that when one record gives the suffix -ėză/-ėscă/-ėsca (see *Syllabification source*), all the form's spellings count. `rules::SYLLABIFICATIONS` may give several readings for one word; the first is the default.
 
 The UI shows every spelling of a homograph in one switch on a dark-grey track. The active spelling sits on the text area's background, and the others are light grey on the track. A click on one makes it active. Copying takes the active spellings.
 

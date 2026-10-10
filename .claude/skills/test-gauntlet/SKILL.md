@@ -13,7 +13,8 @@ The tests are the review: a change to `crates/core` is accepted when every gate 
 cargo fmt --all --check
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace --locked
-uv run python -m unittest discover -s server     # while server/ exists
+cargo clippy -p grafia-wasm --target wasm32-unknown-unknown --all-targets -- -D warnings
+cargo test -p grafia-wasm --target wasm32-unknown-unknown --locked   # under Node: README.md, *Tests*
 ```
 
 ## Mutation testing

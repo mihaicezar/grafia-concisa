@@ -75,7 +75,7 @@ This file is the log of closed decisions: what was decided, when, and why, with 
 - **2026-10-06:** an unknown form of an *-iesc* adjective is tied to its lemma and derived from it (*harabagiasca* → *harabagiėsca* ← *harabagiesc*). **Why:** dexonline lists some of these adjectives with no forms, and the rules alone would miss both the hiatus and the suffix rule.
 
 ## Reverse conversion (spec: *Reverse conversion*)
-- Concise → standard is currently a plain character map. The `/api/revert` endpoint and the round-trip test are kept for now.
+- Concise → standard is currently a plain character map. Reverse conversion (*Concis → standard* in the web app) and its round-trip test are kept for now.
 - **2026-10-06:** the ė of a final -iėză/-iėscă/-iėsca reverts to a, so the suffix rule stays reversible (*studiėză* → *studiază*). The only conflicts are *fiiască*, *fiiasca* (*fiėscă*, *fiėsca*), which revert to *fiască*, *fiasca*.
 - **2026-10-09: a long infinitive in -iare is not restored** (*apreciere* stays *apreciere*).
 - **2026-10-06: î is left unchanged**, so â is not restored after the â → î rule (*cîine* stays *cîine*).
@@ -87,6 +87,7 @@ This file is the log of closed decisions: what was decided, when, and why, with 
 ## Platforms and stack
 - **2026-10-09: one Rust core replaces Python.** The rules, conversion, reverse conversion and the pipeline move to Rust. Python stays only as the reference until the Rust port gives the same output for every form in the database, then it is removed. **Why:** the rules must run offline on the web, Android and iOS, and they change often. One implementation called from every platform avoids keeping copies in sync.
   - **2026-10-09, the same day: once Rust matches Python, the Python rules are frozen** (`rules.py`, `db.py`, `server/`). Rule changes then go into Rust only, and the Flask app, which is not deployed, keeps the last Python rules until the PWA replaces it; Python is removed then. **Why:** two implementations would double the work of every rule change, and no deployed site depends on the Python version.
+    - **2026-10-10: removed**, with the Flask app, its Docker image and the Python CI job, once the PWA replaced them. **Why:** nothing ran on them any more, and the round-trip test is in Rust.
   - **2026-10-09, the same day: the Python pipeline stays editable until the Rust pipeline replaces it.** **Why:** dexonline's data and the record flags come in through it, and a rule may need a new flag before the Rust pipeline exists.
     - **2026-10-10: replaced and removed.** The frozen Flask app keeps the last `word_db.sqlite` the Python pipeline built. **Why:** the Rust pipeline builds the same database from MariaDB as from the Python pipeline's records, byte for byte (292,128 forms of the 2026-10-04 dump), so nothing needs the Python one any more. Spec: *Data*.
   - **2026-10-09, the same day: the first step ports the database builder (`db.py`) along with the rules.** **Why:** how the default spelling, the alternatives and the reverse -ee form are chosen is part of the spec, and most test tables need a built database.

@@ -1,0 +1,6 @@
+[alias]
+xtask = "run --package xtask --"
+
+# cargo test --target wasm32-unknown-unknown runs the tests under Node (README.md, *Tests*)
+[target.wasm32-unknown-unknown]
+runner = "wasm-bindgen-test-runner"

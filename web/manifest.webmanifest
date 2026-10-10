@@ -1,0 +1,16 @@
+{
+  "name": "grafia concisă",
+  "short_name": "grafia concisă",
+  "description": "Convertește un text românesc în grafia concisă: ie → ẹ, ia → ė, ea → ē, oa → ō, oriunde cele două vocale stau în aceeași silabă.",
+  "lang": "ro",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fbfcfd",
+  "theme_color": "#1f5f8b",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

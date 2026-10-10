@@ -1,4 +1,4 @@
-//! Build the word database from inflected-form records (the port of `grafia_concisa/db.py`).
+//! Build the word database from inflected-form records.
 //!
 //! A record is (form, lemma, lemma_hyphenation, number, *flags):
 //!   - lemma_hyphenation: dexonline's hyphenation of the lemma, complete, partial

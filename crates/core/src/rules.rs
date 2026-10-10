@@ -1,4 +1,4 @@
-//! Orthographic rules of grafia concisă (the port of `grafia_concisa/rules.py`).
+//! Orthographic rules of grafia concisă.
 //!
 //! A digraph ie/ia/ea/oa is compressed when both vowels are in the same
 //! syllable (no hiatus). Within a syllable the scan is left to right and
@@ -31,11 +31,13 @@
 //! (a homograph: ia = the verb lua or the articulated ie). One is the default,
 //! the other an alternative the user can switch to.
 //!
-//! Words are indexed by character, as in Python, so the code mirrors rules.py.
+//! Words are indexed by character (a `Vec<char>`), not by byte; the code was
+//! ported from Python, whose semantics some comments still cite.
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::sync::LazyLock;
 
 use fancy_regex::{Captures, Regex};
+use serde::Serialize;
 use unicode_normalization::UnicodeNormalization;
 
 use crate::Dictionary;
@@ -706,11 +708,13 @@ pub struct Row {
 
 /// A piece of converted text: `t`, plus `alts` (all its spellings, default
 /// first; empty if one) and `unknown` (the original word, if missing from the
-/// database).
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+/// database). In JSON, `alts` and `unknown` are left out when empty.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 pub struct Segment {
     pub t: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub alts: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub unknown: Option<String>,
 }
 

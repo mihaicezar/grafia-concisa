@@ -1,4 +1,4 @@
-//! grafia concisă — table-driven test suite (the port of server/test_server.py).
+//! grafia concisă — table-driven test suite.
 //!
 //! Run: cargo test --workspace
 use std::collections::{HashMap, HashSet};

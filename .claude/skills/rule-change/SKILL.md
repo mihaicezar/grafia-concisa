@@ -39,10 +39,10 @@ Run `cargo test --workspace`. At least one new line must fail. If all pass, the 
 
 ## 3. Code (green)
 
-- Change `crates/core` only. `grafia_concisa/` and `server/` are frozen (DECISIONS.md, *Platforms and stack*).
+- Change `crates/core` only.
 - Keep the constants' names: the spec cites them as `rules::X`.
-- If the rule needs a new record flag, `pipeline/build_db.py` is still editable until the Rust pipeline replaces it; document the flag in `crates/core/src/build.rs` (module documentation) and in the spec's *Data* section.
-- Run `cargo test --workspace` and `uv run python -m unittest discover -s server` (while `server/` exists). Both pass.
+- If the rule needs a new record flag, add it to the query in `crates/pipeline/src/records.rs`, and document it in `crates/core/src/build.rs` (module documentation), in `build --help` (`crates/pipeline/src/main.rs`) and in the spec's *Data* section.
+- Run `cargo test --workspace`. It passes.
 
 ## 4. Spec and README.ro.md
 
@@ -54,10 +54,11 @@ Run `cargo test --workspace`. At least one new line must fail. If all pass, the 
 
 - Run the `test-gauntlet` skill on the change.
 - Run the `snapshot-diff` skill and show Cezar the words whose output changed. A change the decision does not predict is a question for Cezar, in Romanian, before the commit. If the dexonline export is not available, say so in the final message.
+- Rebuild the web app's data file from MariaDB, since it holds the rules' output: `cargo run --release -p grafia-pipeline -- build --mysql --port 3307 --out web/grafia.dat` (README.md, *Updating the data*). Then run `cargo test -p grafia-wasm --target wasm32-unknown-unknown`. Without MariaDB, say in the final message that `web/grafia.dat` is stale.
 
 ## 6. Commit
 
-One commit with DECISIONS.md, the tests, the code, the spec and README.ro.md:
+One commit with DECISIONS.md, the tests, the code, the spec, README.ro.md and `web/grafia.dat`:
 
 ```
 feat(rules) : <summary>
