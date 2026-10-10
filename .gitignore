@@ -4,3 +4,4 @@ __pycache__/
 *.sqlite.tmp
 data/
 target/
+mutants.out*/
