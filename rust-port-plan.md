@@ -107,7 +107,7 @@ android/                Gradle project                                       (ph
 
 **Pipeline change in Python** (decision 2): `build_db.py --export DIR` writes `records.tsv` (the rows of `SOURCE_QUERY`, in the `--text` format) and `known.txt` (`KNOWN_QUERY`) into `data/`.
 
-**Parity gate.** The temporary tools `pipeline/parity.py` and `crates/core/examples/parity.rs` both read `data/records.tsv` and `known.txt`, and each writes the same files to `data/parity/{python,rust}/`:
+**Parity gate.** The temporary tools `pipeline/parity.py` and `crates/core/examples/snapshot.rs` (named `parity.rs` until the snapshot-diff skill kept it) both read `data/records.tsv` and `known.txt`, and each writes the same files to `data/parity/{python,rust}/`:
 1. `references.tsv`: `syllabify_all` of every distinct (lemma, hyphenation, verb). This narrows a difference down to the syllabifier.
 2. The five tables, sorted, plus the build stats.
 3. `convert.tsv`: every stored form, as the text "form Form FORM", with all four ee/ai switch combinations. Segments are written in one canonical line format that both sides produce.
@@ -158,7 +158,7 @@ The gate passes when:
 
 Passed on the 2026-10-04 dump. The parity check also ran once through the data file (`DataFile` instead of `Tables`), with no difference from Python.
 
-**End of phase 2:** delete `pipeline/*.py` (including `parity.py`), `examples/parity.rs` and the `pipeline` extra in `pyproject.toml`.
+**End of phase 2:** delete `pipeline/*.py` (including `parity.py`) and the `pipeline` extra in `pyproject.toml`. Keep `examples/snapshot.rs`: the snapshot-diff skill uses it.
 
 **Docs:**
 - the spec's *Data* section describes `grafia.dat`, and `README.ro.md` follows it;
