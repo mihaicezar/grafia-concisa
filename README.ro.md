@@ -53,7 +53,7 @@ Când mai multe înregistrări dau aceeași formă, grafia implicită se alege d
 2. O despărțire susținută de una explicită, din dexonline sau parțială bate regulile singure, chiar și la un cuvânt-titlu: *agreare* e *agreare* (← *agrea* `a-gre-a`), nu cuvântul-titlu *agreare* despărțit prin reguli (*agrēre*).
 3. Un cuvânt-titlu bate o formă dedusă.
 4. O despărțire explicită bate dexonline, iar o lemă despărțită complet de dexonline bate una despărțită parțial.
-5. Altfel câștigă prima înregistrare.
+5. Altfel câștigă prima înregistrare: a lexemului adăugat primul în dexonline, apoi a formei lui adăugate prima (după id-urile lor).
 
 Tăieturile se deduc din lemă pe rând, pentru fiecare pereche de vocale:
 
@@ -156,11 +156,13 @@ Orice alt cuvânt, inclusiv cele necunoscute, trece prin înlocuirea de caracter
 
 ## Date
 
-`word_db.sqlite` are cinci tabele:
-- `forms(form, concise_form, concise_ee, alternatives)`, cu cheia forma normalizată. `concise_ee` e NULL când regula -ee nu schimbă nimic. `alternatives` conține celelalte grafii ale unui omograf, separate prin spațiu, sau NULL.
-- `eu_lemmas(lemma)`: toate lemele normalizate în -eu, pentru pluralele necunoscute în -eele/-eelor (vezi *Cuvinte necunoscute*).
-- `ea_lemmas(lemma)`: toate lemele normalizate în -ea, pentru genitivele necunoscute în -eei (vezi *Cuvinte necunoscute*).
-- `iesc_lemmas(lemma, reference)`: toate lemele normalizate în -iesc și despărțirea lor (*harabagi-esc*), pentru formele necunoscute ale adjectivelor în -iesc (vezi *Cuvinte necunoscute*).
-- `ee_revert(concise, form, alternatives)`: o grafie cu regula -ee, forma la care revine și celelalte forme ale unei egalități (separate prin spațiu, sau NULL), doar unde înlocuirea de caractere singură nu dă răspunsul (vezi *Conversia inversă*).
+Datele despre cuvinte vin într-un singur fișier, `grafia.dat` (structura lui e în `crates/core/src/datafile.rs`). Pe lângă cinci tabele, conține versiunea formatului, ziua la care sunt datele dexonline din care a fost construit (ziua ultimei modificări a unui lexem sau a unei definiții în dexonline) și o sumă de control, verificată la deschiderea fișierului. Fiecare tabel are cheia un cuvânt normalizat:
+- `forms`: o formă → `concise`, grafia ei concisă; `concise_ee`, grafia ei cu regula -ee, când diferă de `concise`; și `alternatives`, celelalte grafii ale unui omograf.
+- `eu_lemmas`: toate lemele normalizate în -eu, pentru pluralele necunoscute în -eele/-eelor (vezi *Cuvinte necunoscute*).
+- `ea_lemmas`: toate lemele normalizate în -ea, pentru genitivele necunoscute în -eei (vezi *Cuvinte necunoscute*).
+- `iesc_lemmas`: toate lemele normalizate în -iesc → despărțirea lor (*harabagi-esc*), pentru formele necunoscute ale adjectivelor în -iesc (vezi *Cuvinte necunoscute*).
+- `ee_revert`: o grafie cu regula -ee → forma la care revine și celelalte forme ale unei egalități, doar unde înlocuirea de caractere singură nu dă răspunsul (vezi *Conversia inversă*).
+
+Aceleași tabele dau mereu același fișier, octet cu octet.
 
 `forms` păstrează doar formele care pot diferi: cele care conțin ie/ia/ea/oa sau iăr, ori se termină în -ee, -eea, -eei, -eele, -eelor, -euri, -eurile sau -eurilor. Intrarea pipeline-ului pentru fiecare formă flexionară este: forma, lema ei, despărțirea lemei din dexonline (completă, parțială sau goală), numărul (S/P), dacă lema e verb (modelul V sau VT din dexonline), dacă e substantiv feminin sau neclasificată, scrisă cu literă mică (modelul F, T sau IL; pentru infinitivele lungi în -iare) și dacă e DEX-MDA-DOOM: are o definiție activă proprie (al cărei titlu e chiar lexemul) dintr-o sursă al cărei nume scurt începe cu MDA, DEX, NODEX sau DOOM (MDA2, DEX '09, NODEX, DOOM 3, ...; nu dicționarul intern *dexonline*).

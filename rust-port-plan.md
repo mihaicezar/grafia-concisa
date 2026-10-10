@@ -1,6 +1,6 @@
 # grafia concisă — Rust port plan
 
-**Status:** step 0 and phase 1 done on 2026-10-10: Rust matches Python on the 2026-10-04 dump, and the Python rules are frozen.
+**Status:** step 0 and phases 1 and 2 done on 2026-10-10: Rust matches Python on the 2026-10-04 dump, the Python rules are frozen, and the Rust pipeline has replaced the Python one.
 
 ## Context
 
@@ -126,33 +126,37 @@ The gate passes when:
 
 **`crates/pipeline`**, the binary `grafia-pipeline`, with clap subcommands:
 - `load`: ports `load_dexonline.py`.
-  - The download prints the dump's Last-Modified date and saves it as `data/dex-database.date`.
+  - The download prints the dump's Last-Modified date. (Done differently: no date file. The build reads the date from the data itself, see below.)
   - flate2 filters the gzip down to the tables in `TABLES`, and the result is piped into the mariadb client.
-- `build --mysql [conn] | --text FILE [--known FILE] --out PATH`: runs `SOURCE_QUERY` and `KNOWN_QUERY` verbatim through the `mysql` crate (no TLS: the server is local), then `core::build`, then `datafile::write`. The dump date in the header is read from `data/dex-database.date` when that file exists.
+- `build --mysql [conn] | --text FILE [--known FILE] --out PATH`: runs `SOURCE_QUERY` and `KNOWN_QUERY` verbatim through the `mysql` crate (no TLS: the server is local), then `core::build`, then `datafile::write`. Done with an `ORDER BY l.id, f.id`, the order MariaDB used anyway, since the first record wins a tie. The date is the day of dexonline's latest change to a lexeme or a definition (`MAX(modDate)`), so it always matches the data built; a date file written at download time could disagree with what was loaded.
 - `seed`: `seed_db.py`'s `SEED` list → a development data file.
 - For HTTPS, prefer native-tls (Schannel) over rustls with aws-lc, which needs cmake and NASM on Windows.
 
 **Data file `grafia.dat` (`crates/core/src/datafile.rs`):**
-- A header: magic, format version, and the dexonline dump date (shown in the apps' attribution).
+- A header: magic, format version, and the dexonline dump date (shown in the apps' attribution). Done: the date is the first section, and a CRC-32 trailer is checked on opening, so that a corrupted file is refused instead of panicking on a lookup.
 - Sections:
-  - `forms`: an `fst::Map` from the normalized form to an entry in a string table. The entry holds the concise spelling (empty when it equals the form, as in about 40% of forms), the -ee spelling and the alternatives.
+  - `forms`: an `fst::Map` from the normalized form to an entry in a string table. The entry holds the concise spelling, the -ee spelling and the alternatives.
   - `eu_lemmas` and `ea_lemmas`: `fst::Set`.
   - `iesc_lemmas` and `ee_revert`: `fst::Map` into the string table.
+  - Done: each word of an entry is written as an edit of its key (*soare* → *sōre*: keep 1 byte, replace 2 by "ō"), which most keys share, and identical entries are stored once: the string table is 15 KB.
 - The writer sorts everything, so the same input always gives the same bytes.
 - `DataFile<B: AsRef<[u8]>>` implements `Dictionary`:
   - over a `Vec<u8>` in WASM;
-  - over a `memmap2::Mmap` (feature `mmap`) on iOS and Android. Clean, file-backed pages don't count against the keyboard's memory limit the way heap memory does.
+  - over a `memmap2::Mmap` on iOS and Android. Clean, file-backed pages don't count against the keyboard's memory limit the way heap memory does. `Mmap` is `AsRef<[u8]>`, so the core needs no `mmap` feature: `crates/ffi` maps the file.
 - **Why not SQLite:** in WASM it needs a C build and a VFS, and only exact-key lookups are needed. The `fst` crate is pure Rust and made for this.
 - **Size target,** measured today:
   - the forms as sorted text are 1.59 MB gzipped (1.34 MB with the unchanged spellings left out);
   - the SQLite file is 2.54 MB gzipped (9.1 MB raw);
-  - target: `grafia.dat` at most 1.5 MB gzipped and 6 MB raw.
+  - target: `grafia.dat` at most 1.5 MB gzipped and 6 MB raw;
+  - done: 0.82 MB raw, 0.56 MB gzipped.
 
 **Tests:** the database-backed tables run against both `Tables` and the round trip `Tables` → bytes → `DataFile`.
 
 **Gate:**
 - the build from MySQL is byte-identical to the build from the Python `--export`;
 - the stats are equal.
+
+Passed on the 2026-10-04 dump. The parity check also ran once through the data file (`DataFile` instead of `Tables`), with no difference from Python.
 
 **End of phase 2:** delete `pipeline/*.py` (including `parity.py`), `examples/parity.rs` and the `pipeline` extra in `pyproject.toml`.
 

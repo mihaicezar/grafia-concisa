@@ -10,9 +10,6 @@ dependencies = [
     "gunicorn>=22.0",
 ]
 
-[project.optional-dependencies]
-pipeline = ["mysql-connector-python>=9.0"]
-
 [tool.uv]
 required-version = ">=0.8"
 

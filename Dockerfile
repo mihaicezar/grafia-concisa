@@ -12,7 +12,7 @@ COPY grafia_concisa ./grafia_concisa
 COPY server ./server
 RUN uv sync --locked --no-dev
 
-# Read-only database, built beforehand with pipeline/build_db.py
+# Read-only database, built beforehand by the Python pipeline (see README.md)
 COPY word_db.sqlite ./word_db.sqlite
 
 RUN useradd --create-home app

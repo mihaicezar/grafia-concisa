@@ -1,18 +1,22 @@
 //! grafia concisă: ie/ia/ea/oa in one syllable (no hiatus) are written ẹ/ė/ē/ō.
 //!
 //! The Rust port of `grafia_concisa/` (see `rust-port-plan.md`): `rules` holds the
-//! rules (rules.py), `build` the database builder (db.py), and this module the
-//! lookups and the answers the server gave (server.py).
+//! rules (rules.py), `build` the database builder (db.py), `datafile` the file the
+//! database is shipped in, and this module the lookups and the answers the server
+//! gave (server.py).
 pub mod build;
+pub mod datafile;
 pub mod rules;
 
 use std::collections::{BTreeSet, HashMap};
 
 use indexmap::IndexMap;
 
+pub use datafile::DataFile;
 pub use rules::{Row, Segment};
 
 /// The word database: the tables of the spec's *Data* section, by normalized key.
+/// Implemented by `build::Tables`, in memory, and by `DataFile`.
 pub trait Dictionary {
     /// The `forms` row of a form.
     fn form(&self, form: &str) -> Option<Row>;

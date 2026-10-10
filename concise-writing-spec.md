@@ -51,7 +51,7 @@ When several records produce the same form, the default spelling is chosen by pr
 2. A syllabification backed by an explicit, dexonline or partial one beats rules alone, even for a headword: *agreare* is *agreare* (← *agrea* `a-gre-a`), not the headword *agreare* by rules (*agrēre*).
 3. A headword beats a derived form.
 4. An explicit syllabification beats dexonline, and a lemma syllabified completely by dexonline beats a partial one.
-5. Otherwise the first record wins.
+5. Otherwise the first record wins: that of the lexeme added to dexonline first, then of its form added first (by their ids).
 
 Cuts are derived from the lemma one vowel pair at a time:
 
@@ -154,11 +154,13 @@ Any other word, unknown ones included, goes through the character map (*femeẹ*
 
 ## Data
 
-`word_db.sqlite` has five tables:
-- `forms(form, concise_form, concise_ee, alternatives)`, keyed on the normalized form. `concise_ee` is NULL when the -ee rule changes nothing. `alternatives` holds a homograph's other spellings, space-separated, or NULL.
-- `eu_lemmas(lemma)`: every normalized lemma in -eu, for unknown plurals in -eele/-eelor (see *Unknown words*).
-- `ea_lemmas(lemma)`: every normalized lemma in -ea, for unknown genitives in -eei (see *Unknown words*).
-- `iesc_lemmas(lemma, reference)`: every normalized lemma in -iesc and its syllabification (*harabagi-esc*), for unknown forms of -iesc adjectives (see *Unknown words*).
-- `ee_revert(concise, form, alternatives)`: a spelling with the -ee rule, the form it reverts to and the other forms of a tie (space-separated, or NULL), only where the character map alone is not the answer (see *Reverse conversion*).
+The word data comes in one file, `grafia.dat` (its layout is in `crates/core/src/datafile.rs`). Besides five tables, it holds the format version, the date of the dexonline data it was built from (the day of dexonline's latest change to a lexeme or a definition), and a checksum, checked when the file is opened. The tables are each keyed on a normalized word:
+- `forms`: a form → `concise`, its concise spelling; `concise_ee`, its spelling with the -ee rule when that differs from `concise`; and `alternatives`, a homograph's other spellings.
+- `eu_lemmas`: every normalized lemma in -eu, for unknown plurals in -eele/-eelor (see *Unknown words*).
+- `ea_lemmas`: every normalized lemma in -ea, for unknown genitives in -eei (see *Unknown words*).
+- `iesc_lemmas`: every normalized lemma in -iesc → its syllabification (*harabagi-esc*), for unknown forms of -iesc adjectives (see *Unknown words*).
+- `ee_revert`: a spelling with the -ee rule → the form it reverts to and the other forms of a tie, only where the character map alone is not the answer (see *Reverse conversion*).
+
+The same tables always give the same file, byte for byte.
 
 `forms` stores only forms that can differ: those containing ie/ia/ea/oa or iăr, or ending in -ee, -eea, -eei, -eele, -eelor, -euri, -eurile or -eurilor. The pipeline input per inflected form is: the form, its lemma, the lemma's dexonline hyphenation (complete, partial or empty), the number (S/P), whether the lemma is a verb (dexonline model V or VT), whether it is a lowercase feminine noun or unclassified (model F, T or IL; for long infinitives in -iare), and whether it is DEX-MDA-DOOM: it has an active definition of its own (whose headword is the lexeme) from a source whose short name starts with MDA, DEX, NODEX or DOOM (MDA2, DEX '09, NODEX, DOOM 3, ...; not the internal *dexonline*).
