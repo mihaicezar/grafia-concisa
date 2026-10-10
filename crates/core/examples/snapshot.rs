@@ -1,7 +1,8 @@
-//! Compare the Rust port with Python on the full data (temporary: see rust-port-plan.md).
+//! Write every table and conversion of the core on the full data, to diff two runs (see the snapshot-diff skill).
 //!
 //! Writes the same files as pipeline/parity.py, which documents them.
-//! Run: cargo run --release -p grafia-concisa --example parity -- [DATA [OUT]]
+//! Run: cargo run --release -p grafia-concisa --example snapshot -- [DATA [OUT]]
+#![allow(clippy::disallowed_methods, clippy::disallowed_types)] // the example does file I/O; the core lib may not
 use std::collections::{BTreeSet, HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
