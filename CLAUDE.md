@@ -19,7 +19,7 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
 - `cargo run --release -p grafia-pipeline -- seed`: build a small dev data file, `data/grafia.dat`.
 - Full data file: see README.md. A MariaDB server is required: on this machine, a portable one on port 3307; see "This machine" there. Then run:
   - `cargo run --release -p grafia-pipeline -- load --download --client <mariadb> --port 3307`: load or update dexonline;
-  - `cargo run --release -p grafia-pipeline -- build --mysql --port 3307 --out web/grafia.dat`: build the web app's data file. Rebuild and commit it after a rule change or a dexonline update.
+  - `cargo run --release -p grafia-pipeline -- build --mysql --port 3307 --out web/grafia.dat`: build the web app's data file. Rebuild and commit it after a dexonline update and after any change to the code of `rules.rs` or `build.rs` (not only their comments): the file records `RULES_HASH`, and `cargo xtask web` (so CI) refuses it otherwise.
 
 ## Conventions
 - Simple over clever, with best practices, and no speculative features.

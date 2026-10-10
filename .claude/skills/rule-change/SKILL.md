@@ -54,7 +54,7 @@ Run `cargo test --workspace`. At least one new line must fail. If all pass, the 
 
 - Run the `test-gauntlet` skill on the change.
 - Run the `snapshot-diff` skill and show Cezar the words whose output changed. A change the decision does not predict is a question for Cezar, in Romanian, before the commit. If the dexonline export is not available, say so in the final message.
-- Rebuild the web app's data file from MariaDB, since it holds the rules' output: `cargo run --release -p grafia-pipeline -- build --mysql --port 3307 --out web/grafia.dat` (README.md, *Updating the data*). Then run `cargo test -p grafia-wasm --target wasm32-unknown-unknown`. Without MariaDB, say in the final message that `web/grafia.dat` is stale.
+- Rebuild the web app's data file from MariaDB, since it holds the rules' output: `cargo run --release -p grafia-pipeline -- build --mysql --port 3307 --out web/grafia.dat` (README.md, *Updating the data*). Then run `cargo test -p grafia-wasm --target wasm32-unknown-unknown`. Without MariaDB, say in the final message that `web/grafia.dat` is stale: it records the rules it was built with (`RULES_HASH`), so `cargo xtask web`, and with it CI, fails until it is rebuilt.
 
 ## 6. Commit
 

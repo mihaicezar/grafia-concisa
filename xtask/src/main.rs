@@ -9,7 +9,7 @@ use std::{env, fs};
 use anyhow::{Context, Result, bail, ensure};
 use flate2::Compression;
 use flate2::write::GzEncoder;
-use grafia_concisa::DataFile;
+use grafia_concisa::{DataFile, RULES_HASH};
 use wasm_bindgen_cli_support::Bindgen;
 
 fn main() -> Result<()> {
@@ -33,12 +33,17 @@ fn web() -> Result<()> {
     let web = root.join("web");
     let dist = web.join("dist");
 
-    // The data file first: CI can't rebuild it, so one that doesn't open (an old format) stops the build.
+    // The data file first: CI can't rebuild it, so one that doesn't open (an old
+    // format) or that was built with other rules stops the build.
+    const REBUILD: &str = "rebuild it with the pipeline (README.md, *Updating the data*)";
     let data = read(&web.join("grafia.dat"))?;
-    let date = DataFile::new(&data[..])
-        .context("web/grafia.dat: rebuild it with the pipeline (README.md, *Updating the data*)")?
-        .date()
-        .to_string();
+    let file = DataFile::new(&data[..]).with_context(|| format!("web/grafia.dat: {REBUILD}"))?;
+    ensure!(
+        file.rules() == RULES_HASH,
+        "web/grafia.dat was built with other rules ({:016x}, not {RULES_HASH:016x}): {REBUILD}",
+        file.rules()
+    );
+    let date = file.date().to_string();
 
     // cargo's JSON messages on stdout give the path of the .wasm, wherever the target directory is
     let cargo = env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
@@ -98,7 +103,10 @@ fn web() -> Result<()> {
         println!("{size:>9}  {file}");
     }
     let date = if date.is_empty() { "no date" } else { &date };
-    println!("{}: version {version}, dexonline data of {date}", dist.display());
+    println!(
+        "{}: version {version}, dexonline data of {date}, rules {RULES_HASH:016x}",
+        dist.display()
+    );
     Ok(())
 }
 

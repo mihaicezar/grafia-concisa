@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, ensure};
 use clap::{Args, Parser};
 use grafia_concisa::build::{Stats, Tables, build};
-use grafia_concisa::datafile;
+use grafia_concisa::{RULES_HASH, datafile};
 
 #[derive(Parser)]
 #[command(version, about = "Builds the grafia concisă data file from dexonline.")]
@@ -125,7 +125,11 @@ fn write(out: &Path, tables: &Tables, stats: &Stats, date: &str) -> Result<()> {
     }
     written.with_context(|| format!("writing {}", out.display()))?;
     let date = if date.is_empty() { "no date" } else { date };
-    println!("{}: {} bytes, dexonline data of {date}", out.display(), bytes.len());
+    let size = bytes.len();
+    println!(
+        "{}: {size} bytes, dexonline data of {date}, rules {RULES_HASH:016x}",
+        out.display()
+    );
     let stats: Vec<String> = stats.iter().map(|(k, v)| format!("{k} {v}")).collect();
     println!("{}", stats.join(", "));
     Ok(())

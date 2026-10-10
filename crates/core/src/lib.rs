@@ -16,6 +16,39 @@ use serde::Serialize;
 pub use datafile::DataFile;
 pub use rules::{Row, Segment};
 
+/// The rules a data file is built with: a hash of the code of `rules.rs` and
+/// `build.rs`, without comments or whitespace. The data file records it, and the
+/// web app's build refuses a data file built with other rules.
+pub const RULES_HASH: u64 = code_hash(
+    code_hash(FNV_OFFSET, include_str!("rules.rs")),
+    include_str!("build.rs"),
+);
+
+const FNV_OFFSET: u64 = 0xcbf2_9ce4_8422_2325;
+const FNV_PRIME: u64 = 0x0100_0000_01b3;
+
+/// FNV-1a of `source` from `hash`, skipping whitespace and the lines that are
+/// comments (`//`, `///`, `//!`), so that only a change of the code changes it.
+const fn code_hash(mut hash: u64, source: &str) -> u64 {
+    let bytes = source.as_bytes();
+    let (mut i, mut line_start) = (0, true);
+    while i < bytes.len() {
+        let b = bytes[i];
+        if b == b'\n' {
+            line_start = true;
+        } else if line_start && b == b'/' && i + 1 < bytes.len() && bytes[i + 1] == b'/' {
+            while i + 1 < bytes.len() && bytes[i + 1] != b'\n' {
+                i += 1;
+            }
+        } else if !b.is_ascii_whitespace() {
+            line_start = false;
+            hash = (hash ^ b as u64).wrapping_mul(FNV_PRIME);
+        }
+        i += 1;
+    }
+    hash
+}
+
 /// The word database: the tables of the spec's *Data* section, by normalized key.
 /// Implemented by `build::Tables`, in memory, and by `DataFile`.
 pub trait Dictionary {
@@ -150,4 +183,23 @@ pub fn lookup(words: &[&str], dict: &dyn Dictionary, options: Options) -> Lookup
             .for_each(|x| *x = rules::a_to_i(x));
     }
     out
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn code_hash_sees_only_code() {
+        let hash = |source| code_hash(FNV_OFFSET, source);
+        let code = "fn a() -> u8 {\n    1 // one\n}\n";
+        // comment lines, indentation and blank lines don't count...
+        assert_eq!(
+            hash(code),
+            hash("//! A.\n/// a\nfn a()\n    -> u8 {\n\n  // why\n1 // one\n}")
+        );
+        // ...the code does, and so does a comment after it
+        assert_ne!(hash(code), hash("fn a() -> u8 {\n    2 // one\n}\n"));
+        assert_ne!(hash(code), hash("fn a() -> u8 {\n    1 // two\n}\n"));
+    }
 }

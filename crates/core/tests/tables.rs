@@ -9,7 +9,7 @@ use grafia_concisa::build::{Record, Tables, build};
 use grafia_concisa::rules::{
     concise_ee, concise_from_reference, concise_from_syllables, iere_spelling, long_infinitive, revert_text, syllabify,
 };
-use grafia_concisa::{DataFile, Dictionary, Options, convert, datafile, lookup, revert};
+use grafia_concisa::{DataFile, Dictionary, Options, RULES_HASH, convert, datafile, lookup, revert};
 
 // (syllabified, expected concise). Add a case = add a line.
 const WORDS: &[(&str, &str)] = &[
@@ -748,6 +748,7 @@ fn data_file() {
     f.check("zzgiesc", FILE.iesc_lemma("zzgiesc"), None);
     f.check("zzeẹ", FILE.ee_revert("zzeẹ"), None);
     f.check("date", FILE.date(), DATE);
+    f.check("rules", FILE.rules(), RULES_HASH);
     f.assert();
 }
 
@@ -763,7 +764,7 @@ fn bad_data_files() {
         ("empty", Vec::new()),
         ("magic", [b"SQLite format 3\0".as_slice(), &bytes[16..]].concat()),
         ("version", changed(8)),
-        ("a section's length", changed(12)),
+        ("a section's length", changed(20)),
         ("a byte in the middle", changed(bytes.len() / 2)),
         ("truncated", bytes[..bytes.len() - 1].to_vec()),
         ("extra byte", [&bytes[..], &[0]].concat()),

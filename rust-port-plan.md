@@ -180,7 +180,7 @@ Passed on the 2026-10-04 dump. The parity check also ran once through the data f
   - gzips the data file and stamps the build hash into `sw.js`;
   - writes `web/dist/`.
 - **Tests:** a `wasm-bindgen-test` smoke test under Node converts and reverts some `TEXTS` lines against the seed data. CI builds `web/dist`.
-  - Done on the committed `web/grafia.dat` instead of the seed data: it is the file the site ships, so a format change without a rebuilt data file fails the test. `cargo xtask web` also refuses a data file that doesn't open.
+  - Done on the committed `web/grafia.dat` instead of the seed data: it is the file the site ships, so a format change without a rebuilt data file fails the test. `cargo xtask web` also refuses a data file that doesn't open, or that was built with other rules: since format 2 the file records `RULES_HASH`, a hash of the code of `rules.rs` and `build.rs`.
   - The page was checked in headless Edge (puppeteer-core, not committed): load, convert, a homograph switch, copy, unknown words, the -ee footnote, revert, local fonts only, no installability errors, and a reload with the server stopped.
 - **Hosting on GitHub Pages** (decision 8):
   - once, in the repository settings: *Pages* → *Source*: GitHub Actions; free hosting needs a public repository;

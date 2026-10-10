@@ -2,7 +2,8 @@
 //! place (from a `Vec<u8>` in WASM, memory-mapped on iOS and Android).
 //!
 //! Layout, integers little-endian:
-//!   - the magic `GRAFIAC\0`, the format version (u32) and each section's length (u32);
+//!   - the magic `GRAFIAC\0`, the format version (u32), the rules it was built with
+//!     (u64: `RULES_HASH`) and each section's length (u32);
 //!   - the sections, in this order:
 //!     - `date`: the date of the dexonline data (UTF-8, empty if unknown);
 //!     - `forms`: an `fst::Map` from the normalized form to its entry;
@@ -28,11 +29,11 @@ use std::ops::Range;
 use fst::{Map, MapBuilder, Set, SetBuilder};
 
 use crate::build::Tables;
-use crate::{Dictionary, Row};
+use crate::{Dictionary, RULES_HASH, Row};
 
 const MAGIC: &[u8; 8] = b"GRAFIAC\0";
 /// The format version, changed with the layout.
-pub const VERSION: u32 = 1;
+pub const VERSION: u32 = 2;
 
 const DATE: usize = 0;
 const FORMS: usize = 1;
@@ -42,7 +43,10 @@ const IESC_LEMMAS: usize = 4;
 const EE_REVERT: usize = 5;
 const ENTRIES: usize = 6;
 const SECTIONS: usize = 7;
-const HEADER: usize = MAGIC.len() + 4 + 4 * SECTIONS;
+// the header: the magic, the version, the rules, then the sections' lengths
+const RULES: usize = MAGIC.len() + 4;
+const LENGTHS: usize = RULES + 8;
+const HEADER: usize = LENGTHS + 4 * SECTIONS;
 
 /// A data file that can't be written or read.
 #[derive(Debug)]
@@ -114,7 +118,7 @@ fn set<'a>(keys: impl IntoIterator<Item = &'a String>) -> Result<Vec<u8>, Error>
     Ok(set.into_inner()?)
 }
 
-/// The data file of `tables`, with the `date` of the dexonline data.
+/// The data file of `tables`, with the `date` of the dexonline data and the rules (`RULES_HASH`).
 pub fn write(tables: &Tables, date: &str) -> Result<Vec<u8>, Error> {
     let mut entries = Entries::default();
 
@@ -159,6 +163,7 @@ pub fn write(tables: &Tables, date: &str) -> Result<Vec<u8>, Error> {
     let mut out = Vec::with_capacity(HEADER + sections.iter().map(Vec::len).sum::<usize>());
     out.extend_from_slice(MAGIC);
     out.extend_from_slice(&VERSION.to_le_bytes());
+    out.extend_from_slice(&RULES_HASH.to_le_bytes());
     for section in &sections {
         let len = u32::try_from(section.len()).map_err(|_| Error("data file: a section over 4 GB".into()))?;
         out.extend_from_slice(&len.to_le_bytes());
@@ -199,7 +204,7 @@ impl<B: AsRef<[u8]>> DataFile<B> {
         let mut sections: [Range<usize>; SECTIONS] = Default::default();
         let mut at = HEADER;
         for (i, section) in sections.iter_mut().enumerate() {
-            let end = at.checked_add(u32_at(data, MAGIC.len() + 4 + 4 * i));
+            let end = at.checked_add(u32_at(data, LENGTHS + 4 * i));
             *section = at..end.ok_or(Error("data file: sections over its size".into()))?;
             at = section.end;
         }
@@ -219,6 +224,12 @@ impl<B: AsRef<[u8]>> DataFile<B> {
     /// The date of the dexonline data, empty if unknown.
     pub fn date(&self) -> &str {
         std::str::from_utf8(self.section(DATE)).expect("checked in new")
+    }
+
+    /// The rules the file was built with: the `RULES_HASH` of the code that wrote it.
+    pub fn rules(&self) -> u64 {
+        let bytes = &self.bytes.as_ref()[RULES..LENGTHS];
+        u64::from_le_bytes(bytes.try_into().expect("8 bytes"))
     }
 
     fn section(&self, i: usize) -> &[u8] {

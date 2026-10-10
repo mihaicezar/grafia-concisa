@@ -71,7 +71,7 @@ The service worker keeps serving the version it cached. After a rebuild, close e
 - `engine.convert(text, ee, ai)` and `engine.revert(text, ee)` return `{text, segments, unknown}` and `{text, segments}`. A segment is `{t}`, plus `alts` (all the spellings of a homograph, the default first) and `unknown` (a word missing from the data) when they apply. `engine.date` is the date of the dexonline data, which the footer shows.
 - `web/sw.js` is the service worker. It caches every file of the site under a name that holds the build's version, `grafia-<version>`, and serves them from the cache first. A new version is cached beside the old one, with files fetched past the browser's HTTP cache so that none of the old ones slip in, and takes over once no page uses the old one. The old `grafia-` caches are then deleted, and only those: the other sites of `mihaicezar.github.io` share the same cache storage.
 - `cargo xtask web` writes `web/dist/`:
-  1. it checks that `web/grafia.dat` opens, so a data file in an old format stops the build;
+  1. it checks that `web/grafia.dat` opens and was built with the current rules, so a data file in an old format, or not rebuilt after a rule change, stops the build;
   2. it builds `crates/wasm` with the `wasm` profile (optimized for size) and runs wasm-bindgen on it;
   3. it copies the files of `web/`, and gzips the data file;
   4. it writes `sw.js` with the list of files and the version, a hash of all of them.
@@ -134,7 +134,7 @@ cargo run --release -p grafia-pipeline -- load --download --client "$M/mariadb.e
 cargo run --release -p grafia-pipeline -- build --mysql --port 3307 --out web/grafia.dat
 ```
 
-This writes the web app's data file (without `--out`, `data/grafia.dat`), in about 2 minutes, most of it in MariaDB. It prints the file's size, the date of the data and the build's stats. The date is the day of dexonline's latest change to a lexeme or a definition, so it always matches the data. For the 2026-10-04 dump (2026-10-10 rules): 816,260 bytes, data of 2026-10-03; 292,128 forms stored, of which 51 homographs and 2,749 with an -ee spelling, plus 2,613 reverse -ee spellings (`ee_revert`, 129 of them ties), 1,066 lemmas in -eu (`eu_lemmas`), 3,434 in -ea (`ea_lemmas`) and 65 in -iesc (`iesc_lemmas`). Lemma syllabifications came from dexonline (4,165 complete, 6,601 partial), Cezar's explicit list (18) and the rules alone (80,859).
+This writes the web app's data file (without `--out`, `data/grafia.dat`), in about 2 minutes, most of it in MariaDB. It prints the file's size, the date of the data, the rules (`RULES_HASH`, see *Updating the data*) and the build's stats. The date is the day of dexonline's latest change to a lexeme or a definition, so it always matches the data. For the 2026-10-04 dump (2026-10-10 rules): 816,268 bytes, data of 2026-10-03; 292,128 forms stored, of which 51 homographs and 2,749 with an -ee spelling, plus 2,613 reverse -ee spellings (`ee_revert`, 129 of them ties), 1,066 lemmas in -eu (`eu_lemmas`), 3,434 in -ea (`ea_lemmas`) and 65 in -iesc (`iesc_lemmas`). Lemma syllabifications came from dexonline (4,165 complete, 6,601 partial), Cezar's explicit list (18) and the rules alone (80,859).
 
 What the build reads:
 - the inflected forms, with their lemma and number (`InflectedForm`, `Inflection`);
@@ -148,7 +148,7 @@ How these are turned into spellings is in the spec. The records are read in a fi
 
 ### Updating the data
 
-`web/grafia.dat` holds the rules' output for every word, so it is rebuilt after a dexonline update and after every rule change:
+`web/grafia.dat` holds the rules' output for every word, so it is rebuilt after a dexonline update and after every rule change. The data file records the rules it was built with, `RULES_HASH`: a hash of the code of `crates/core/src/rules.rs` and `build.rs`, without comments or whitespace. `cargo xtask web`, and so CI and the deployment, refuses a data file built with other rules. So any change to the code of these two files calls for a rebuild, even one that changes no spelling; a change to their comments alone doesn't. The steps:
 1. Start the server.
 2. For a dexonline update, run step 2 with `--download`.
 3. Run step 3, which writes `web/grafia.dat`.

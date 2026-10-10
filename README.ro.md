@@ -156,7 +156,7 @@ Orice alt cuvânt, inclusiv cele necunoscute, trece prin înlocuirea de caracter
 
 ## Date
 
-Datele despre cuvinte vin într-un singur fișier, `grafia.dat` (structura lui e în `crates/core/src/datafile.rs`). Pe lângă cinci tabele, conține versiunea formatului, ziua la care sunt datele dexonline din care a fost construit (ziua ultimei modificări a unui lexem sau a unei definiții în dexonline) și o sumă de control, verificată la deschiderea fișierului. Fiecare tabel are cheia un cuvânt normalizat:
+Datele despre cuvinte vin într-un singur fișier, `grafia.dat` (structura lui e în `crates/core/src/datafile.rs`). Pe lângă cinci tabele, conține versiunea formatului, ziua la care sunt datele dexonline din care a fost construit (ziua ultimei modificări a unui lexem sau a unei definiții în dexonline), regulile cu care a fost construit și o sumă de control, verificată la deschiderea fișierului. Regulile sunt `RULES_HASH`, o sumă (hash) a codului din `crates/core/src/rules.rs` și `build.rs`, fără comentarii și spații: construirea aplicației web refuză un fișier de date construit cu alte reguli. Fiecare tabel are cheia un cuvânt normalizat:
 - `forms`: o formă → `concise`, grafia ei concisă; `concise_ee`, grafia ei cu regula -ee, când diferă de `concise`; și `alternatives`, celelalte grafii ale unui omograf.
 - `eu_lemmas`: toate lemele normalizate în -eu, pentru pluralele necunoscute în -eele/-eelor (vezi *Cuvinte necunoscute*).
 - `ea_lemmas`: toate lemele normalizate în -ea, pentru genitivele necunoscute în -eei (vezi *Cuvinte necunoscute*).
