@@ -4,6 +4,7 @@
 //!   cargo run --release -p grafia-pipeline -- load --download --client mariadb --port 3307
 //!   cargo run --release -p grafia-pipeline -- build --mysql --port 3307
 //!   cargo run --release -p grafia-pipeline -- build --text records.tsv [--known known.txt]
+//!   cargo run --release -p grafia-pipeline -- export --port 3307
 //!   cargo run --release -p grafia-pipeline -- seed
 mod load;
 mod records;
@@ -25,6 +26,14 @@ enum Command {
     Load(load::LoadArgs),
     /// Build the data file from dexonline in MariaDB or MySQL, or from records in a text file
     Build(BuildArgs),
+    /// Write dexonline's records from MariaDB or MySQL as text files, for build --text and the snapshot example
+    Export {
+        #[command(flatten)]
+        server: Server,
+        /// The directory for records.tsv and known.txt
+        #[arg(long, default_value = "data")]
+        out: PathBuf,
+    },
     /// Build a small development data file, without MariaDB
     Seed {
         #[arg(long, default_value = "data/grafia.dat")]
@@ -85,6 +94,11 @@ fn main() -> Result<()> {
                 None => records::build_from_mysql(&args.server)?,
             };
             write(&args.out, &tables, &stats, &date)
+        }
+        Command::Export { server, out } => {
+            let n = records::export_from_mysql(&server, &out)?;
+            println!("{}: records.tsv ({n} records), known.txt", out.display());
+            Ok(())
         }
         Command::Seed { out } => {
             let (tables, stats) = build(seed::records(), &HashSet::new());

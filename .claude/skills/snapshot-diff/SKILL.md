@@ -10,9 +10,9 @@ The test tables check chosen words. This checks every form in the database: it w
 ## Inputs
 
 - The export of dexonline records: `DATA/records.tsv` and `DATA/known.txt`, written by
-  `uv run --extra pipeline python pipeline/build_db.py --export DATA --host 127.0.0.1 --port 3307`
-  (MariaDB must be running: see README.md, *This machine*). `DATA` is `data` by default.
-- The writer: `crates/core/examples/snapshot.rs`. It writes `references.tsv`, the five tables, `stats.tsv`, `convert.tsv`, `unknown.tsv` and `revert.tsv` (documented in `pipeline/parity.py`).
+  `cargo run --release -p grafia-pipeline -- export --port 3307 --out DATA`
+  (MariaDB must be running: see README.md, *This machine*). `DATA` is `data` by default. These are the records `build --mysql` reads.
+- The writer: `crates/core/examples/snapshot.rs`. It writes `references.tsv`, the five tables, `stats.tsv`, `convert.tsv`, `unknown.tsv` and `revert.tsv` (documented in its header).
 
 If there is no export and no MariaDB, stop and say so.
 

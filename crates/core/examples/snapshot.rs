@@ -1,6 +1,19 @@
 //! Write every table and conversion of the core on the full data, to diff two runs (see the snapshot-diff skill).
 //!
-//! Writes the same files as pipeline/parity.py, which documents them.
+//! Reads `DATA/records.tsv` (the records, in the format of `grafia-pipeline build --text`)
+//! and `DATA/known.txt` (the words the prefix rule may find), both written by
+//! `grafia-pipeline export`, and writes into OUT (`DATA/snapshot` by default):
+//!   - `references.tsv`: each distinct lemma, hyphenation and verb flag, with its
+//!     readings by `syllabify_all` (syllabified/source);
+//!   - `stats.tsv`: the build's stats;
+//!   - the five tables: `forms.tsv` (form, concise, concise_ee, alternatives),
+//!     `eu_lemmas.txt`, `ea_lemmas.txt`, `iesc_lemmas.tsv` and `ee_revert.tsv`;
+//!   - `convert.tsv`: each form as the text "form Form FORM", converted with the four
+//!     combinations of the ee and ai switches;
+//!   - `unknown.tsv`: each form converted by the rules alone, with ee off and on;
+//!   - `revert.tsv`: each spelling in `forms`, reverted without and with the -ee switch.
+//!
+//! A conversion is one line: each segment as text<alternatives>?unknown word, joined by ¦.
 //! Run: cargo run --release -p grafia-concisa --example snapshot -- [DATA [OUT]]
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)] // the example does file I/O; the core lib may not
 use std::collections::{BTreeSet, HashMap, HashSet};
@@ -43,9 +56,7 @@ fn clean(value: &str) -> String {
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let data = PathBuf::from(args.first().map_or("data", String::as_str));
-    let out = args
-        .get(1)
-        .map_or_else(|| data.join("parity").join("rust"), PathBuf::from);
+    let out = args.get(1).map_or_else(|| data.join("snapshot"), PathBuf::from);
     fs::create_dir_all(&out).expect("create the output directory");
     let records: Vec<Record> = fs::read_to_string(data.join("records.tsv"))
         .expect("read records.tsv")

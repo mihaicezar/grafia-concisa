@@ -1,6 +1,10 @@
 //! The build's input: inflected-form records and the words the prefix rule may
-//! find, from dexonline in MariaDB or MySQL, or from text files.
+//! find, from dexonline in MariaDB or MySQL, or from text files, which `export`
+//! writes from the server.
 use std::collections::HashSet;
+use std::fs::{self, File};
+use std::io::{BufWriter, Write};
+use std::path::Path;
 
 use anyhow::{Context, Result, bail};
 use grafia_concisa::build::{Record, Stats, Tables, build};
@@ -81,8 +85,7 @@ pub fn known_from_text(text: &str) -> HashSet<String> {
         .collect()
 }
 
-/// Builds the tables from dexonline on the server; also returns the date of its data.
-pub fn build_from_mysql(server: &Server) -> Result<(Tables, Stats, String)> {
+fn connect(server: &Server) -> Result<Conn> {
     let opts = OptsBuilder::new()
         .ip_or_hostname(Some(&server.host))
         .tcp_port(server.port)
@@ -91,27 +94,65 @@ pub fn build_from_mysql(server: &Server) -> Result<(Tables, Stats, String)> {
         .db_name(Some(&server.database))
         .prefer_socket(false)
         .init(vec!["SET NAMES utf8mb4", "SET time_zone = '+00:00'"]);
-    let mut conn = Conn::new(opts).with_context(|| format!("connecting to {}:{}", server.host, server.port))?;
+    Conn::new(opts).with_context(|| format!("connecting to {}:{}", server.host, server.port))
+}
 
-    let date: Option<Option<String>> = conn.query_first(DATE_QUERY)?;
-    let known = conn
-        .query_iter(KNOWN_QUERY)?
+fn known_words(conn: &mut Conn) -> Result<HashSet<String>> {
+    conn.query_iter(KNOWN_QUERY)?
         .map(|row| Ok(normalize(&field(row?.unwrap().swap_remove(0))?)))
-        .collect::<Result<HashSet<String>>>()?;
+        .collect()
+}
+
+/// The records, one per row of SOURCE_QUERY, in its order.
+fn records(conn: &mut Conn) -> Result<impl Iterator<Item = Result<Record>> + '_> {
+    Ok(conn.query_iter(SOURCE_QUERY)?.map(|row| {
+        let fields = row?.unwrap().into_iter().map(field).collect::<Result<_>>()?;
+        Ok(Record(fields))
+    }))
+}
+
+/// Builds the tables from dexonline on the server; also returns the date of its data.
+pub fn build_from_mysql(server: &Server) -> Result<(Tables, Stats, String)> {
+    let mut conn = connect(server)?;
+    let date: Option<Option<String>> = conn.query_first(DATE_QUERY)?;
+    let known = known_words(&mut conn)?;
     // the records are streamed into the build; the first error stops them
     let mut failed = None;
-    let records = conn.query_iter(SOURCE_QUERY)?.map_while(|row| {
-        let record = row.map_err(anyhow::Error::from).and_then(|row| {
-            let fields = row.unwrap().into_iter().map(field).collect::<Result<_>>()?;
-            Ok(Record(fields))
-        });
-        record.map_err(|e| failed = Some(e)).ok()
-    });
+    let records = records(&mut conn)?.map_while(|record| record.map_err(|e| failed = Some(e)).ok());
     let (tables, stats) = build(records, &known);
     match failed {
         Some(e) => Err(e.context("reading the records")),
         None => Ok((tables, stats, date.flatten().unwrap_or_default())),
     }
+}
+
+/// Writes dexonline's records and known words from the server into `dir`:
+/// `records.tsv` and `known.txt`, in the formats of `build --text` and `--known`.
+/// Returns the number of records.
+pub fn export_from_mysql(server: &Server, dir: &Path) -> Result<usize> {
+    let mut conn = connect(server)?;
+    let mut known: Vec<String> = known_words(&mut conn)?.into_iter().collect();
+    known.sort();
+    fs::create_dir_all(dir).with_context(|| format!("creating {}", dir.display()))?;
+    let path = dir.join("records.tsv");
+    let mut out = BufWriter::new(File::create(&path).with_context(|| format!("writing {}", path.display()))?);
+    let mut n = 0;
+    for record in records(&mut conn)? {
+        out.write_all(text_line(&record?)?.as_bytes())?;
+        n += 1;
+    }
+    out.flush()?;
+    let known: String = known.iter().map(|word| format!("{word}\n")).collect();
+    fs::write(dir.join("known.txt"), known).with_context(|| format!("writing {}", dir.display()))?;
+    Ok(n)
+}
+
+/// A record as a line of a text file (see `from_text`).
+fn text_line(Record(fields): &Record) -> Result<String> {
+    if let Some(field) = fields.iter().find(|f| f.contains(['\t', '\n', '\r'])) {
+        bail!("a field holds a tab or a line break: {field:?}");
+    }
+    Ok(fields.join("\t") + "\n")
 }
 
 /// A column's text; NULL reads as ''.
@@ -145,5 +186,18 @@ mod tests {
         );
         let known = known_from_text(" Abilitat \n\n# a comment\n");
         assert_eq!(known, HashSet::from(["abilitat".to_string()]));
+    }
+
+    #[test]
+    fn exported_records() {
+        // as SOURCE_QUERY gives them: seven fields, some empty
+        let records = [
+            Record::new(&["ideea", "idee", "i-de-e", "S", "", "D", ""]),
+            Record::new(&["familia", "familie", "", "S", "", "", ""]),
+        ];
+        let text: String = records.iter().map(|r| text_line(r).unwrap()).collect();
+        assert_eq!(text, "ideea\tidee\ti-de-e\tS\t\tD\t\nfamilia\tfamilie\t\tS\t\t\t\n");
+        assert_eq!(from_text(&text).unwrap().collect::<Vec<_>>(), records);
+        assert!(text_line(&Record::new(&["a\tb", "a", "", "S"])).is_err());
     }
 }
