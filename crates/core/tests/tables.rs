@@ -1,4 +1,4 @@
-//! grafia concisă — table-driven test suite (the port of server/test_server.py).
+//! grafia concisă — table-driven test suite.
 //!
 //! Run: cargo test --workspace
 use std::collections::{HashMap, HashSet};
@@ -9,7 +9,7 @@ use grafia_concisa::build::{Record, Tables, build};
 use grafia_concisa::rules::{
     concise_ee, concise_from_reference, concise_from_syllables, iere_spelling, long_infinitive, revert_text, syllabify,
 };
-use grafia_concisa::{Options, convert, lookup, revert};
+use grafia_concisa::{DataFile, Dictionary, Options, RULES_HASH, convert, datafile, lookup, revert};
 
 // (syllabified, expected concise). Add a case = add a line.
 const WORDS: &[(&str, &str)] = &[
@@ -477,6 +477,17 @@ static DB: LazyLock<Tables> = LazyLock::new(|| {
     build(records, &HashSet::new()).0
 });
 
+const DATE: &str = "2026-10-04";
+
+// The test database through the data file
+static FILE: LazyLock<DataFile<Vec<u8>>> =
+    LazyLock::new(|| DataFile::new(datafile::write(&DB, DATE).expect("write")).expect("read"));
+
+/// The test database, in memory and through the data file.
+fn dicts() -> [(&'static str, &'static dyn Dictionary); 2] {
+    [("tables", &*DB), ("file", &*FILE)]
+}
+
 /// Collects the failing cases, so that one run reports all of them.
 #[derive(Default)]
 struct Failures(Vec<String>);
@@ -553,9 +564,15 @@ fn ee_db() {
         }
     }
     let mut f = Failures::default();
-    for (form, exp) in expected {
-        let row = &DB.forms[form];
-        f.check(form, row.concise_ee.as_ref().unwrap_or(&row.concise).as_str(), exp);
+    for (name, dict) in dicts() {
+        for (form, exp) in &expected {
+            let row = dict.form(form);
+            f.check(
+                (name, form),
+                row.map(|r| r.concise_ee.unwrap_or(r.concise)),
+                Some(exp.to_string()),
+            );
+        }
     }
     f.assert();
 }
@@ -563,13 +580,15 @@ fn ee_db() {
 #[test]
 fn convert_table() {
     let mut f = Failures::default();
-    for (text, ee, expected, unknown, ai) in TEXTS {
-        let r = convert(text, &*DB, Options { ee: *ee, ai: *ai });
-        f.check(
-            (text, ee, ai),
-            (r.text, r.unknown),
-            (expected.to_string(), strings(unknown)),
-        );
+    for (name, dict) in dicts() {
+        for (text, ee, expected, unknown, ai) in TEXTS {
+            let r = convert(text, dict, Options { ee: *ee, ai: *ai });
+            f.check(
+                (name, text, ee, ai),
+                (r.text, r.unknown),
+                (expected.to_string(), strings(unknown)),
+            );
+        }
     }
     f.assert();
 }
@@ -577,8 +596,10 @@ fn convert_table() {
 #[test]
 fn revert_table() {
     let mut f = Failures::default();
-    for (text, expected, ee) in REVERTS {
-        f.check((text, ee), revert(text, &*DB, *ee).text, expected.to_string());
+    for (name, dict) in dicts() {
+        for (text, expected, ee) in REVERTS {
+            f.check((name, text, ee), revert(text, dict, *ee).text, expected.to_string());
+        }
     }
     f.assert();
 }
@@ -610,60 +631,56 @@ fn round_trip_whole_db() {
 
 #[test]
 fn lookup_words() {
-    let r = lookup(&["Soare", "casa", "zzoa", "Câine", "român"], &*DB, Options::default());
-    let results: HashMap<&str, &str> = [
-        ("Soare", "sōre"),
-        ("casa", "casa"),
-        ("zzoa", "zzō"),
-        ("Câine", "cîine"),
-        ("român", "român"),
-    ]
-    .into();
-    assert_eq!(
-        r.results
-            .iter()
-            .map(|(k, v)| (k.as_str(), v.as_str()))
-            .collect::<HashMap<_, _>>(),
-        results
-    );
-    assert_eq!(r.unknown, ["zzoa"]);
-    assert!(r.alternatives.is_empty());
+    let pairs = |r: &grafia_concisa::Lookup| -> HashMap<String, String> {
+        r.results.iter().map(|(k, v)| (k.clone(), v.clone())).collect()
+    };
+    let expected = |xs: &[(&str, &str)]| -> HashMap<String, String> {
+        xs.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect()
+    };
+    for (name, dict) in dicts() {
+        let r = lookup(&["Soare", "casa", "zzoa", "Câine", "român"], dict, Options::default());
+        let results = [
+            ("Soare", "sōre"),
+            ("casa", "casa"),
+            ("zzoa", "zzō"),
+            ("Câine", "cîine"),
+            ("român", "român"),
+        ];
+        assert_eq!(pairs(&r), expected(&results), "{name}");
+        assert_eq!(r.unknown, ["zzoa"], "{name}");
+        assert!(r.alternatives.is_empty(), "{name}");
 
-    let r = lookup(&["pâinea"], &*DB, Options { ee: false, ai: false });
-    assert_eq!(r.results["pâinea"], "pâinē");
+        let r = lookup(&["pâinea"], dict, Options { ee: false, ai: false });
+        assert_eq!(r.results["pâinea"], "pâinē", "{name}");
 
-    let r = lookup(
-        &["idee", "zzee", "zzeele", "muzeele"],
-        &*DB,
-        Options { ee: true, ai: true },
-    );
-    let results: HashMap<&str, &str> = [
-        ("idee", "ideẹ"),
-        ("zzee", "zzeẹ"),
-        ("zzeele", "zzeile"),
-        ("muzeele", "muzeẹle"),
-    ]
-    .into();
-    assert_eq!(
-        r.results
-            .iter()
-            .map(|(k, v)| (k.as_str(), v.as_str()))
-            .collect::<HashMap<_, _>>(),
-        results
-    );
-    assert_eq!(r.unknown, ["zzee", "zzeele", "muzeele"]);
-    assert_eq!(r.alternatives.len(), 1);
-    assert_eq!(r.alternatives["zzeele"], ["zzeile", "zzeẹle"]);
+        let r = lookup(
+            &["idee", "zzee", "zzeele", "muzeele"],
+            dict,
+            Options { ee: true, ai: true },
+        );
+        let results = [
+            ("idee", "ideẹ"),
+            ("zzee", "zzeẹ"),
+            ("zzeele", "zzeile"),
+            ("muzeele", "muzeẹle"),
+        ];
+        assert_eq!(pairs(&r), expected(&results), "{name}");
+        assert_eq!(r.unknown, ["zzee", "zzeele", "muzeele"], "{name}");
+        assert_eq!(r.alternatives.len(), 1, "{name}");
+        assert_eq!(r.alternatives["zzeele"], ["zzeile", "zzeẹle"], "{name}");
+    }
 }
 
 #[test]
 fn homographs() {
     let mut f = Failures::default();
-    for (word, spellings) in HOMOGRAPHS {
-        let s = &convert(word, &*DB, Options::default()).segments[0];
-        f.check(word, s.alts.clone(), strings(spellings));
-        if let Some(first) = spellings.first() {
-            f.check(word, s.t.as_str(), first); // default in the text
+    for (name, dict) in dicts() {
+        for (word, spellings) in HOMOGRAPHS {
+            let s = &convert(word, dict, Options::default()).segments[0];
+            f.check((name, word), s.alts.clone(), strings(spellings));
+            if let Some(first) = spellings.first() {
+                f.check((name, word), s.t.as_str(), first); // default in the text
+            }
         }
     }
     f.assert();
@@ -672,11 +689,13 @@ fn homographs() {
 #[test]
 fn revert_homographs() {
     let mut f = Failures::default();
-    for (word, spellings) in REVERT_HOMOGRAPHS {
-        let s = &revert(word, &*DB, true).segments[0];
-        f.check(word, s.alts.clone(), strings(spellings));
-        if let Some(first) = spellings.first() {
-            f.check(word, s.t.as_str(), first); // default in the text
+    for (name, dict) in dicts() {
+        for (word, spellings) in REVERT_HOMOGRAPHS {
+            let s = &revert(word, dict, true).segments[0];
+            f.check((name, word), s.alts.clone(), strings(spellings));
+            if let Some(first) = spellings.first() {
+                f.check((name, word), s.t.as_str(), first); // default in the text
+            }
         }
     }
     f.assert();
@@ -685,16 +704,72 @@ fn revert_homographs() {
 #[test]
 fn unknown_ee() {
     let mut f = Failures::default();
-    for (word, spellings) in UNKNOWN_EE {
-        let s = &convert(word, &*DB, Options { ee: true, ai: true }).segments[0];
-        f.check(word, s.unknown.as_deref(), Some(*word));
-        f.check(word, s.t.as_str(), spellings[0]);
-        let alts = if s.alts.is_empty() {
-            vec![s.t.clone()]
-        } else {
-            s.alts.clone()
-        };
-        f.check(word, alts, strings(spellings));
+    for (name, dict) in dicts() {
+        for (word, spellings) in UNKNOWN_EE {
+            let s = &convert(word, dict, Options { ee: true, ai: true }).segments[0];
+            f.check((name, word), s.unknown.as_deref(), Some(*word));
+            f.check((name, word), s.t.as_str(), spellings[0]);
+            let alts = if s.alts.is_empty() {
+                vec![s.t.clone()]
+            } else {
+                s.alts.clone()
+            };
+            f.check((name, word), alts, strings(spellings));
+        }
     }
     f.assert();
+}
+
+#[test]
+fn data_file() {
+    let mut f = Failures::default();
+    // every table reads back as written...
+    for (form, row) in &DB.forms {
+        f.check(form, FILE.form(form), Some(row.clone()));
+    }
+    for lemma in &DB.eu_lemmas {
+        f.check(lemma, FILE.eu_lemma(lemma), true);
+    }
+    for lemma in &DB.ea_lemmas {
+        f.check(lemma, FILE.ea_lemma(lemma), true);
+    }
+    for (lemma, reference) in &DB.iesc_lemmas {
+        f.check(lemma, FILE.iesc_lemma(lemma), Some(reference.clone()));
+    }
+    for (concise, entry) in &DB.ee_revert {
+        f.check(concise, FILE.ee_revert(concise), Some(entry.clone()));
+    }
+    // ...with nothing else
+    for key in ["", "casa", "soar", "soarez", "zzoa"] {
+        f.check(key, FILE.form(key), None);
+    }
+    f.check("zzeu", FILE.eu_lemma("zzeu"), false);
+    f.check("zzea", FILE.ea_lemma("zzea"), false);
+    f.check("zzgiesc", FILE.iesc_lemma("zzgiesc"), None);
+    f.check("zzeẹ", FILE.ee_revert("zzeẹ"), None);
+    f.check("date", FILE.date(), DATE);
+    f.check("rules", FILE.rules(), RULES_HASH);
+    f.assert();
+}
+
+#[test]
+fn bad_data_files() {
+    let bytes = datafile::write(&DB, DATE).unwrap();
+    let changed = |at: usize| {
+        let mut b = bytes.clone();
+        b[at] ^= 1;
+        b
+    };
+    let cases = [
+        ("empty", Vec::new()),
+        ("magic", [b"SQLite format 3\0".as_slice(), &bytes[16..]].concat()),
+        ("version", changed(8)),
+        ("a section's length", changed(20)),
+        ("a byte in the middle", changed(bytes.len() / 2)),
+        ("truncated", bytes[..bytes.len() - 1].to_vec()),
+        ("extra byte", [&bytes[..], &[0]].concat()),
+    ];
+    for (case, bytes) in cases {
+        assert!(DataFile::new(bytes).is_err(), "{case}");
+    }
 }

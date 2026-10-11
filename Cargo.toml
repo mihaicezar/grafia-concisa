@@ -1,8 +1,22 @@
 [workspace]
 resolver = "3"
-members = ["crates/core"]
+members = ["crates/core", "crates/pipeline", "crates/wasm", "xtask"]
 
 [workspace.package]
 version = "0.2.0"
 edition = "2024"
 license = "GPL-3.0-or-later"
+
+# The one place for the wasm-bindgen version. Its CLI support library and
+# wasm-bindgen-test-runner must be the same version: CI installs the runner of
+# the version in Cargo.lock (README.md, *Development*).
+[workspace.dependencies]
+wasm-bindgen = "=0.2.129"
+wasm-bindgen-cli-support = "=0.2.129"
+
+# The web app's WASM (cargo xtask web): small, since every visitor downloads it
+[profile.wasm]
+inherits = "release"
+opt-level = "s"
+lto = true
+codegen-units = 1

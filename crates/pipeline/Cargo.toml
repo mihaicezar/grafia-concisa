@@ -1,0 +1,15 @@
+[package]
+name = "grafia-pipeline"
+description = "grafia concisă — builds the data file from dexonline"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+anyhow = "1.0.104"
+clap = { version = "4.6.7", features = ["derive"] }
+flate2 = "1.1.10"
+grafia-concisa = { path = "../core" }
+mysql = { version = "28.0.3", default-features = false, features = ["minimal-rust"] }
+ureq = { version = "3.4.2", default-features = false, features = ["native-tls"] }

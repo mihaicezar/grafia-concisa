@@ -6,21 +6,20 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
 @concise-writing-spec.md
 
 ## Layout
-- `crates/core/`: the Rust core: rules (`rules.rs`), the DB builder (`build.rs`), lookups and conversion (`lib.rs`), tests (`tests/tables.rs`). Put rule logic here only.
-- `grafia_concisa/`: the Python rules (`rules.py`) and DB builder (`db.py`), frozen since Rust matched them (2026-10-10); the Flask app runs on them until the PWA replaces it
-- `pipeline/`: `load_dexonline.py` (dexonline dump → local MariaDB), `build_db.py` (MariaDB → `word_db.sqlite`, or `--export` for `parity.py`), `seed_db.py` (dev DB, no MySQL), `parity.py` (Python's side of the Rust parity check)
-- `server/`: Flask API (`server.py`), static UI (`static/index.html`), tests (`test_server.py`)
+- `crates/core/`: the Rust core: rules (`rules.rs`), the DB builder (`build.rs`), the data file `grafia.dat` (`datafile.rs`), lookups and conversion (`lib.rs`), tests (`tests/tables.rs`). Put rule logic here only.
+- `crates/pipeline/`: the binary `grafia-pipeline`: `load` (dexonline dump → local MariaDB), `build` (MariaDB → `grafia.dat`), `export` (MariaDB → text records, for `build --text` and `crates/core/examples/snapshot.rs`), `seed` (dev data file, no MariaDB)
+- `crates/wasm/`: the core in WASM for the web app (`Engine`), tests under Node (`tests/node.rs`)
+- `web/`: the web app (a PWA): the page (`index.html`), the service worker (`sw.js`), the manifest, icons and fonts, and the data file it ships, `grafia.dat` (committed: CI can't build it)
+- `xtask/`: `cargo xtask web`, which builds the web app into `web/dist/`
 
 ## Commands
-- Use `uv` only, never `pip`.
-- `uv run python -m unittest discover -s server`: run all tests (must pass before any commit).
-- `cargo test --workspace`: run the Rust tests (must pass before any commit too).
-- `uv run python pipeline/seed_db.py`: build a small dev DB.
-- Full DB: see README.md. A MariaDB server is required: on this machine, a portable one on port 3307; see "This machine" there. Then run:
-  - `uv run python pipeline/load_dexonline.py --download --client <mariadb> --port 3307`: load or update dexonline;
-  - `uv run --extra pipeline python pipeline/build_db.py --mysql --host 127.0.0.1 --port 3307 --database dexonline`: build.
-- `uv run flask --app server/server.py run`: dev server.
-- Rust parity check (see `pipeline/parity.py`): `build_db.py --export data`, then `parity.py` and `cargo run --release -p grafia-concisa --example parity`, then `git diff --no-index --stat data/parity/python data/parity/rust`.
+- `cargo test --workspace`: run the tests (must pass before any commit).
+- `cargo test -p grafia-wasm --target wasm32-unknown-unknown`: the WASM tests, under Node, on `web/grafia.dat` (must pass before a commit that changes `crates/` or `web/grafia.dat`). Needs `wasm-bindgen-test-runner`: see README.md.
+- `cargo xtask web`: build the web app into `web/dist/`; `npx serve web/dist` serves it on <http://localhost:3000>.
+- `cargo run --release -p grafia-pipeline -- seed`: build a small dev data file, `data/grafia.dat`.
+- Full data file: see README.md. A MariaDB server is required: on this machine, a portable one on port 3307; see "This machine" there. Then run:
+  - `cargo run --release -p grafia-pipeline -- load --download --client <mariadb> --port 3307`: load or update dexonline;
+  - `cargo run --release -p grafia-pipeline -- build --mysql --port 3307 --out web/grafia.dat`: build the web app's data file. Rebuild and commit it after a dexonline update and after any change to the code of `rules.rs` or `build.rs` (not only their comments): the file records `RULES_HASH`, and `cargo xtask web` (so CI) refuses it otherwise.
 
 ## Conventions
 - Simple over clever, with best practices, and no speculative features.
@@ -38,7 +37,7 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
 1. Refine the fallback syllabifier (`rules::rule_cut`). dexonline prevails wherever it has data. `IA_DIPHTHONG`, `EA_HIATUS`, `IE_HIATUS` and `OA_HIATUS` were reviewed by Cezar on 2026-10-09 against dexonline's own syllabifications of similar words. Extend them as new cases appear.
 2. Port to Rust (2026-10-09, see *Platforms and stack* in `DECISIONS.md`) following `rust-port-plan.md`, in this order:
    - the core (all of `rules.py`, and the builder in `db.py`) with the test tables, then check that it matches Python on every form in the database; the Python rules are then frozen (done 2026-10-10);
-   - the pipeline, and the data file format: it must work in WASM and be memory-mapped on iOS, where keyboards are killed above a few tens of MB;
-   - the web as a WASM PWA on GitHub Pages; the rest of Python is removed when it replaces the Flask app;
+   - the pipeline, and the data file format: it must work in WASM and be memory-mapped on iOS, where keyboards are killed above a few tens of MB (done 2026-10-10: `grafia.dat`, and the Python pipeline is removed);
+   - the web as a WASM PWA on GitHub Pages (done 2026-10-10: `crates/wasm`, `web/`, `cargo xtask web`, and the rest of Python is removed);
    - iOS: one keyboard with two modes and a mode key, with the data file inside the keyboard extension (it can't read the App Group container without Full Access), and predictions from `UITextChecker`. iOS builds need macOS (a cloud CI build is fine); during development they are sideloaded with a free Apple ID;
    - Android: an `ACTION_PROCESS_TEXT` activity, with bindings generated by UniFFI.
