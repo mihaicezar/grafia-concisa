@@ -207,9 +207,9 @@
         }
         if (seg.obsolete) {
           obsolete++;
-          const [old, current] = seg.obsolete;
-          footnote(`old:${old.toLowerCase()}`,
-                   ["Forma ", word(old), " e învechită; forma actuală e ", word(current), "."]);
+          const [old, ...current] = seg.obsolete;  // one current form, or several (alineam: alinam, aliniam)
+          const forms = current.flatMap((c, i) => (i ? [" sau ", word(c)] : [word(c)]));
+          footnote(`old:${old.toLowerCase()}`, ["Forma ", word(old), " e învechită; forma actuală e ", ...forms, "."]);
         }
       }
       for (const { text } of footnotes) {

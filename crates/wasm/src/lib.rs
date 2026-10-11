@@ -28,7 +28,7 @@ impl Engine {
 
     /// Standard -> concise, with the -ee and â -> î switches:
     /// `{text, segments: [{t, alts?, unknown?, obsolete?}], unknown}`, where `obsolete` is
-    /// [the obsolete word, its current form].
+    /// [the obsolete word, then its current forms].
     pub fn convert(&self, text: &str, ee: bool, ai: bool) -> Result<JsValue, JsError> {
         let conversion = grafia_concisa::convert(text, &self.dict, Options { ee, ai });
         Ok(serde_wasm_bindgen::to_value(&conversion)?)

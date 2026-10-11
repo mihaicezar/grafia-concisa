@@ -141,13 +141,14 @@ pub fn revert(text: &str, dict: &dyn Dictionary, ee: bool) -> Reversion {
 
 /// Words converted one by one: each word's default spelling (lowercase), the
 /// unknown words, all the spellings of those with several, default first, and the
-/// current form of the obsolete ones (lowercase: alineare -> aliniere).
+/// current forms of the obsolete ones (lowercase: alineare -> aliniere; alineam -> alinam,
+/// aliniam).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Lookup {
     pub results: IndexMap<String, String>,
     pub unknown: Vec<String>,
     pub alternatives: IndexMap<String, Vec<String>>,
-    pub obsolete: IndexMap<String, String>,
+    pub obsolete: IndexMap<String, Vec<String>>,
 }
 
 /// Converts each word on its own, as `convert` does.
@@ -182,7 +183,7 @@ pub fn lookup(words: &[&str], dict: &dyn Dictionary, options: Options) -> Lookup
         if *unknown {
             out.unknown.push(w.to_string());
         }
-        if let Some(current) = current {
+        if !current.is_empty() {
             out.obsolete.insert(w.to_string(), current.clone());
         }
     }

@@ -73,10 +73,11 @@ This file is the log of closed decisions: what was decided, when, and why, with 
 
 ## Obsolete forms (spec: *Obsolete forms*)
 - **2026-10-11: an obsolete form is written as its current form**, and the switch offers its own spelling, with a footnote naming the current form („Forma *alineare* e învechită; forma actuală e *aliniere*.”). **Why:** the obsolete form is incorrect, and its current form is what the text means; the switch keeps the old spelling at hand.
-  - The obsolete lemmas are listed by hand with their current lemma (*alinea* → *alinia*, *alineare* → *aliniere*, *rachiareasă* → *rachiereasă*), and each form is paired with the current lemma's form of the same inflection (*alineează* → *aliniază*, *alineând* → *aliniind*). **Why:** the two paradigms differ beyond the stem.
+  - The obsolete lemmas are listed by hand with their current lemma (*alinea* → *alinia*, *alineare* → *aliniere*, *alini* → *alina*, *rachiareasă* → *rachiereasă*), and each form is paired with the current lemma's form of the same inflection (*alineează* → *aliniază*, *alineând* → *aliniind*). **Why:** the two paradigms differ beyond the stem.
   - The old spelling follows the old syllabification (*alineare*: *a-li-ne-a-re*, a hiatus, not *alinēre*; *rachiareasă*: *rachiarēsă*).
-  - A form that a current lemma also gives keeps that lemma's spelling, with no switch (*alineat*, the noun; *alinea*, the imperfect of *alini*).
-  - A word missing from the database with the stem of an obsolete lemma takes the current stem (*rachiareasa* → *rachierēsa*, or *rachiarēsa*).
+  - A form that a current lemma also gives keeps that lemma's spelling, with no switch (*alineat*, the noun).
+  - **2026-10-12:** *alini* is the obsolete form of *alina* (*alinesc* → *alin*). A form of several obsolete lemmas with different current forms is not rewritten: the switch offers its own spellings, the one of the lemma listed first in `rules::OBSOLETE` by default, and the footnote names every current form (*alineam*, of *alinea* and *alini*: *alineam* or *alinēm*; „forma actuală e *aliniam* sau *alinam*”). **Why:** the text alone does not say which verb was meant.
+  - A word missing from the database with the stem of an obsolete lemma that dexonline lists without its forms takes the current stem (*rachiareasa* → *rachierēsa*, or *rachiarēsa*). **Why:** for the other lemmas every form is in the database, and the stem would only catch other words (*Alinei*, of *Alina*).
   - Long infinitives in -iare are obsolete forms too (*apreciare* → *apreciere*, *ambreiere*, *inventariere*, *înjunghiere*).
 
 ## Optional -ee rule (spec: *Optional rule: final -ee*)

@@ -93,7 +93,7 @@ pub fn normalize(word: &str) -> String {
 /// -ee ending with the -ee switch, or an obsolete stem (alineez).
 pub fn has_candidate(word: &str, ee: bool) -> bool {
     let w = normalize(word);
-    found(&CANDIDATE, &w) || (ee && found(&EE_FINAL, &w)) || obsolete_stem(&w).is_some()
+    found(&CANDIDATE, &w) || (ee && found(&EE_FINAL, &w)) || has_obsolete_stem(&w)
 }
 
 const VOWELS: &str = "aeiouăâî";
@@ -146,14 +146,20 @@ pub const IERE_DIPHTHONG: [&str; 4] = ["miere", "înmiere", "fiere", "piere"];
 pub const IARE_KEPT: [&str; 2] = ["fiare", "mobiliare"];
 static IAR: LazyLock<Regex> = LazyLock::new(|| re(r"(.*i-?)[aă](-?r)")); // the last -iar-/-iăr- of a word
 // Obsolete lemmas: (the lemma, syllabified, its current lemma, the stem its forms start
-// with). A form of one is written as the current lemma's form with the same inflection
-// (alineează -> aliniėză), and offers its own spelling, from this syllabification, on the
-// switch (alineēză). A word missing from the database that starts with the stem takes the
-// current lemma's stem instead (rachiareasa -> rachiereasa, or rachiarēsa).
-pub const OBSOLETE: &[(&str, &str, &str)] = &[
-    ("a-li-ne-a", "alinia", "aline"),
-    ("a-li-ne-a-re", "aliniere", "aline"),
-    ("ra-chi-a-rea-să", "rachiereasă", "rachiare"),
+// with, whether dexonline lists it without its forms). A form of one is written as the
+// current lemma's form with the same inflection (alineează -> aliniėză), and offers its own
+// spelling, from this syllabification, on the switch (alineēză). Words with the stem are
+// looked up even with no candidate digraph (alineez). For a lemma listed without its forms,
+// a word missing from the database that starts with the stem takes the current lemma's
+// stem instead (rachiareasa -> rachiereasa, or rachiarēsa); for the others it would only
+// catch other words (Alinei). A form of several obsolete lemmas with different current
+// lemmas is not rewritten: its own spellings, in the order of this list, are offered
+// (alineam, of alinea and alini: alineam or alinēm).
+pub const OBSOLETE: &[(&str, &str, &str, bool)] = &[
+    ("a-li-ne-a", "alinia", "aline", false),
+    ("a-li-ne-a-re", "aliniere", "aline", false),
+    ("a-li-ni", "alina", "alin", false), // its imperfect is alinea's: alineam (alinea first)
+    ("ra-chi-a-rea-să", "rachiereasă", "rachiare", true),
 ];
 
 // Headwords in -eea take -eė with the -ee switch (Niceė, Andreė), except the
@@ -355,13 +361,16 @@ fn rule_cut(word: &[char], b: usize, known: &HashSet<String>, verb: bool) -> boo
         return !inside(&IA_DIPHTHONG, word, b);
     }
     if labial_or_palatal {
-        if starts_with_at(word, &['i', 'e', 'r'], b - 1) && IERE_ENDINGS.contains(&text(&word[b + 2..]).as_str()) {
-            // copiere, învierea; not mierea, pieri
-            return !IERE_DIPHTHONG.contains(&(text(&word[..b + 2]) + "e").as_str());
-        }
-        if starts_with_at(word, &['i', 'e', 'r'], b - 1) && IER_ENDINGS.contains(&text(&word[b + 2..]).as_str()) {
-            // plumier, legumieră, rachiereasă, rachieresele; not fier, zbier
-            return word[..b - 2].iter().any(|&c| is_vowel(c));
+        if starts_with_at(word, &['i', 'e', 'r'], b - 1) {
+            let end = text(&word[b + 2..]);
+            if IERE_ENDINGS.contains(&end.as_str()) {
+                // copiere, învierea; not mierea, pieri
+                return !IERE_DIPHTHONG.contains(&(text(&word[..b + 2]) + "e").as_str());
+            }
+            if IER_ENDINGS.contains(&end.as_str()) {
+                // plumier, legumieră, rachiereasă, rachieresele; not fier, zbier
+                return word[..b - 2].iter().any(|&c| is_vowel(c));
+            }
         }
         return text(&word[b - 1..]) == "iesc" || inside(&IE_HIATUS, word, b);
     }
@@ -376,23 +385,28 @@ fn inside(pattern: &Regex, word: &[char], b: usize) -> bool {
         .any(|m| m.map(|m| m.start() < at && at < m.end()).expect("regex match"))
 }
 
-/// The syllabification and the current lemma of an obsolete `lemma` in OBSOLETE
-/// (alinea: a-li-ne-a, alinia).
-pub fn obsolete(lemma: &str) -> Option<(&'static str, &'static str)> {
+/// The place in OBSOLETE, the syllabification and the current lemma of an obsolete
+/// `lemma` (alinea: 0, a-li-ne-a, alinia).
+pub fn obsolete(lemma: &str) -> Option<(usize, &'static str, &'static str)> {
     OBSOLETE
         .iter()
-        .find(|(old, ..)| old.chars().filter(|&c| c != '-').eq(lemma.chars()))
-        .map(|&(old, new, _)| (old, new))
+        .position(|(old, ..)| old.chars().filter(|&c| c != '-').eq(lemma.chars()))
+        .map(|i| (i, OBSOLETE[i].0, OBSOLETE[i].1))
 }
 
-/// A `word` with the stem of an obsolete lemma in OBSOLETE: the word with the current
-/// lemma's stem instead, and the obsolete lemma, syllabified (rachiareasa ->
-/// rachiereasa, ra-chi-a-rea-să).
+/// True if `word` starts with the stem of an obsolete lemma in OBSOLETE (alineez).
+pub fn has_obsolete_stem(word: &str) -> bool {
+    OBSOLETE.iter().any(|(_, _, stem, _)| word.starts_with(stem))
+}
+
+/// A `word` missing from the database with the stem of an obsolete lemma that dexonline
+/// lists without its forms: the word with the current lemma's stem instead, and the
+/// obsolete lemma, syllabified (rachiareasa -> rachiereasa, ra-chi-a-rea-să; not Alinei).
 pub fn obsolete_stem(word: &str) -> Option<(String, &'static str)> {
     OBSOLETE
         .iter()
-        .find(|(.., stem)| word.starts_with(stem))
-        .map(|&(old, new, stem)| {
+        .find(|&&(_, _, stem, missing)| missing && word.starts_with(stem))
+        .map(|&(old, new, stem, _)| {
             let n = stem.chars().count();
             let current: String = new.chars().take(n).chain(word.chars().skip(n)).collect();
             (current, old)
@@ -742,21 +756,21 @@ pub fn apply_case(template: &str, word: &str) -> String {
 }
 
 /// A `forms` row: the concise spelling, the one with the -ee rule (None if
-/// identical), a homograph's other spellings, and an obsolete form's current form
-/// (alineare: aliniere; its concise spelling is the current form's, its own the
-/// alternative).
+/// identical), a homograph's other spellings, and an obsolete form's current forms
+/// (alineare: aliniere, its concise spelling the current form's and its own the
+/// alternative; alineam: alinam and aliniam, its spellings its own two).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Row {
     pub concise: String,
     pub concise_ee: Option<String>,
     pub alternatives: Vec<String>,
-    pub current: Option<String>,
+    pub current: Vec<String>,
 }
 
 /// A piece of converted text: `t`, plus `alts` (all its spellings, default
 /// first; empty if one), `unknown` (the original word, if missing from the
-/// database) and `obsolete` (an obsolete word and its current form, in the word's case:
-/// [Alineare, Aliniere]). In JSON, `alts`, `unknown` and `obsolete` are left out when empty.
+/// database) and `obsolete` (an obsolete word, then its current forms, in the word's case:
+/// [Alineare, Aliniere], [Alineam, Alinam, Aliniam]). In JSON, `alts`, `unknown` and `obsolete` are left out when empty.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 pub struct Segment {
     pub t: String,
@@ -764,16 +778,16 @@ pub struct Segment {
     pub alts: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unknown: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub obsolete: Option<[String; 2]>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub obsolete: Vec<String>,
 }
 
-/// A word's spellings, default first; whether it is unknown; and an obsolete word's current form.
+/// A word's spellings, default first; whether it is unknown; and an obsolete word's current forms.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Resolution {
     pub spellings: Vec<String>,
     pub unknown: bool,
-    pub current: Option<String>,
+    pub current: Vec<String>,
 }
 
 /// Normalized candidate words -> their resolution.
@@ -818,13 +832,13 @@ pub fn resolve(keys: &BTreeSet<String>, dict: &dyn Dictionary, ee: bool) -> Hash
                         Resolution {
                             spellings,
                             unknown: changeable,
-                            current: Some(current),
+                            current: vec![current],
                         }
                     }
                     None => Resolution {
                         spellings: concise_by_rules(k, ee, &known),
                         unknown: changeable,
-                        current: None,
+                        current: Vec::new(),
                     },
                 }
             }
@@ -840,7 +854,7 @@ fn plain(segments: &mut Vec<Segment>, chunk: &str) {
         return;
     }
     match segments.last_mut() {
-        Some(last) if last.alts.is_empty() && last.unknown.is_none() && last.obsolete.is_none() => {
+        Some(last) if last.alts.is_empty() && last.unknown.is_none() && last.obsolete.is_empty() => {
             last.t.push_str(chunk)
         }
         _ => segments.push(Segment {
@@ -879,7 +893,13 @@ pub fn convert_text(text: &str, dict: &dyn Dictionary, ee: bool, ai: bool) -> Ve
             unknown,
             current,
         } = &resolved[&key];
-        let obsolete = current.as_ref().map(|c| [word.to_string(), apply_case(word, c)]);
+        let obsolete: Vec<String> = if current.is_empty() {
+            Vec::new()
+        } else {
+            std::iter::once(word.to_string())
+                .chain(current.iter().map(|c| apply_case(word, c)))
+                .collect()
+        };
         // all hiatus: keep the original spelling untouched
         let options: Vec<String> = spellings
             .iter()
@@ -891,7 +911,7 @@ pub fn convert_text(text: &str, dict: &dyn Dictionary, ee: bool, ai: bool) -> Ve
                 }
             })
             .collect();
-        if *unknown || options.len() > 1 || obsolete.is_some() {
+        if *unknown || options.len() > 1 || !obsolete.is_empty() {
             let alts = if options.len() > 1 { options.clone() } else { Vec::new() };
             segments.push(Segment {
                 t: options[0].clone(),

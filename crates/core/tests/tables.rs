@@ -407,6 +407,8 @@ const HOMOGRAPHS: &[(&str, &[&str])] = &[
     ("alineez", &["aliniez", "alineez"]),
     ("alineară", &["aliniară", "alineară"]),
     ("alineare", &["aliniere", "alineare"]), // a-li-ne-a-re: a hiatus
+    ("alinea", &["alinea", "alinē"]),        // obsolete twice: only the obsolete spellings, alinea's first
+    ("alineam", &["alineam", "alinēm"]),
     ("rachiareasă", &["rachierēsă", "rachiarēsă"]),
     ("rachiareasa", &["rachierēsa", "rachiarēsa"]), // unknown
     ("apreciarea", &["aprecierē", "apreciarē"]),    // a long infinitive in -iare: obsolete
@@ -548,24 +550,36 @@ const OBSOLETE_RECORDS: &[&[&str]] = &[
     &["alineat", "alineat", "", "S"],
     &["rachiereasă", "rachiereasă", "", "S", "", "I85.0"], // the current lemma first
     &["rachiareasă", "rachiareasă", "", "S", "", "I85.0"],
-    &["alinea", "alinea", "", "S", "V", "I49.0"], // also the imperfect of the current alini...
+    &["alinea", "alini", "", "S", "V", "I68.0"], // two obsolete lemmas, alini (-> alina) first...
+    &["alina", "alina", "", "S", "V", "I68.0"],
+    &["alinea", "alinea", "", "S", "V", "I49.0"], // ...and alinea (-> alinia)
     &["alinia", "alinia", "-ni-a", "S", "V", "I49.0"],
-    &["alinea", "alini", "", "S", "V", "I68.0"],
+    &["alineam", "alini", "", "S", "V", "I66.0"],
+    &["alinam", "alina", "", "S", "V", "I66.0"],
+    &["alineam", "alinea", "", "S", "V", "I66.0"],
+    &["aliniam", "alinia", "-ni-a", "S", "V", "I66.0"],
+    &["alineasem", "alinea", "", "S", "V", "I78.0"], // no current form of this inflection: its own spelling
+    &["alinit", "alini", "", "S", "V", "I52.0"],     // looked up by the stem alin-
+    &["alinat", "alina", "", "S", "V", "I52.0"],
     &["alineară", "alinea", "", "S", "V", "I77.0"], // alinea + -ră: its own cut ne-a
     &["aliniară", "alinia", "-ni-a", "S", "V", "I77.0"],
     &["aliniere", "aliniere", "-ni-e-re", "S", "", "I30.0"],
     &["alineare", "alineare", "", "S", "", "I30.0"],
 ];
-// Obsolete words: (word, its current form, in its case; None if not obsolete)
-const OBSOLETE_WORDS: &[(&str, Option<&str>)] = &[
-    ("Alineează", Some("Aliniază")),
-    ("alineez", Some("aliniez")),
-    ("alineat", None), // a current word too
-    ("alinea", None),  // ...so not obsolete
-    ("rachiareasă", Some("rachiereasă")),
-    ("rachiareasa", Some("rachiereasa")), // unknown: by its stem
-    ("Apreciarea", Some("Aprecierea")),   // a long infinitive in -iare
-    ("conciliare", None),                 // also the adjective conciliar
+// Obsolete words: (word, its current forms, in its case; none if not obsolete)
+const OBSOLETE_WORDS: &[(&str, &[&str])] = &[
+    ("Alineează", &["Aliniază"]),
+    ("alineez", &["aliniez"]),
+    ("alineat", &[]),                    // a current word too
+    ("Alineam", &["Aliniam", "Alinam"]), // two obsolete lemmas: in the order of rules::OBSOLETE
+    ("alinea", &["alinia", "alina"]),
+    ("alineasem", &[]), // no current form to pair it with
+    ("alinit", &["alinat"]),
+    ("Alinei", &[]), // unknown, with the stem aline-: alinea is listed with its forms
+    ("rachiareasă", &["rachiereasă"]),
+    ("rachiareasa", &["rachiereasa"]), // unknown: by its stem
+    ("Apreciarea", &["Aprecierea"]),   // a long infinitive in -iare
+    ("conciliare", &[]),               // also the adjective conciliar
 ];
 // Records the build skips: a form or a lemma that is not one word
 const INVALID_RECORDS: &[&[&str]] = &[&["zzoare", "zz1", "", "S"], &["zzoa1re", "zzoare", "", "S"]];
@@ -727,6 +741,8 @@ const TEXTS: &[(&str, bool, &str, &[&str], bool)] = &[
         &[],
         true,
     ), // obsolete, but the noun alineat
+    ("alinea alineam", false, "alinea alineam", &[], true), // two obsolete lemmas: alinea's spelling first
+    ("pentru Alinei", false, "pentru Alinei", &[], true), // the stem aline-, but not obsolete: no switch
     (
         "rachiareasa rachiaresele",
         false,
@@ -962,8 +978,9 @@ fn round_trip_whole_db() {
         // ...and an obsolete form to its current form
         let allowed = if long_inf.contains(form.as_str()) {
             vec![form.clone(), iere_spelling(form)]
-        } else if let Some(current) = &row.current {
-            vec![current.to_string()]
+        } else if !row.current.is_empty() {
+            // ...and an obsolete form to its current form, or, with several, to itself
+            row.current.iter().cloned().chain([form.clone()]).collect()
         } else {
             vec![form.clone()]
         };
@@ -1038,10 +1055,15 @@ fn obsolete_words() {
     for (name, dict) in dicts() {
         for (word, current) in OBSOLETE_WORDS {
             let s = &convert(word, dict, Options::default()).segments[0];
-            let got = s.obsolete.as_ref().map(|[old, new]| (old.as_str(), new.as_str()));
-            f.check((name, word), got, current.map(|c| (*word, c)));
+            let expected = if current.is_empty() {
+                Vec::new()
+            } else {
+                std::iter::once(*word).chain(current.iter().copied()).collect()
+            };
+            f.check((name, word), s.obsolete.clone(), strings(&expected));
             let r = lookup(&[word], dict, Options::default());
-            let lowercase = current.map(|c| c.to_lowercase());
+            let lowercase: Vec<String> = current.iter().map(|c| c.to_lowercase()).collect();
+            let lowercase = (!lowercase.is_empty()).then_some(lowercase);
             f.check((name, word, "lookup"), r.obsolete.get(*word).cloned(), lowercase);
         }
     }
@@ -1133,8 +1155,11 @@ fn data_file() {
         f.check(concise, FILE.ee_revert(concise), Some(entry.clone()));
     }
     // ...with nothing else
-    // (zeii: a record with no candidate; zzoare, zzoa1re: INVALID_RECORDS)
-    for key in ["", "casa", "soar", "soarez", "zzoa", "zeii", "zzoare", "zzoa1re"] {
+    // (zeii, alinam: records with no candidate, alinam of the current alina; zzoare, zzoa1re:
+    // INVALID_RECORDS)
+    for key in [
+        "", "casa", "soar", "soarez", "zzoa", "zeii", "zzoare", "zzoa1re", "alinam",
+    ] {
         f.check(key, FILE.form(key), None);
     }
     f.check("zzeu", FILE.eu_lemma("zzeu"), false);
