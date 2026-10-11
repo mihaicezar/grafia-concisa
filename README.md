@@ -63,6 +63,14 @@ The tests must pass before every commit, and the WASM tests too when a commit ch
 
 `cargo xtask web`, then `npx serve web/dist`, and open <http://localhost:3000>. The site must be served over HTTP: browsers don't run its module script or its service worker from a `file://` page. Service workers also need HTTPS, except on `localhost`.
 
+To access the app from other devices on your local WiFi:
+
+```bash
+npx serve web/dist -p 5000
+```
+
+Then find your computer's local IP address with `ipconfig` (look for "IPv4 Address") and visit `http://<your-ip>:5000` from another device.
+
 The service worker keeps serving the version it cached. After a rebuild, close every tab of the site and open it again, or tick *Update on reload* in the browser's developer tools (*Application* → *Service workers*).
 
 ## How the web app works
