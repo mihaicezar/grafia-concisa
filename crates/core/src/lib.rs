@@ -201,5 +201,11 @@ mod tests {
         // ...the code does, and so does a comment after it
         assert_ne!(hash(code), hash("fn a() -> u8 {\n    2 // one\n}\n"));
         assert_ne!(hash(code), hash("fn a() -> u8 {\n    1 // two\n}\n"));
+        // a single / starts no comment, even as the last byte; a comment may end the file
+        assert_ne!(hash("a\n/ b"), hash("a\n/ c"));
+        assert_ne!(hash("a\n/"), hash("a\n"));
+        assert_eq!(hash("a\n// x"), hash("a"));
+        // FNV-1a
+        assert_eq!(hash("a"), 0xaf63_dc4c_8601_ec8c);
     }
 }
