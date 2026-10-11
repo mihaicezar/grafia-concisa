@@ -108,9 +108,9 @@ static IENT: LazyLock<Regex> = LazyLock::new(|| re(r"^ien[tț](?:[aăei]|$)"));
 // specializat), except in these native stems (chiar, biată, piatră, amiază).
 pub static IA_DIPHTHONG: LazyLock<Regex> = LazyLock::new(|| {
     re(concat!(
-        r"chiar(?!e)|chiab|(?<!s)chiag|chiaun|unchiaș", // not -chiare (trunchiare), schiagrafie
-        r"|(?<!n)(?<!litur)(?<!^gor)ghia(?![tnl]|re|ce)", // not unghiar, -ghiat, -ghian, -ghial,
-        // -ghiare, liturghiar, Gorghias, eleghiacesc
+        r"chiar|chiab|(?<!s)chiag|chiaun|unchiaș",     // not schiagrafie
+        r"|(?<!n)(?<!litur)(?<!^gor)ghia(?![tnl]|ce)", // not unghiar, -ghiat, -ghian, -ghial,
+        // liturghiar, Gorghias, eleghiacesc
         r"|^biat(?!l)|(?<!hi)piatr|viaț(?!i)",   // not biatlon, hipiatric, deviație
         r"|(?:^|[aă])miaz(?!m)|(?<!e)miau(?!l)", // not distomiază, miazmă, semiautomat, Miaulis
         r"|megiaș|caragial|barcian|vianu$|chiajn|^obial",
@@ -120,11 +120,11 @@ pub static IA_DIPHTHONG: LazyLock<Regex> = LazyLock::new(|| {
 // realizat); native deal, beat, asear, greșeală stay diphthongs.
 pub static EA_HIATUS: LazyLock<Regex> = LazyLock::new(|| {
     re(concat!(
-        r"(?<![cgdb])eal$",                                // real, leal, boreal; not deal, podbeal
-        r"|(?:lin|hl|baln)ear$|nuclear",                   // linear, cohlear, balnear, nuclearizat
-        r"|(?:gr|aur|or|lin|cl|un|ct|id|al|pl)eat$|creat", // laureat, alineat, nucleat, creator
-        r"|(?:real|ideal)i|boreal|cereal",                 // realizat, idealist, cereale
-        r"|reac[tț]|steat|meandr|aleat|beatif",            // reactor, reacție, steatoză, aleator
+        r"(?<![gdb])eal$",               // real, leal, boreal, interliceal; not mangeal, deal, podbeal
+        r"|(?:lin|hl|baln)ear$|nuclear", // linear, cohlear, balnear, nuclearizat
+        r"|(?:gr|aur|lor|lin|ucl|un|ct|id|upl)eată?$|creat", // laureat(ă), nucleat(ă); not cleat, pleată
+        r"|(?:real|ideal)i|(?<!ră)(?<!sto)boreal|cereal", // realizat, idealist, cereale; not răboreală
+        r"|reac[tț]|steat|meandr|aleat|beatif", // reactor, reacție, steatoză, aleator
     ))
 });
 // Medial ie after p/b/f/v/m or c/g/ch/gh is a hiatus in these neologism stems and
@@ -132,7 +132,7 @@ pub static EA_HIATUS: LazyLock<Regex> = LazyLock::new(|| {
 pub static IE_HIATUS: LazyLock<Regex> =
     LazyLock::new(|| re(r"gien|pieton|cviet|societ|soviet|vien|miel(?:o|in|it|ie)|ietoa?r|(?<=[^zs])bier"));
 // oa is a hiatus in these neologism stems and endings (coagulat, coaliție, protozoar).
-pub static OA_HIATUS: LazyLock<Regex> = LazyLock::new(|| re(r"coagul|coabit|coali[tțz]|zoar$"));
+pub static OA_HIATUS: LazyLock<Regex> = LazyLock::new(|| re(r"coagul|coabit|coali[țz]|zoar$"));
 // A long infinitive in -iere after p/b/f/v/m or c/g/ch/gh is a hiatus in all its forms
 // (copiere, învierea, aprecierilor), except in these native words and their forms
 // (mierea, pieri). After a vowel it is a diphthong anyway (tăiere, înmuiere).
@@ -273,7 +273,7 @@ fn dexonline_cuts(word: &[char], hyphenation: &str) -> Option<(HashSet<usize>, u
 ///   - e-e: hiatus (idee -> ide-e; the -ee switch builds on this);
 ///   - a prefix (PREFIXES) followed by a known word: hiatus (re-abilitat);
 ///   - -ient, -ienț/-ient + a/ă/e/i: hiatus (client, ambient, experiență);
-///   - -iabil, -eabil: hiatus (fiabil, agreabil);
+///   - -iabil, -eabil after a consonant: hiatus (fiabil, agreabil; not debreiabil);
 ///   - prefix bi- before en: hiatus (bienal);
 ///   - ea in the EA_HIATUS neologism endings and stems: hiatus (real, nuclear,
 ///     creat, realizat; not deal, beat, greșeală);
@@ -308,8 +308,11 @@ fn rule_cut(word: &[char], b: usize, known: &HashSet<String>, verb: bool) -> boo
     if pair == ['i', 'e'] && found(&IENT, &text(&word[b - 1..])) {
         return true;
     }
-    if (pair == ['i', 'a'] || pair == ['e', 'a']) && starts_with_at(word, &['a', 'b', 'i', 'l'], b) {
-        return true;
+    if (pair == ['i', 'a'] || pair == ['e', 'a'])
+        && starts_with_at(word, &['a', 'b', 'i', 'l'], b)
+        && (b == 1 || !is_vowel(word[b - 2]))
+    {
+        return true; // fiabil, agreabil; not debreiabil (de-bre-ia)
     }
     if b == 2 && word.starts_with(&['b', 'i', 'e', 'n']) {
         return true;

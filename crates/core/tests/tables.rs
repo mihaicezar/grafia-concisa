@@ -175,7 +175,8 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
     ("biată", "", "biată", "rules", ""),    // IA_DIPHTHONG stem
     ("fiabil", "", "fi-abil", "rules", ""), // -iabil, -eabil: hiatus
     ("agreabil", "", "agre-abil", "rules", ""),
-    ("copiere", "", "copi-ere", "rules", ""), // final -iere: hiatus...
+    ("debreiabil", "", "debreiabil", "rules", ""), // -iabil after a vowel: like its verb (de-bre-ia)
+    ("copiere", "", "copi-ere", "rules", ""),      // final -iere: hiatus...
     ("veghiere", "", "veghi-ere", "rules", ""),
     ("miere", "", "miere", "rules", ""), // ...except IERE_DIPHTHONG
     ("înmiere", "", "înmiere", "rules", ""),
@@ -257,6 +258,9 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
     ("caragialian", "", "caragiali-an", "rules", ""), // only the stem's ia
     ("barcianu", "", "barcianu", "rules", ""),
     ("vianu", "", "vianu", "rules", ""),
+    ("ghiare", "", "ghiare", "rules", ""), // like ghiară
+    ("ghiarele", "", "ghiarele", "rules", ""),
+    ("rachiareasă", "", "rachiareasă", "rules", ""), // like rachiar
     // ...and each exception
     ("unghiar", "", "unghi-ar", "rules", ""),
     ("gorghias", "", "gorghi-as", "rules", ""),
@@ -269,7 +273,8 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
     ("miaulis", "", "mi-aulis", "rules", ""),
     ("diluvianul", "", "diluvi-anul", "rules", ""),
     // EA_HIATUS
-    ("mangeal", "", "mangeal", "rules", ""), // -eal after g: diphthong
+    ("interliceal", "", "interlice-al", "rules", ""), // -eal after c: hiatus
+    ("mangeal", "", "mangeal", "rules", ""),          // -eal after g: diphthong
     ("cohlear", "", "cohle-ar", "rules", ""),
     ("balnear", "", "balne-ar", "rules", ""),
     ("agreat", "", "agre-at", "rules", ""),
@@ -280,8 +285,18 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
     ("bracteat", "", "bracte-at", "rules", ""),
     ("ideat", "", "ide-at", "rules", ""),
     ("supleat", "", "suple-at", "rules", ""),
+    ("anucleată", "", "anucle-ată", "rules", ""), // the feminine too
+    ("laureată", "", "laure-ată", "rules", ""),
+    ("cleat", "", "cleat", "rules", ""), // native: diphthong
+    ("procleat", "", "procleat", "rules", ""),
+    ("procleată", "", "procleată", "rules", ""),
+    ("pleată", "", "pleată", "rules", ""),
+    ("soreată", "", "soreată", "rules", ""),
     ("idealist", "", "ide-alist", "rules", ""),
     ("boreale", "", "bore-ale", "rules", ""),
+    ("hiperboreală", "", "hiperbore-ală", "rules", ""),
+    ("răboreală", "", "răboreală", "rules", ""), // native -eală
+    ("stoboreală", "", "stoboreală", "rules", ""),
     ("reacție", "", "re-acți-e", "rules", ""),
     ("steatoză", "", "ste-atoză", "rules", ""),
     ("meandru", "", "me-andru", "rules", ""),

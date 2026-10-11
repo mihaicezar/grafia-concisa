@@ -11,14 +11,14 @@ exclude_re = [
     'replace < with <= in inside',
     # syllabify: w[b / 1] is w[b]; rule_cut then also sees consonant + vowel, where only the prefix
     # rule can cut, and every prefix ends in a vowel
-    'rules\.rs:404:26: replace - with / in syllabify',
+    'rules\.rs:407:26: replace - with / in syllabify',
     # concise_from_reference: a cut at the lemma's end is never read (only cuts < p or at p < len are)
-    'rules\.rs:448:38: replace - with / in concise_from_reference',
+    'rules\.rs:451:38: replace - with / in concise_from_reference',
     # titlecase letters (ǅ, ǈ, ǋ) do not occur in Romanian
     'in is_titlecase',
     'replace is_titlecase -> bool with false',
     # apply_case: a one-letter template is never a word with a candidate digraph or an -ee spelling
-    'rules\.rs:689:33: replace > with >= in apply_case',
+    'rules\.rs:692:33: replace > with >= in apply_case',
     # ro_order: the forms of an ee_revert tie share their stem and differ only in -ee/-eie/-euri,
     # so only the order of e, i, u matters (the test zzbeleẹ: e before u)
     'build\.rs:92:33: replace == with != in ro_order',

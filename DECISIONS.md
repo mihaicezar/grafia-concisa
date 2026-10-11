@@ -54,6 +54,14 @@ This file is the log of closed decisions: what was decided, when, and why, with 
   - ea: *reactor*, *reacție*, *creator*, *pancreatic*, *steatoză*, *meandru*, *aleator*, *beatific*, *denuclearizat*;
   - oa: *coagulat*, *coabita*, *coaliție*, *protozoar*.
 - **2026-10-09: the native ia stems were reviewed.** *chiajna* and *obială* are diphthongs. *liturghiar*, *eleghiacesc*, *stavropighiacesc*, *schiagrafie*, *schiagramă*, *Gorghias* and *Miaulis* are a hiatus. *rachiar*, *ochiar*, *peruchiar* and the other *-chiar* words are left as they are. **Why:** they are practically out of use.
+- **2026-10-11: corrections found while testing every rule**, from the words each exception alone decides:
+  - *-iabil* after a vowel follows its verb, a diphthong (*debreiabil* → *debreėbil* ← *de-bre-ia*); the *-abil* hiatus stays after a consonant (*fiabil*, *agreabil*);
+  - final *-eal* after c is a hiatus too (*interliceal*); after g, d, b it stays a diphthong (*mangeal*, *deal*, *podbeal*);
+  - *boreal* is a hiatus only in *boreal* itself and its compounds (*boreală*, *hiperboreală*), not in the native *-eală* words (*răboreală*, *stoboreală*);
+  - the *-eat* hiatus covers the feminine *-eată* too (*anucleată*, *bacalaureată*), like the masculine;
+  - *ghiare* is a diphthong (*ghėre*, like *ghiară*), and *rachiareasă* follows *rachiar* (*rachėrēsă*): the exceptions for *-ghiare* and *-chiare* were for long infinitives, which are now written *-iere* (*înjunghiere*, *rachiereasă*);
+  - the *coaliț-* stem has no *coalit-* spelling.
+  - **Why:** each exception was checked against every dexonline word it decides; these were the ones that gave a wrong spelling.
 - **2026-10-05: final -ii after a consonant is a hiatus in verb infinitives only** (*sfi-i*, *pri-i*; not *copii*). **Why:** dexonline syllabifies none of the -ii verbs, and without the cut their forms came out as diphthongs (*sfiește*, *priască* are *sfi-eș-te*, *pri-as-că*).
 
 ## Long infinitives in -iare (spec: *Syllabification source*)
@@ -65,6 +73,7 @@ This file is the log of closed decisions: what was decided, when, and why, with 
 - **A separate switch, default off.** Word-final *-ee* is read as *-eie* and written *-eẹ* (*idee* → *ideẹ*), and the forms of *-ee* lemmas follow the *femeie* pattern (*ideea* → *ideė*, *ideei* → *ideii*).
   - **2026-10-04:** extended to the articulated plurals in *-eele*/*-eelor* (*orhideile*; *bombeẹle* ← *bombeu*); to the *-uri* plurals of *-eu* lemmas longer than 4 letters (*bombeuri* → *bombeẹ*; not *pneuri*); to articulated *-eea* and genitive *-eei* beyond *-ee* lemmas (*spontaneė*, *Andreė*, *Galileii*), except the pronouns *aceea*, *ceea*, *oareceea*.
 - If one spelling is both a singular and a plural, the singular reading wins.
+- **2026-10-11, deferred:** whether the -ee switch should reach words derived from an -ee/-eu stem. The plural *licee* (*liceẹ*) could give *liceėn*, *liceėl*, *interliceėl*, and *muzeė* could give *muzeėl*, *intermuzeėl*. Until it is decided, the switch leaves them as they are (*interliceal*, *muzeal*).
 
 ## â → î (spec: *Optional rule: â → î*)
 - **2026-10-06: â is written î, except in words with the root *român*/*rumân*** (*câine* → *cîine*; *român*, *aromân*, *rumânesc* keep â). A separate switch, default on.
