@@ -122,7 +122,7 @@ pub static EA_HIATUS: LazyLock<Regex> = LazyLock::new(|| {
     re(concat!(
         r"(?<![gdb])eal$",               // real, leal, boreal, interliceal; not mangeal, deal, podbeal
         r"|(?:lin|hl|baln)ear$|nuclear", // linear, cohlear, balnear, nuclearizat
-        r"|(?:gr|aur|lor|lin|ucl|un|ct|id|upl)eată?$|creat", // laureat(ă), nucleat(ă); not cleat, pleată
+        r"|(?:gr|aur|lor|lin|ucl|un|ct|id|upl)eat|creat", // laureat(ă), nucleat(ă), delineator; not cleat, pleată
         r"|(?:real|ideal)i|(?<!ră)(?<!sto)boreal|cereal", // realizat, idealist, cereale; not răboreală
         r"|reac[tț]|steat|meandr|aleat|beatif", // reactor, reacție, steatoză, aleator
     ))
@@ -137,10 +137,16 @@ pub static OA_HIATUS: LazyLock<Regex> = LazyLock::new(|| re(r"coagul|coabit|coal
 // (copiere, învierea, aprecierilor), except in these native words and their forms
 // (mierea, pieri). After a vowel it is a diphthong anyway (tăiere, înmuiere).
 pub const IERE_ENDINGS: [&str; 6] = ["e", "ea", "i", "ii", "ile", "ilor"]; // after -ier: -iere, -ierea, -ieri, ...
+// After -ier, ending an agent noun: -ier, -ieră, -iereasă and its forms (plumier, legumieră,
+// rachiereasă, rachieresele)
+pub const IER_ENDINGS: [&str; 8] = ["", "ă", "easă", "easa", "ese", "esei", "esele", "eselor"];
 pub const IERE_DIPHTHONG: [&str; 4] = ["miere", "înmiere", "fiere", "piere"];
 // Lemmas in -iare that are no long infinitives (fiare: s.f. pl.; mobiliare: s.n.)
 pub const IARE_KEPT: [&str; 2] = ["fiare", "mobiliare"];
 static IAR: LazyLock<Regex> = LazyLock::new(|| re(r"(.*i-?)[aă](-?r)")); // the last -iar-/-iăr- of a word
+// Obsolete stems, written as their current stem in every form, known or not, like a long
+// infinitive in -iare (rachiareasă, rachiareasa -> rachiereasă, rachiereasa)
+pub const OBSOLETE: &[(&str, &str)] = &[("rachiare", "rachiere")];
 // Headwords in -eea take -eė with the -ee switch (Niceė, Andreė), except the
 // pronoun aceea and its kin, which keep -eē.
 pub const EEA_UNCHANGED: [&str; 2] = ["aceea", "oareceea"];
@@ -289,7 +295,7 @@ fn dexonline_cuts(word: &[char], hyphenation: &str) -> Option<(HashSet<usize>, u
 ///     -iere, final -iare after p/b/f/v/m or c/g/ch/gh (fiare);
 ///   - ie medial after p/b/f/v/m or c/g/ch/gh: diphthong (fier, piept),
 ///     except the IE_HIATUS stems (igienă, bărbierit, așchietor), the
-///     adjectives in -iesc (zapciesc, surugiesc), final -ier/-ieră after a
+///     adjectives in -iesc (zapciesc, surugiesc), final -ier/-ieră/-iereasă (IER_ENDINGS) after a
 ///     vowel and a consonant (plumier, legumieră; not fier, zbier) and the
 ///     long infinitives in -iere with all their endings (copiere, învierea,
 ///     aprecierilor, schiere), though not in IERE_DIPHTHONG (miere, mierea,
@@ -344,12 +350,11 @@ fn rule_cut(word: &[char], b: usize, known: &HashSet<String>, verb: bool) -> boo
             // copiere, învierea; not mierea, pieri
             return !IERE_DIPHTHONG.contains(&(text(&word[..b + 2]) + "e").as_str());
         }
-        let from = text(&word[b - 1..]);
-        if from == "ier" || from == "ieră" {
-            // plumier, legumieră; not fier, zbier
+        if starts_with_at(word, &['i', 'e', 'r'], b - 1) && IER_ENDINGS.contains(&text(&word[b + 2..]).as_str()) {
+            // plumier, legumieră, rachiereasă, rachieresele; not fier, zbier
             return word[..b - 2].iter().any(|&c| is_vowel(c));
         }
-        return from == "iesc" || inside(&IE_HIATUS, word, b);
+        return text(&word[b - 1..]) == "iesc" || inside(&IE_HIATUS, word, b);
     }
     true
 }
@@ -360,6 +365,14 @@ fn inside(pattern: &Regex, word: &[char], b: usize) -> bool {
     pattern
         .find_iter(&text(word))
         .any(|m| m.map(|m| m.start() < at && at < m.end()).expect("regex match"))
+}
+
+/// The current form of a `word` with an obsolete stem in OBSOLETE (rachiareasa -> rachiereasa).
+pub fn current_form(word: &str) -> Option<String> {
+    OBSOLETE
+        .iter()
+        .find(|(old, _)| word.starts_with(old))
+        .map(|(old, new)| format!("{new}{}", &word[old.len()..]))
 }
 
 /// True if `lemma`, a feminine noun or unclassified in dexonline, is a long
@@ -552,8 +565,9 @@ pub fn lemma_candidates(word: &str) -> Vec<String> {
 /// Input normalized; the default spelling comes first. `known` maps known
 /// lemma candidates to their syllabification ('' when not needed). A form of
 /// an -iesc adjective in `known` is derived from it (harabagiasca ->
-/// harabagiėsca, harabagiești <- harabagi-esc). With the -ee switch the word is read as a
-/// singular, except:
+/// harabagiėsca, harabagiești <- harabagi-esc). A word with an obsolete stem is
+/// converted as its current form (rachiareasa -> rachiereasa, see OBSOLETE). With the
+/// -ee switch the word is read as a singular, except:
 ///   - -eei: the genitive of the first of its `lemma_candidates` in `known`
 ///     (Andreii <- Andreea, ideii <- idee), otherwise unchanged (the default)
 ///     or -eii (Zzeei, Zzeii);
@@ -563,6 +577,9 @@ pub fn lemma_candidates(word: &str) -> Vec<String> {
 ///     (bombeẹle <- bombeu), otherwise of an -ee lemma (bombeile, the default)
 ///     or of an -eu lemma (bombeẹle).
 pub fn concise_by_rules(word: &str, ee: bool, known: &HashMap<String, String>) -> Vec<String> {
+    if let Some(current) = current_form(word) {
+        return concise_by_rules(&current, ee, known);
+    }
     if let Some(reference) = iesc_lemma(word).and_then(|iesc| known.get(&iesc)) {
         return vec![concise_from_reference(word, reference, false)];
     }

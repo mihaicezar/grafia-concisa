@@ -7,7 +7,8 @@ use std::sync::LazyLock;
 
 use grafia_concisa::build::{Record, Stats, Tables, build};
 use grafia_concisa::rules::{
-    concise_ee, concise_from_reference, concise_from_syllables, iere_spelling, long_infinitive, revert_text, syllabify,
+    concise_ee, concise_from_reference, concise_from_syllables, current_form, iere_spelling, long_infinitive,
+    revert_text, syllabify,
 };
 use grafia_concisa::{DataFile, Dictionary, Options, RULES_HASH, convert, datafile, lookup, revert};
 
@@ -191,6 +192,14 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
     ("bărbier", "", "bărbi-er", "rules", ""), // except final -ier/-ieră after
     ("plumier", "", "plumi-er", "rules", ""), // a vowel and a consonant...
     ("legumieră", "", "legumi-eră", "rules", ""),
+    ("rachiereasă", "", "rachi-ereasă", "rules", ""), // rachier + -easă
+    ("pompiereasă", "", "pompi-ereasă", "rules", ""),
+    ("pompiereasa", "", "pompi-ereasa", "rules", ""),
+    ("rachieresele", "", "rachi-eresele", "rules", ""), // and the forms of -iereasă
+    ("rachierese", "", "rachi-erese", "rules", ""),
+    ("rachieresei", "", "rachi-eresei", "rules", ""),
+    ("rachiereselor", "", "rachi-ereselor", "rules", ""),
+    ("boiereasă", "", "boiereasă", "rules", ""),  // after a vowel: diphthong
     ("zbier", "", "zbier", "rules", ""),          // (not fier, zbier)
     ("bărbierit", "", "bărbi-erit", "rules", ""), // ...IE_HIATUS stems...
     ("zbieret", "", "zbieret", "rules", ""),
@@ -287,6 +296,8 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
     ("supleat", "", "suple-at", "rules", ""),
     ("anucleată", "", "anucle-ată", "rules", ""), // the feminine too
     ("laureată", "", "laure-ată", "rules", ""),
+    ("laureatul", "", "laure-atul", "rules", ""), // whatever follows -eat
+    ("delineator", "", "deline-ator", "rules", ""),
     ("cleat", "", "cleat", "rules", ""), // native: diphthong
     ("procleat", "", "procleat", "rules", ""),
     ("procleată", "", "procleată", "rules", ""),
@@ -488,14 +499,18 @@ const STATS_RECORDS: &[&[&str]] = &[
     &["ideea", "idee", "i-de-e", "S"],                       // an -ee spelling
     &["aceea", "aceea", "a-ce-ea", "S"],                     // an -ea lemma
     &["familia", "familie", "-li-e", "S"],                   // partial
+    &["menție", "menține", "", "S", "V"],                    // derived, then replaced by a headword
+    &["menție", "menție", "", "S"],
+    &["alee", "alee", "", "S", "", "D"], // an ee_revert entry with no tie
+    &["aleie", "aleie", "", "S"],
 ];
 // ...and the stats they give
 const STATS: &[(&str, i64)] = &[
     ("derived", 7),
     ("ea_lemmas", 1),
-    ("ee", 2),
+    ("ee", 3),
     ("ee_no_rule", 2),
-    ("ee_revert", 2),
+    ("ee_revert", 3),
     ("ee_revert_ties", 1),
     ("eu_lemmas", 2),
     ("homographs", 1),
@@ -504,12 +519,14 @@ const STATS: &[(&str, i64)] = &[
     ("lemma_dexonline", 6),
     ("lemma_manual", 1),
     ("lemma_partial", 1),
-    ("lemma_rules", 1),
+    ("lemma_rules", 5),
     ("long_infinitive", 1),
     ("no_candidate", 1),
-    ("read", 12),
-    ("stored", 9),
+    ("read", 16),
+    ("stored", 12),
 ];
+// Obsolete forms (rules::OBSOLETE): records for the test DB
+const OBSOLETE_RECORDS: &[&[&str]] = &[&["rachiareasă", "rachiareasă", "", "S"]];
 // Records the build skips: a form or a lemma that is not one word
 const INVALID_RECORDS: &[&[&str]] = &[&["zzoare", "zz1", "", "S"], &["zzoa1re", "zzoare", "", "S"]];
 // Lemmas for the test DB with no forms of their own: -eu (no -eele/-eelor), -iesc.
@@ -661,10 +678,18 @@ const TEXTS: &[(&str, bool, &str, &[&str], bool)] = &[
         &[],
         true,
     ),
-    ("agreare", false, "agreare", &[], true),     // backed beats rules alone
-    ("mobiliare", false, "mobiliare", &[], true), // rules::IARE_KEPT
-    ("zzea", false, "zzē", &["zzea"], true),      // unknown: any digraph
-    ("zzeez", true, "zzeez", &[], true),          // -ee only at the end
+    ("agreare", false, "agreare", &[], true),        // backed beats rules alone
+    ("Rachiareasă", false, "Rachierēsă", &[], true), // obsolete: as rachiereasă
+    (
+        "rachiareasa rachiaresele",
+        false,
+        "rachierēsa rachieresele",
+        &["rachiareasa", "rachiaresele"],
+        true,
+    ), // unknown forms of an obsolete stem
+    ("mobiliare", false, "mobiliare", &[], true),    // rules::IARE_KEPT
+    ("zzea", false, "zzē", &["zzea"], true),         // unknown: any digraph
+    ("zzeez", true, "zzeez", &[], true),             // -ee only at the end
     // unknown forms of a known -iesc lemma: every ending
     (
         "harabagiescu harabagiescul harabagiescului harabagieștii harabagieștile harabagieștilor",
@@ -735,6 +760,7 @@ fn records() -> Vec<Record> {
         HOMOGRAPH_RECORDS,
         EE_REVERT_RECORDS,
         LONG_INFINITIVE_RECORDS,
+        OBSOLETE_RECORDS,
         INVALID_RECORDS,
     ] {
         records.extend(table.iter().map(|r| Record::new(r)));
@@ -886,8 +912,11 @@ fn round_trip_whole_db() {
         .collect();
     let mut f = Failures::default();
     for (form, row) in &DB.forms {
+        // ...and an obsolete form to its current form
         let allowed = if long_inf.contains(form.as_str()) {
             vec![form.clone(), iere_spelling(form)]
+        } else if let Some(current) = current_form(form) {
+            vec![current.to_string()]
         } else {
             vec![form.clone()]
         };

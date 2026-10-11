@@ -19,8 +19,8 @@ use indexmap::IndexMap;
 
 use crate::Dictionary;
 use crate::rules::{
-    EE_FINAL, EE_SPELLING, EURI, HIATUS_SUFFIX, Row, Source, concise_ee, concise_from_reference, found, has_candidate,
-    iere_spelling, long_infinitive, normalize, revert_text, syllabifications, syllabify_all,
+    EE_FINAL, EE_SPELLING, EURI, HIATUS_SUFFIX, Row, Source, concise_ee, concise_from_reference, current_form, found,
+    has_candidate, iere_spelling, long_infinitive, normalize, revert_text, syllabifications, syllabify_all,
 };
 
 /// A record: its fields as read (see the module documentation).
@@ -123,6 +123,8 @@ struct Entry {
 /// A form of a long infinitive in -iare (flag 'F', rules::long_infinitive) is
 /// converted as its -iere spelling (apreciare, apreciări -> apreciere, aprecieri),
 /// unless another record gives the same form (conciliare: the adjective conciliar).
+/// So is an obsolete form in rules::OBSOLETE, as its current form (rachiareasă ->
+/// rachiereasă).
 /// A form in rules::SYLLABIFICATIONS takes all its spellings from there, whatever
 /// its lemma (piei: pẹi only, not also piei <- pia).
 /// All lemmas in -eu and -ea are stored too (tables eu_lemmas, ea_lemmas), for
@@ -217,6 +219,10 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
             spelled = iere_spelling(&form);
             reference = (iere_spelling(&lemma), iere_spelling(first), verb);
             add(&mut stats, "long_infinitive", 1);
+        } else if let Some(current) = current_form(&form) {
+            // rachiareasă -> rachiereasă, by rules
+            spelled = current;
+            reference = (spelled.clone(), String::new(), verb);
         }
         if !references.contains_key(&reference) {
             let readings = syllabify_all(&reference.0, &reference.1, known, verb);

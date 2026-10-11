@@ -3,22 +3,25 @@
 exclude_re = [
     # dexonline_cuts: a cut at the word end is never read (cuts are placed for b < len), and
     # lo/hi only matter inside 1..len: parts.len() / 1, start * 1 (start is 0 there), end + 1, end / 1
-    'rules\.rs:251:38: replace - with / in dexonline_cuts',
-    'rules\.rs:263:40: replace \+ with \* in dexonline_cuts',
-    'rules\.rs:264:37: replace - with [+/] in dexonline_cuts',
+    'rules\.rs:257:38: replace - with / in dexonline_cuts',
+    'rules\.rs:269:40: replace \+ with \* in dexonline_cuts',
+    'rules\.rs:270:37: replace - with [+/] in dexonline_cuts',
     # inside: no regex of the rules starts at the second vowel of its pair, or ends at the first,
     # in any word (only EA_HIATUS's aleat and IA_DIPHTHONG's [aă]miaz could, after another vowel)
     'replace < with <= in inside',
     # syllabify: w[b / 1] is w[b]; rule_cut then also sees consonant + vowel, where only the prefix
     # rule can cut, and every prefix ends in a vowel
-    'rules\.rs:407:26: replace - with / in syllabify',
+    'rules\.rs:420:26: replace - with / in syllabify',
+    # rule_cut: ia + -abil after a consonant is a hiatus anyway (fiabil), and after a vowel the
+    # -abil rule does not apply; no other vowel pair + -abil follows a consonant in any word
+    'rules\.rs:317:14: replace == with != in rule_cut',
     # concise_from_reference: a cut at the lemma's end is never read (only cuts < p or at p < len are)
-    'rules\.rs:451:38: replace - with / in concise_from_reference',
+    'rules\.rs:464:38: replace - with / in concise_from_reference',
     # titlecase letters (ǅ, ǈ, ǋ) do not occur in Romanian
     'in is_titlecase',
     'replace is_titlecase -> bool with false',
     # apply_case: a one-letter template is never a word with a candidate digraph or an -ee spelling
-    'rules\.rs:692:33: replace > with >= in apply_case',
+    'rules\.rs:709:33: replace > with >= in apply_case',
     # ro_order: the forms of an ee_revert tie share their stem and differ only in -ee/-eie/-euri,
     # so only the order of e, i, u matters (the test zzbeleẹ: e before u)
     'build\.rs:92:33: replace == with != in ro_order',

@@ -58,8 +58,9 @@ This file is the log of closed decisions: what was decided, when, and why, with 
   - *-iabil* after a vowel follows its verb, a diphthong (*debreiabil* → *debreėbil* ← *de-bre-ia*); the *-abil* hiatus stays after a consonant (*fiabil*, *agreabil*);
   - final *-eal* after c is a hiatus too (*interliceal*); after g, d, b it stays a diphthong (*mangeal*, *deal*, *podbeal*);
   - *boreal* is a hiatus only in *boreal* itself and its compounds (*boreală*, *hiperboreală*), not in the native *-eală* words (*răboreală*, *stoboreală*);
-  - the *-eat* hiatus covers the feminine *-eată* too (*anucleată*, *bacalaureată*), like the masculine;
-  - *ghiare* is a diphthong (*ghėre*, like *ghiară*), and *rachiareasă* follows *rachiar* (*rachėrēsă*): the exceptions for *-ghiare* and *-chiare* were for long infinitives, which are now written *-iere* (*înjunghiere*, *rachiereasă*);
+  - the *-eat* hiatus covers whatever follows it: the feminine *-eată* (*anucleată*, *bacalaureată*) and *delineator*, *delineatură*, like the forms dexonline gives;
+  - *ghiare* is a diphthong (*ghėre*, like *ghiară*): the exceptions for *-ghiare* and *-chiare* were for long infinitives, which are now written *-iere* (*înjunghiere*);
+  - final *-iereasă*, with its forms, after a vowel and a consonant is a hiatus, like *-ier*: the i belongs to the stem (*rachiereasă* ← *rachier*, *pompiereasă* ← *pompier*, like *bărbiereasă*);
   - the *coaliț-* stem has no *coalit-* spelling.
   - **Why:** each exception was checked against every dexonline word it decides; these were the ones that gave a wrong spelling.
 - **2026-10-05: final -ii after a consonant is a hiatus in verb infinitives only** (*sfi-i*, *pri-i*; not *copii*). **Why:** dexonline syllabifies none of the -ii verbs, and without the cut their forms came out as diphthongs (*sfiește*, *priască* are *sfi-eș-te*, *pri-as-că*).
@@ -68,6 +69,10 @@ This file is the log of closed decisions: what was decided, when, and why, with 
 - **2026-10-09: a long infinitive in -iare is written -iere**, then follows the -iere rules (*apreciare* → *apreciere*, *tăiare* → *tăẹre*). **Why:** long infinitives in -iare are incorrect; the correct form always ends in -iere.
   - A form that another lemma also gives keeps that lemma's spelling (*conciliare*, the adjective). **Why:** the other word is the current one.
   - It replaces the earlier diphthong reading of -iare after a labial or palatal consonant, which now applies only to words that are not long infinitives (*fiare*).
+
+## Obsolete forms (spec: *Syllabification source*)
+- **2026-10-11: an obsolete form is written as its current form**, like a long infinitive in -iare, in every form of the obsolete stem, known or not (*rachiareasă*, *rachiareasa* → *rachierēsă*, *rachierēsa* ← *rachiereasă*). **Why:** the obsolete form is incorrect, and its current form is what the text means.
+  - A category of officially obsolete forms is planned: the switch will offer the obsolete spelling, with the current one selected, and a footnote (*alinea*, *alineare* → *alinia*, *aliniere*). Until then, only the stems listed in `rules::OBSOLETE` are rewritten.
 
 ## Optional -ee rule (spec: *Optional rule: final -ee*)
 - **A separate switch, default off.** Word-final *-ee* is read as *-eie* and written *-eẹ* (*idee* → *ideẹ*), and the forms of *-ee* lemmas follow the *femeie* pattern (*ideea* → *ideė*, *ideei* → *ideii*).
