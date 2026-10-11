@@ -209,7 +209,7 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
         // the spelling to convert, and its lemma
         let (mut spelled, mut reference) = (form.clone(), (lemma.clone(), hyph.clone(), verb));
         if syllabifications(&form).is_some() {
-            // Cezar's syllabification of the form decides; the verb flag only matters to the rules
+            // Cezar's syllabification of the form decides; it is its own reference, so the verb flag plays no role
             reference = (form.clone(), String::new(), false);
         } else if flags.contains("F") && long_infinitive(&lemma) {
             // apreciare -> apreciere; only the first hyphenation variant is used (rules::dexonline_cuts)
@@ -228,7 +228,7 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
             // a long infinitive loses to any other record (conciliare: the adjective),
             // and rules alone to a backed syllabification (agreare <- agrea a-gre-a)
             let priority = (spelled == form, *rank > Source::Rules, spelled == reference.0, *rank);
-            let concise = concise_from_reference(&spelled, syllabified);
+            let concise = concise_from_reference(&spelled, syllabified, reference.2);
             match rows.get_mut(&form) {
                 None => {
                     add(&mut stats, "derived", i64::from(!priority.2));

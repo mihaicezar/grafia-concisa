@@ -48,31 +48,39 @@ const WORDS: &[(&str, &str)] = &[
 ];
 
 // Forms without their own syllabification: cuts come from the lemma.
-// (form, lemma syllabified, expected)
-const DERIVED: &[(&str, &str, &str)] = &[
-    ("soarele", "soa-re", "sōrele"), // shared prefix: lemma decides
-    ("reală", "re-al", "reală"),
-    ("familia", "fa-mi-li-e", "familia"), // ending replaces a vowel: lemma decides
-    ("familiei", "fa-mi-li-e", "familiei"),
-    ("femeia", "fe-me-ie", "femeė"),
-    ("ploaia", "ploa-ie", "plōė"),
-    ("ideea", "i-de-e", "ideē"), // appended ending: diphthong
-    ("creează", "cre-a", "creēză"),
-    ("înșeală", "în-șe-la", "înșēlă"), // stem alternation: diphthong
-    ("doarme", "dor-mi", "dōrme"),
-    ("ploaie", "plo-ua", "plōẹ"), // o/e before a replaced vowel: diphthong
-    ("scheaună", "sche-u-na", "schēună"),
-    ("taie", "tă-ia", "taẹ"),
-    ("argintie", "ar-gin-tiu", "argintie"), // -iu lemma: hiatus
-    ("cheflia", "che-fliu", "cheflia"),
-    ("sfiește", "sfi-i", "sfiește"), // -ii verb: lemma decides
-    ("sfiască", "sfi-i", "sfiėscă"), // -ează/-ească after a hiatus i: -ėză, -ėscă
-    ("priască", "pri-i", "priėscă"),
-    ("studiază", "stu-di-a", "studiėză"),
-    ("pliază", "pli-a", "pliėză"),
-    ("remaniază", "re-ma-ni-a", "remaniėză"),
-    ("fiască", "fi-esc", "fiėscă"),
-    ("fiasca", "fi-esc", "fiėsca"),
+// (form, lemma syllabified, expected, "V" for a verb)
+const DERIVED: &[(&str, &str, &str, &str)] = &[
+    ("soarele", "soa-re", "sōrele", ""), // shared prefix: lemma decides
+    ("reală", "re-al", "reală", ""),
+    ("familia", "fa-mi-li-e", "familia", ""), // ending replaces a vowel: lemma decides
+    ("familiei", "fa-mi-li-e", "familiei", ""),
+    ("femeia", "fe-me-ie", "femeė", ""),
+    ("ploaia", "ploa-ie", "plōė", ""),
+    ("ideea", "i-de-e", "ideē", ""), // appended ending: diphthong
+    ("creează", "cre-a", "creēză", "V"),
+    ("înșeală", "în-șe-la", "înșēlă", "V"), // stem alternation: diphthong
+    ("doarme", "dor-mi", "dōrme", "V"),
+    ("ploaie", "plo-ua", "plōẹ", "V"), // o/e before a replaced vowel: diphthong
+    ("scheaună", "sche-u-na", "schēună", "V"),
+    ("taie", "tă-ia", "taẹ", "V"),
+    ("argintie", "ar-gin-tiu", "argintie", ""), // -iu lemma: hiatus
+    ("cheflia", "che-fliu", "cheflia", ""),
+    ("sfiește", "sfi-i", "sfiește", "V"), // -ii verb: lemma decides
+    ("sfiască", "sfi-i", "sfiėscă", "V"), // -ează/-ească after a hiatus i: -ėză, -ėscă
+    ("priască", "pri-i", "priėscă", "V"),
+    ("studiază", "stu-di-a", "studiėză", "V"),
+    ("pliază", "pli-a", "pliėză", "V"),
+    ("remaniază", "re-ma-ni-a", "remaniėză", "V"),
+    ("fiască", "fi-esc", "fiėscă", ""),
+    ("fiasca", "fi-esc", "fiėsca", ""),
+    ("știa", "ști", "știa", "V"), // ending after the final i of a verb in consonant + i: hiatus
+    ("știam", "ști", "știam", "V"),
+    ("știai", "ști", "știai", "V"),
+    ("știați", "ști", "știați", "V"),
+    ("știau", "ști", "știau", "V"),
+    ("neștie", "ne-ști", "neștie", "V"),
+    ("preștia", "pre-ști", "preștia", "V"),
+    ("locuia", "lo-cu-i", "locuė", "V"), // ...not after a vowel
 ];
 
 // -ee rule: (form, lemma syllabified, number, expected with switch)
@@ -241,6 +249,8 @@ const HOMOGRAPH_RECORDS: &[&[&str]] = &[
     &["vierul", "vier", "", "S"],
     &["agreare", "agreare", "", "S"],           // a headword by rules alone...
     &["agreare", "agrea", "a-gre-a", "S", "V"], // ...loses to a backed derived form
+    &["menție", "menție", "", "S"],             // a headword (men-ți-e)...
+    &["menție", "menține", "", "S", "V"],       // ...beats a derived form (mențẹ), both by rules
 ];
 // ...and (word, all spellings, default first). No alternatives: [].
 const HOMOGRAPHS: &[(&str, &[&str])] = &[
@@ -350,6 +360,8 @@ const TEXTS: &[(&str, bool, &str, &[&str], bool)] = &[
     ("SOARE", false, "SŌRE", &[], true),
     ("Iepure, fier și ceai.", false, "Ẹpure, fẹr și cēi.", &[], true),
     ("Real teatru", false, "Real teatru", &[], true),
+    ("Știam", false, "Știam", &[], true),   // the verb flag reaches the derivation
+    ("menție", false, "menție", &[], true), // a headword beats a derived form
     // unknown forms of a known -iesc lemma
     (
         "harabagiasca harabagiască harabagiești",
@@ -463,7 +475,7 @@ static DB: LazyLock<Tables> = LazyLock::new(|| {
     records.extend(
         DERIVED
             .iter()
-            .map(|(f, lemma, _)| Record::new(&[f, &lemma.replace('-', ""), lemma, "S"])),
+            .map(|(f, lemma, _, pos)| Record::new(&[f, &lemma.replace('-', ""), lemma, "S", pos])),
     );
     records.extend(
         EE_WORDS
@@ -520,8 +532,12 @@ fn rules() {
 #[test]
 fn derived() {
     let mut f = Failures::default();
-    for (form, lemma, expected) in DERIVED {
-        f.check(form, concise_from_reference(form, lemma), expected.to_string());
+    for (form, lemma, expected, pos) in DERIVED {
+        f.check(
+            form,
+            concise_from_reference(form, lemma, *pos == "V"),
+            expected.to_string(),
+        );
     }
     f.assert();
 }

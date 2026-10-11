@@ -62,6 +62,7 @@ Tăieturile se deduc din lemă pe rând, pentru fiecare pereche de vocale:
 | ambele litere în prefixul comun cu lema | tăietura lemei | *soarele* → *sōrele* (← *soa-re*), *reală* neschimbat (← *re-al*) |
 | terminația înlocuiește o vocală a lemei pe același loc, după i | tăietura lemei | *familia* neschimbat (← *fa-mi-li-e*), *femeia* → *femeė* (← *fe-me-ie*) |
 | terminația înlocuiește u final al unei leme în -iu | hiat | *argintie*, *argintia* neschimbate (← *ar-gin-tiu*), *cheflie* (← *che-fliu*) |
+| terminație adăugată după i-ul final al unui verb în consoană + i | hiat | *știa*, *știam*, *știau* neschimbate (← *ști*), *neștie* (← *ne-ști*); nu după o vocală (*locuia* → *locuė* ← *lo-cu-i*) |
 | terminație adăugată, alternanță în temă sau o/e înaintea unei vocale înlocuite | diftong | *ideea* → *ideē*, *creează* → *creēză*, *doarme* → *dōrme*, *ploaie* → *plōẹ* (← *plo-ua*), *scheaună* → *schēună* (← *sche-u-na*) |
 
 Sufixul -ează/-ească al verbelor și adjectivelor după un i în hiat (scris -ază/-ască/-asca) păstrează o formă de e, ca la celelalte forme (*studiez*, *studiezi*; *sfiesc*, *sfiești*; *fiesc*, *fiești*), și se scrie -ėză/-ėscă/-ėsca:

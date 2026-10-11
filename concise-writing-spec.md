@@ -60,6 +60,7 @@ Cuts are derived from the lemma one vowel pair at a time:
 | both letters in the prefix shared with the lemma | the lemma's cut | *soarele* → *sōrele* (← *soa-re*), *reală* unchanged (← *re-al*) |
 | ending replaces a lemma vowel at the same place, after i | the lemma's cut | *familia* unchanged (← *fa-mi-li-e*), *femeia* → *femeė* (← *fe-me-ie*) |
 | ending replaces the final u of an -iu lemma | hiatus | *argintie*, *argintia* unchanged (← *ar-gin-tiu*), *cheflie* (← *che-fliu*) |
+| ending appended after the final i of a verb in consonant + i | hiatus | *știa*, *știam*, *știau* unchanged (← *ști*), *neștie* (← *ne-ști*); not after a vowel (*locuia* → *locuė* ← *lo-cu-i*) |
 | appended ending, stem alternation, or o/e before a replaced vowel | diphthong | *ideea* → *ideē*, *creează* → *creēză*, *doarme* → *dōrme*, *ploaie* → *plōẹ* (← *plo-ua*), *scheaună* → *schēună* (← *sche-u-na*) |
 
 The suffix -ează/-ească of verbs and adjectives after a hiatus i (written -ază/-ască/-asca) keeps an e form, as in the other forms (*studiez*, *studiezi*; *sfiesc*, *sfiești*; *fiesc*, *fiești*), and is written -ėză/-ėscă/-ėsca:

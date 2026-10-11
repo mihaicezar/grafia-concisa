@@ -34,6 +34,7 @@ This file is the log of closed decisions: what was decided, when, and why, with 
 - **Inflected forms derive their cuts from the lemma.** **Why:** dexonline often gives no syllabification for inflected forms, especially articulated nouns. The derivation is a heuristic: on 2026-09-24 it agreed with the forms' own dexonline syllabification in 337 of 338 cases (the exception: *cheflie* ← *che-fliu*).
   - A form that is itself a headword uses its own syllabification, which is why the noun *ploaie* beats the verb form of *ploua*. **2026-10-09:** unless its syllabification comes from rules alone and a derived one is backed (see *Homographs*).
   - **2026-10-05: a lemma's hiatus after o or e is not inherited by its forms.** **Why:** o and e diphthongize as a matter of course in Romanian, so a hiatus in the root says nothing about the form (*(să) ploaie* ← *plo-ua* is *plōẹ*). Only an i keeps the lemma's cut.
+  - **2026-10-11: a vowel ending added after the final i of a verb in consonant + i is a hiatus** (*știa*, *știam* ← *ști*: *ști-a*, *ști-am*; *neștie* ← *nești*: *ne-ști-e*). **Why:** the final i of such a verb is a full vowel, so the ending starts a new syllable; the imperfect and the present *-ie* of *ști* and its compounds came out as diphthongs (*ștė*, *neștẹ*).
 
 ### Fallback rules, 2026-09-27 (spec: the fallback table)
 - **ie hiatus in -ient/-ienț** (*client*, *experiență*). The one dexonline conflict is *farniente*.

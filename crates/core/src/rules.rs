@@ -429,6 +429,9 @@ pub fn syllabify_all(word: &str, hyphenation: &str, known: &HashSet<String>, ver
 ///     lemma's cut decides (familia <- fa-mi-li-e: hiatus; femeia <-
 ///     fe-me-ie: diphthong), except that replacing the final u of an -iu
 ///     lemma gives a hiatus (argintie <- ar-gin-tiu, cheflie <- che-fliu);
+///   - an ending appended after the final i of a verb (`verb`) whose i
+///     follows a consonant: hiatus (știa, știam <- ști, neștie <- ne-ști;
+///     not locuia <- lo-cu-i);
 ///   - otherwise (appended ending, stem alternation, or o/e before a
 ///     replaced vowel): diphthong (ideea <- i-de-e, creează <- cre-a,
 ///     doarme <- dor-mi, ploaie <- plo-ua, scheaună <- sche-u-na).
@@ -437,7 +440,7 @@ pub fn syllabify_all(word: &str, hyphenation: &str, known: &HashSet<String>, ver
 /// forms: -ază of an i-a verb -> -ėză (studiază <- stu-di-a, like studiez),
 /// -ască of an i-i verb -> -ėscă (sfiască <- sfi-i, like sfiesc), -ască/-asca
 /// of an i-esc adjective -> -ėscă/-ėsca (fiască, fiasca <- fi-esc, like fiesc).
-pub fn concise_from_reference(form: &str, reference: &str) -> String {
+pub fn concise_from_reference(form: &str, reference: &str, verb: bool) -> String {
     let lemma: Vec<char> = reference.chars().filter(|&c| c != '-').collect();
     let f = chars(form);
     let parts: Vec<&str> = reference.split('-').collect();
@@ -458,7 +461,8 @@ pub fn concise_from_reference(form: &str, reference: &str) -> String {
         if i + 1 == p && p < lemma.len() && is_vowel(lemma[p]) && f[i] == 'i' {
             return cuts.contains(&p) || lemma[p - 1..] == ['i', 'u'];
         }
-        false
+        // știa, știam <- ști; not locuia <- lo-cu-i
+        verb && i + 1 == p && p == lemma.len() && f[i] == 'i' && p >= 2 && !is_vowel(lemma[p - 2])
     };
 
     let mut out = Vec::with_capacity(f.len());
@@ -495,7 +499,7 @@ fn digraph(a: char, b: char) -> Option<char> {
 
 /// 'soa-re' -> 'sōre'; 're-al' -> 'real'. Input must be normalized.
 pub fn concise_from_syllables(syllabified: &str) -> String {
-    concise_from_reference(&syllabified.replace('-', ""), syllabified)
+    concise_from_reference(&syllabified.replace('-', ""), syllabified, false)
 }
 
 /// The -eu lemma of a plural in -eele/-eelor: bombeele, bombeelor -> bombeu.
@@ -557,7 +561,7 @@ pub fn lemma_candidates(word: &str) -> Vec<String> {
 ///     or of an -eu lemma (bombeẹle).
 pub fn concise_by_rules(word: &str, ee: bool, known: &HashMap<String, String>) -> Vec<String> {
     if let Some(reference) = iesc_lemma(word).and_then(|iesc| known.get(&iesc)) {
-        return vec![concise_from_reference(word, reference)];
+        return vec![concise_from_reference(word, reference, false)];
     }
     let concise = concise_from_syllables(&syllabify(word, "", &HashSet::new(), false).0);
     if ee && word.ends_with("eei") {
