@@ -73,9 +73,9 @@ Sufixul -ează/-ească al verbelor și adjectivelor după un i în hiat (scris -
 | lema fără i final + -ască | se termină în hiatul i-i (verb de conjugarea a IV-a) | *sfiască* → *sfiėscă* (← *sfi-i*), *priască* → *priėscă* |
 | lema fără -esc + -ască, -asca | se termină în hiatul i-esc (adjectiv) | *fiască* → *fiėscă*, *fiasca* → *fiėsca* (← *fi-esc*), *pustiască* → *pustiėscă* |
 
-Un infinitiv lung în -iare nu e corect și se scrie în forma lui în -iere, care urmează apoi regulile pentru -iere: *apreciare* → *apreciere*, *apreciarea* → *aprecierē*, *tăiare* → *tăẹre*. În formele lui, ultimul -iar-/-iăr- devine -ier-: *apreciărilor* → *aprecierilor*. Un infinitiv lung este o lemă în -iare pe care dexonline o dă cu literă mică, ca substantiv feminin sau neclasificată (modelul F, T sau IL), cu excepția lui *fiare* și *mobiliare* (`rules::IARE_KEPT`). O formă pe care o dă și altă lemă păstrează grafia acelei leme: *conciliare* (adjectivul *conciliar*), *copiare* (substantivul *copiar*). Grafia în -iere nu apare atunci ca variantă pe comutatorul de omografe.
+Un infinitiv lung în -iare nu e corect și se scrie în forma lui în -iere, care urmează apoi regulile pentru -iere: *apreciare* → *apreciere*, *apreciarea* → *aprecierē*, *tăiare* → *tăẹre*. În formele lui, ultimul -iar-/-iăr- devine -ier-: *apreciărilor* → *aprecierilor*. Un infinitiv lung este o lemă în -iare pe care dexonline o dă cu literă mică, ca substantiv feminin sau neclasificată (modelul F, T sau IL), cu excepția lui *fiare* și *mobiliare* (`rules::IARE_KEPT`). O formă pe care o dă și altă lemă păstrează grafia acelei leme: *conciliare* (adjectivul *conciliar*), *copiare* (substantivul *copiar*). Grafia în -iere nu apare atunci ca variantă pe comutatorul de omografe. Altfel, infinitivul lung e o formă învechită, iar grafia lui proprie e varianta (vezi *Forme învechite*).
 
-Un cuvînt cu o rădăcină învechită din `rules::OBSOLETE`, din bază sau nu, se scrie la fel, cu rădăcina actuală, și urmează apoi regulile: *rachiareasă*, *rachiareasa* → *rachierēsă*, *rachierēsa* (← *rachiereasă*, *rachiereasa*). O formă pe care o dă și altă lemă păstrează grafia acelei leme.
+Și alte forme învechite se scriu în forma lor actuală (vezi *Forme învechite*).
 
 ## Regula opțională pentru -ee (comutator, oprit implicit)
 
@@ -121,6 +121,16 @@ Grafia implicită e cea aleasă după prioritatea de mai sus. Celelalte sunt pă
 
 Regula -ee nu produce omografe: alegerea ei între singular și plural rămâne unică (vezi *Regula opțională pentru -ee*). Excepția e un cuvânt necunoscut în -eei, -eele sau -eelor (vezi *Cuvinte necunoscute*). Conversia inversă cu comutatorul -ee își arată egalitățile pe același comutator (vezi *Conversia inversă*).
 
+## Forme învechite
+
+O formă învechită se scrie în forma ei actuală, iar grafia ei proprie e oferită pe comutatorul de omografe, după cea actuală, cu o notă de subsol: „Forma *alineare* e învechită; forma actuală e *aliniere*.” În `convert` din nucleu, `obsolete` din segment conține cuvîntul și forma lui actuală, cu majusculele cuvîntului (*Alineare*, *Aliniere*); `lookup` întoarce forma actuală în `obsolete`. Formele învechite sînt:
+- infinitivele lungi în -iare (vezi *Sursa despărțirii în silabe*): *apreciarea* → *aprecierē* sau *apreciarē*;
+- formele lemelor din `rules::OBSOLETE`, fiecare cu lema ei actuală: *alinea* → *alinia*, *alineare* → *aliniere*, *rachiareasă* → *rachiereasă*. O formă ia grafia formei lemei actuale cu aceeași flexiune și variantă din dexonline (*alineează* → *aliniėză* ← *aliniază*, *alineez* → *aliniez*), iar grafia ei proprie vine din propria despărțire, trecută cu ea în `rules::OBSOLETE` (*a-li-ne-a*: *alineēză*, *alineare*; *ra-chi-a-rea-să*: *rachiarēsă*). Cuvintele care încep cu rădăcina uneia (*aline-*, *rachiare-*) sînt căutate și fără grup candidat (*alineez*).
+
+O formă pe care o dă și altă lemă păstrează grafia acelei leme, fără comutator: *alineat* (substantivul), *alinea* (imperfectul lui *alini*: *alinē*), *conciliare* (adjectivul *conciliar*).
+
+Un cuvînt care lipsește din bază și începe cu rădăcina unei leme învechite ia rădăcina lemei actuale și e convertit doar prin reguli (*rachiareasa* → *rachierēsa*); grafia lui proprie vine din despărțirea lemei învechite (*rachiarēsa*).
+
 ## Majuscule
 
 Tiparul de majuscule al cuvântului se păstrează: *Soare* → *Sōre*, *SOARE* → *SŌRE*. Celelalte tipare mixte se reduc la inițială mare.
@@ -143,7 +153,7 @@ Un cuvânt în -eele/-eelor:
 - -ele/-elor final se înlocuiește cu -u. Dacă rezultă o lemă în -eu din baza de date (`eu_lemmas`), cuvântul e pluralul ei și are o singură grafie: *bombeele* → *bombeẹle* (← *bombeu*, al cărui plural în dexonline este *bombeuri*).
 - Altfel primește două grafii, ca plural al unei leme în -ee (*coloboleile*, *coloboleilor*, implicit) sau al unei leme în -eu (*coloboleẹle*, *coloboleẹlor*). Ele apar pe comutatorul de omografe, cu o notă de subsol care folosește rădăcina cuvântului: „Dacă singularul e *colobolee*, alege forma *coloboleile/lor*. Dacă singularul e *coloboleu*, alege forma *coloboleẹle/lor*.”
 
-Cuvintele fără grup candidat și fără iăr nu sunt căutate deloc.
+Cuvintele fără grup candidat, fără iăr și fără rădăcină învechită nu sunt căutate deloc.
 
 ## Conversia inversă
 
@@ -160,7 +170,7 @@ Orice alt cuvânt, inclusiv cele necunoscute, trece prin înlocuirea de caracter
 ## Date
 
 Datele despre cuvinte vin într-un singur fișier, `grafia.dat` (structura lui e în `crates/core/src/datafile.rs`). Pe lângă cinci tabele, conține versiunea formatului, ziua la care sunt datele dexonline din care a fost construit (ziua ultimei modificări a unui lexem sau a unei definiții în dexonline), regulile cu care a fost construit și o sumă de control, verificată la deschiderea fișierului. Regulile sunt `RULES_HASH`, o sumă (hash) a codului din `crates/core/src/rules.rs` și `build.rs`, fără comentarii și spații: construirea aplicației web refuză un fișier de date construit cu alte reguli. Fiecare tabel are cheia un cuvânt normalizat:
-- `forms`: o formă → `concise`, grafia ei concisă; `concise_ee`, grafia ei cu regula -ee, când diferă de `concise`; și `alternatives`, celelalte grafii ale unui omograf.
+- `forms`: o formă → `concise`, grafia ei concisă; `concise_ee`, grafia ei cu regula -ee, când diferă de `concise`; `alternatives`, celelalte grafii ale unui omograf; și `current`, forma actuală a unei forme învechite (vezi *Forme învechite*).
 - `eu_lemmas`: toate lemele normalizate în -eu, pentru pluralele necunoscute în -eele/-eelor (vezi *Cuvinte necunoscute*).
 - `ea_lemmas`: toate lemele normalizate în -ea, pentru genitivele necunoscute în -eei (vezi *Cuvinte necunoscute*).
 - `iesc_lemmas`: toate lemele normalizate în -iesc → despărțirea lor (*harabagi-esc*), pentru formele necunoscute ale adjectivelor în -iesc (vezi *Cuvinte necunoscute*).
@@ -168,4 +178,4 @@ Datele despre cuvinte vin într-un singur fișier, `grafia.dat` (structura lui e
 
 Aceleași tabele dau mereu același fișier, octet cu octet.
 
-`forms` păstrează doar formele care pot diferi: cele care conțin ie/ia/ea/oa sau iăr, ori se termină în -ee, -eea, -eei, -eele, -eelor, -euri, -eurile sau -eurilor. Intrarea pipeline-ului pentru fiecare formă flexionară este: forma, lema ei, despărțirea lemei din dexonline (completă, parțială sau goală), numărul (S/P), dacă lema e verb (modelul V sau VT din dexonline), dacă e substantiv feminin sau neclasificată, scrisă cu literă mică (modelul F, T sau IL; pentru infinitivele lungi în -iare) și dacă e DEX-MDA-DOOM: are o definiție activă proprie (al cărei titlu e chiar lexemul) dintr-o sursă al cărei nume scurt începe cu MDA, DEX, NODEX sau DOOM (MDA2, DEX '09, NODEX, DOOM 3, ...; nu dicționarul intern *dexonline*).
+`forms` păstrează doar formele care pot diferi: cele care conțin ie/ia/ea/oa sau iăr, ori se termină în -ee, -eea, -eei, -eele, -eelor, -euri, -eurile sau -eurilor, plus formele care încep cu rădăcina unei leme învechite. Intrarea pipeline-ului pentru fiecare formă flexionară este: forma, lema ei, despărțirea lemei din dexonline (completă, parțială sau goală), numărul (S/P), dacă lema e verb (modelul V sau VT din dexonline), dacă e substantiv feminin sau neclasificată, scrisă cu literă mică (modelul F, T sau IL; pentru infinitivele lungi în -iare) și dacă e DEX-MDA-DOOM: are o definiție activă proprie (al cărei titlu e chiar lexemul) dintr-o sursă al cărei nume scurt începe cu MDA, DEX, NODEX sau DOOM (MDA2, DEX '09, NODEX, DOOM 3, ...; nu dicționarul intern *dexonline*), plus flexiunea și varianta formei, care împerechează formele unei leme învechite cu cele ale lemei ei actuale.

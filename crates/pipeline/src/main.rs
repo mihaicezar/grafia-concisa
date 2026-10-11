@@ -64,7 +64,8 @@ struct BuildArgs {
     mysql: bool,
     /// Read the records from FILE, one per line, tab-separated: form, lemma, the lemma's
     /// hyphenation (complete, partial or empty), number (S/P), then optional flags in any
-    /// order: V (a verb), D (DEX-MDA-DOOM), F (a lowercase feminine noun or unclassified).
+    /// order: V (a verb), D (DEX-MDA-DOOM), F (a lowercase feminine noun or unclassified),
+    /// I and the inflection and variant (I52.0: pairs the forms of an obsolete lemma).
     /// A line with one column is a syllabified headword; empty lines and # comments are skipped.
     #[arg(long, value_name = "FILE")]
     text: Option<PathBuf>,

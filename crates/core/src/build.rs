@@ -8,7 +8,9 @@
 //!     verb; 'D' if it is DEX-MDA-DOOM (a definition of its own in MDA*, DEX*, NODEX*
 //!     or DOOM*), which picks the form an -ee spelling reverts to; 'F' if it is a
 //!     lowercase feminine noun or unclassified (dexonline model F, T or IL), which
-//!     marks a lemma in -iare as a long infinitive (rules::long_infinitive).
+//!     marks a lemma in -iare as a long infinitive (rules::long_infinitive); 'I' and the
+//!     form's inflection and variant (I52.0), which pair the forms of an obsolete lemma
+//!     with those of its current lemma (rules::OBSOLETE).
 //!
 //! A record with fewer than four fields is a syllabified headword (dev/test input).
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
@@ -19,8 +21,8 @@ use indexmap::IndexMap;
 
 use crate::Dictionary;
 use crate::rules::{
-    EE_FINAL, EE_SPELLING, EURI, HIATUS_SUFFIX, Row, Source, concise_ee, concise_from_reference, current_form, found,
-    has_candidate, iere_spelling, long_infinitive, normalize, revert_text, syllabifications, syllabify_all,
+    EE_FINAL, EE_SPELLING, EURI, HIATUS_SUFFIX, OBSOLETE, Row, Source, concise_ee, concise_from_reference, found,
+    has_candidate, iere_spelling, long_infinitive, normalize, obsolete, revert_text, syllabifications, syllabify_all,
 };
 
 /// A record: its fields as read (see the module documentation).
@@ -112,6 +114,12 @@ struct Entry {
     spellings: IndexMap<String, bool>,
     /// DEX-MDA-DOOM
     dex: bool,
+    /// a record of a lemma that is not obsolete
+    current_word: bool,
+    /// (current lemma, inflection) of the first record of an obsolete lemma
+    obsolete: Option<(String, String)>,
+    /// (its own spelling, its -iere form) of the first record of a long infinitive in -iare
+    long_infinitive: Option<(String, String)>,
 }
 
 /// Build the tables.
@@ -123,8 +131,10 @@ struct Entry {
 /// A form of a long infinitive in -iare (flag 'F', rules::long_infinitive) is
 /// converted as its -iere spelling (apreciare, apreciări -> apreciere, aprecieri),
 /// unless another record gives the same form (conciliare: the adjective conciliar).
-/// So is an obsolete form in rules::OBSOLETE, as its current form (rachiareasă ->
-/// rachiereasă).
+/// A form whose every record is of an obsolete lemma (rules::OBSOLETE) takes the
+/// spelling of the current lemma's form with the same inflection, and its own spelling
+/// (from its own syllabification) is its one alternative (alineează: aliniėză, or
+/// alineēză); the row records the current form, for the footnote.
 /// A form in rules::SYLLABIFICATIONS takes all its spellings from there, whatever
 /// its lemma (piei: pẹi only, not also piei <- pia).
 /// All lemmas in -eu and -ea are stored too (tables eu_lemmas, ea_lemmas), for
@@ -156,15 +166,25 @@ struct Entry {
 /// the default being the character map's result, else the first in Romanian
 /// alphabetical order. Stored only where the character map alone is not the answer.
 pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>) -> (Tables, Stats) {
-    let mut stats: Stats = ["read", "invalid", "no_candidate", "derived", "ee_no_rule", "homographs"]
-        .into_iter()
-        .map(|k| (k.to_string(), 0))
-        .collect();
+    let mut stats: Stats = [
+        "read",
+        "invalid",
+        "no_candidate",
+        "derived",
+        "ee_no_rule",
+        "homographs",
+        "obsolete",
+    ]
+    .into_iter()
+    .map(|k| (k.to_string(), 0))
+    .collect();
     // (lemma, hyphenation, verb) -> [(syllabified, source)], one per reading
     let mut references: HashMap<(String, String, bool), Vec<(String, Source)>> = HashMap::new();
     let mut rows: IndexMap<String, Entry> = IndexMap::new();
     // forms with no candidate, spelled like an -ee spelling (zeii) -> DEX-MDA-DOOM
     let mut unchanged: IndexMap<String, bool> = IndexMap::new();
+    // (current lemma, inflection) -> its form, for the forms of obsolete lemmas
+    let mut currents: HashMap<(String, String), String> = HashMap::new();
     let mut tables = Tables::default();
 
     for Record(fields) in records {
@@ -189,6 +209,12 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
             continue;
         }
         let (verb, dex) = (flags.contains("V"), flags.contains("D"));
+        let inflection = flags.iter().find(|f| f.starts_with('I')).cloned();
+        if let Some(i) = &inflection
+            && OBSOLETE.iter().any(|(_, current, _)| *current == lemma)
+        {
+            currents.entry((lemma.clone(), i.clone())).or_insert(form.clone());
+        }
         if lemma.ends_with("eu") {
             tables.eu_lemmas.insert(lemma.clone());
         }
@@ -210,6 +236,7 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
 
         // the spelling to convert, and its lemma
         let (mut spelled, mut reference) = (form.clone(), (lemma.clone(), hyph.clone(), verb));
+        let mut long_inf = false;
         if syllabifications(&form).is_some() {
             // Cezar's syllabification of the form decides; it is its own reference, so the verb flag plays no role
             reference = (form.clone(), String::new(), false);
@@ -218,22 +245,34 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
             let first = hyph.split(',').next().unwrap_or("").trim();
             spelled = iere_spelling(&form);
             reference = (iere_spelling(&lemma), iere_spelling(first), verb);
+            long_inf = true;
             add(&mut stats, "long_infinitive", 1);
-        } else if let Some(current) = current_form(&form) {
-            // rachiareasă -> rachiereasă, by rules
-            spelled = current;
-            reference = (spelled.clone(), String::new(), verb);
         }
         if !references.contains_key(&reference) {
-            let readings = syllabify_all(&reference.0, &reference.1, known, verb);
+            // an obsolete lemma's own syllabification gives its spelling on the switch
+            let readings = match obsolete(&reference.0) {
+                Some((syllabified, _)) => vec![(syllabified.to_string(), Source::Manual)],
+                None => syllabify_all(&reference.0, &reference.1, known, verb),
+            };
             add(&mut stats, &format!("lemma_{}", readings[0].1.name()), 1);
             references.insert(reference.clone(), readings);
         }
+        // a long infinitive's own spelling, with the cuts of its -iere form (apreciare <-
+        // a-pre-ci-e-re: apreciare, not aprecėre)
+        let own = long_inf.then(|| concise_from_reference(&form, &references[&reference][0].0, verb));
+
+        let old = obsolete(&lemma).is_some();
 
         for (syllabified, rank) in &references[&reference] {
-            // a long infinitive loses to any other record (conciliare: the adjective),
+            // a long infinitive or an obsolete lemma loses to any other record (conciliare:
+            // the adjective; alinea: the imperfect of alini),
             // and rules alone to a backed syllabification (agreare <- agrea a-gre-a)
-            let priority = (spelled == form, *rank > Source::Rules, spelled == reference.0, *rank);
+            let priority = (
+                spelled == form && !old,
+                *rank > Source::Rules,
+                spelled == reference.0,
+                *rank,
+            );
             let concise = concise_from_reference(&spelled, syllabified, reference.2);
             match rows.get_mut(&form) {
                 None => {
@@ -244,6 +283,9 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
                         readings: Vec::new(),
                         spellings: IndexMap::new(),
                         dex: false,
+                        current_word: false,
+                        obsolete: None,
+                        long_infinitive: None,
                     };
                     rows.insert(form.clone(), entry);
                 }
@@ -260,6 +302,19 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
         }
         let row = &mut rows[&form];
         row.dex = row.dex || dex;
+        match (own, obsolete(&lemma).map(|(_, current)| current)) {
+            (Some(own), _) => {
+                if row.long_infinitive.is_none() {
+                    row.long_infinitive = Some((own, spelled));
+                }
+            }
+            (None, Some(current)) => {
+                if row.obsolete.is_none() {
+                    row.obsolete = inflection.map(|i| (current.to_string(), i));
+                }
+            }
+            (None, None) => row.current_word = true,
+        }
 
         let reading = (number.to_uppercase() == "P", lemma);
         if found(&EE_FINAL, &form) && !row.readings.contains(&reading) {
@@ -269,7 +324,34 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
 
     // spelling with the -ee rule -> [(form, -ee rule applied)]
     let mut by_spelling: IndexMap<String, Vec<(String, bool)>> = IndexMap::new();
+    let concise_of: HashMap<&str, &str> = rows.iter().map(|(f, r)| (f.as_str(), r.concise.as_str())).collect();
     for (form, row) in &rows {
+        // an obsolete form: the current form's spelling, its own as the alternative
+        // (the current spelling, its own, the current form)
+        let obsolete = match (&row.long_infinitive, &row.obsolete) {
+            _ if row.current_word => None,
+            (Some((own, current)), _) => Some((row.concise.clone(), own.clone(), current.clone())),
+            (None, Some(key)) => currents.get(key).map(|current| {
+                let concise = concise_of
+                    .get(current.as_str())
+                    .unwrap_or(&current.as_str())
+                    .to_string();
+                (concise, row.concise.clone(), current.clone())
+            }),
+            (None, None) => None,
+        };
+        if let Some((concise, own, current)) = obsolete {
+            let alternatives = if own == concise { Vec::new() } else { vec![own] };
+            add(&mut stats, "obsolete", 1);
+            let row = Row {
+                concise,
+                concise_ee: None,
+                alternatives,
+                current: Some(current),
+            };
+            tables.forms.insert(form.clone(), row);
+            continue;
+        }
         let mut readings = row.readings.clone();
         readings.sort_by_key(|(plural, _)| *plural);
         let ee = readings
@@ -300,6 +382,7 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
                 concise: row.concise.clone(),
                 concise_ee: ee,
                 alternatives: alts,
+                current: None,
             },
         );
     }

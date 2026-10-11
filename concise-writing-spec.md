@@ -71,9 +71,9 @@ The suffix -ează/-ească of verbs and adjectives after a hiatus i (written -az�
 | lemma minus final i + -ască | ends in a hiatus i-i (a verb of the fourth conjugation) | *sfiască* → *sfiėscă* (← *sfi-i*), *priască* → *priėscă* |
 | lemma minus -esc + -ască, -asca | ends in a hiatus i-esc (an adjective) | *fiască* → *fiėscă*, *fiasca* → *fiėsca* (← *fi-esc*), *pustiască* → *pustiėscă* |
 
-A long infinitive in -iare is not standard and is written in its -iere form, which then follows the rules for -iere: *apreciare* → *apreciere*, *apreciarea* → *aprecierē*, *tăiare* → *tăẹre*. In its forms, the last -iar-/-iăr- becomes -ier-: *apreciărilor* → *aprecierilor*. A long infinitive is a lemma in -iare that dexonline lists in lowercase as a feminine noun or unclassified (model F, T or IL), except *fiare* and *mobiliare* (`rules::IARE_KEPT`). A form that another lemma also gives keeps that lemma's spelling: *conciliare* (the adjective *conciliar*), *copiare* (the noun *copiar*). The -iere spelling is then no alternative on the homograph switch.
+A long infinitive in -iare is not standard and is written in its -iere form, which then follows the rules for -iere: *apreciare* → *apreciere*, *apreciarea* → *aprecierē*, *tăiare* → *tăẹre*. In its forms, the last -iar-/-iăr- becomes -ier-: *apreciărilor* → *aprecierilor*. A long infinitive is a lemma in -iare that dexonline lists in lowercase as a feminine noun or unclassified (model F, T or IL), except *fiare* and *mobiliare* (`rules::IARE_KEPT`). A form that another lemma also gives keeps that lemma's spelling: *conciliare* (the adjective *conciliar*), *copiare* (the noun *copiar*). The -iere spelling is then no alternative on the homograph switch. Otherwise the long infinitive is an obsolete form, and its own spelling is the alternative (see *Obsolete forms*).
 
-A word with an obsolete stem listed in `rules::OBSOLETE`, in the database or not, is written the same way, with the current stem, and then follows the rules: *rachiareasă*, *rachiareasa* → *rachierēsă*, *rachierēsa* (← *rachiereasă*, *rachiereasa*). A form that another lemma also gives keeps that lemma's spelling.
+Other obsolete forms are written as their current form too (see *Obsolete forms*).
 
 ## Optional rule: final -ee (switch, default off)
 
@@ -119,6 +119,16 @@ The UI shows every spelling of a homograph in one switch on a dark-grey track. T
 
 The -ee rule does not produce homographs: its singular/plural choice stays single (see *Optional rule: final -ee*). The exception is an unknown word in -eei, -eele or -eelor (see *Unknown words*). Reverse conversion with the -ee switch shows its ties on the same switch (see *Reverse conversion*).
 
+## Obsolete forms
+
+An obsolete form is written as its current form, and its own spelling is offered on the homograph switch, after the current one, with a footnote: „Forma *alineare* e învechită; forma actuală e *aliniere*.” In the core's `convert`, the segment's `obsolete` holds the word and its current form, in the word's case (*Alineare*, *Aliniere*); `lookup` returns the current form in `obsolete`. The obsolete forms are:
+- the long infinitives in -iare (see *Syllabification source*): *apreciarea* → *aprecierē* or *apreciarē*;
+- the forms of the lemmas in `rules::OBSOLETE`, each listed with its current lemma: *alinea* → *alinia*, *alineare* → *aliniere*, *rachiareasă* → *rachiereasă*. A form takes the spelling of the current lemma's form with the same dexonline inflection and variant (*alineează* → *aliniėză* ← *aliniază*, *alineez* → *aliniez*), and its own spelling from its own syllabification, listed with it in `rules::OBSOLETE` (*a-li-ne-a*: *alineēză*, *alineare*; *ra-chi-a-rea-să*: *rachiarēsă*). Words that start with the stem of one (*aline-*, *rachiare-*) are looked up even with no candidate digraph (*alineez*).
+
+A form that another lemma also gives keeps that lemma's spelling, with no switch: *alineat* (the noun), *alinea* (the imperfect of *alini*: *alinē*), *conciliare* (the adjective *conciliar*).
+
+A word missing from the database that starts with the stem of an obsolete lemma takes the current lemma's stem and is converted by the rules alone (*rachiareasa* → *rachierēsa*); its own spelling comes from the obsolete lemma's syllabification (*rachiarēsa*).
+
 ## Case
 
 The case pattern of the word is carried over: *Soare* → *Sōre*, *SOARE* → *SŌRE*. Other mixed-case patterns are reduced to an initial capital.
@@ -141,7 +151,7 @@ A word in -eele/-eelor:
 - Final -ele/-elor is replaced by -u. If that gives a lemma in -eu from the database (`eu_lemmas`), the word is its plural, with one spelling: *bombeele* → *bombeẹle* (← *bombeu*, whose dexonline plural is *bombeuri*).
 - Otherwise it gets two spellings, as the plural of an -ee lemma (*coloboleile*, *coloboleilor*, the default) or of an -eu lemma (*coloboleẹle*, *coloboleẹlor*). They are shown as a homograph switch, with a footnote using the word's stem: „Dacă singularul e *colobolee*, alege forma *coloboleile/lor*. Dacă singularul e *coloboleu*, alege forma *coloboleẹle/lor*.”
 
-Words with no candidate digraph and no iăr are never looked up.
+Words with no candidate digraph, no iăr and no obsolete stem are never looked up.
 
 ## Reverse conversion
 
@@ -158,7 +168,7 @@ Any other word, unknown ones included, goes through the character map (*femeẹ*
 ## Data
 
 The word data comes in one file, `grafia.dat` (its layout is in `crates/core/src/datafile.rs`). Besides five tables, it holds the format version, the date of the dexonline data it was built from (the day of dexonline's latest change to a lexeme or a definition), the rules it was built with, and a checksum, checked when the file is opened. The rules are `RULES_HASH`, a hash of the code of `crates/core/src/rules.rs` and `build.rs` without comments or whitespace: the web app's build refuses a data file built with other rules. The tables are each keyed on a normalized word:
-- `forms`: a form → `concise`, its concise spelling; `concise_ee`, its spelling with the -ee rule when that differs from `concise`; and `alternatives`, a homograph's other spellings.
+- `forms`: a form → `concise`, its concise spelling; `concise_ee`, its spelling with the -ee rule when that differs from `concise`; `alternatives`, a homograph's other spellings; and `current`, an obsolete form's current form (see *Obsolete forms*).
 - `eu_lemmas`: every normalized lemma in -eu, for unknown plurals in -eele/-eelor (see *Unknown words*).
 - `ea_lemmas`: every normalized lemma in -ea, for unknown genitives in -eei (see *Unknown words*).
 - `iesc_lemmas`: every normalized lemma in -iesc → its syllabification (*harabagi-esc*), for unknown forms of -iesc adjectives (see *Unknown words*).
@@ -166,4 +176,4 @@ The word data comes in one file, `grafia.dat` (its layout is in `crates/core/src
 
 The same tables always give the same file, byte for byte.
 
-`forms` stores only forms that can differ: those containing ie/ia/ea/oa or iăr, or ending in -ee, -eea, -eei, -eele, -eelor, -euri, -eurile or -eurilor. The pipeline input per inflected form is: the form, its lemma, the lemma's dexonline hyphenation (complete, partial or empty), the number (S/P), whether the lemma is a verb (dexonline model V or VT), whether it is a lowercase feminine noun or unclassified (model F, T or IL; for long infinitives in -iare), and whether it is DEX-MDA-DOOM: it has an active definition of its own (whose headword is the lexeme) from a source whose short name starts with MDA, DEX, NODEX or DOOM (MDA2, DEX '09, NODEX, DOOM 3, ...; not the internal *dexonline*).
+`forms` stores only forms that can differ: those containing ie/ia/ea/oa or iăr, or ending in -ee, -eea, -eei, -eele, -eelor, -euri, -eurile or -eurilor, and the forms that start with the stem of an obsolete lemma. The pipeline input per inflected form is: the form, its lemma, the lemma's dexonline hyphenation (complete, partial or empty), the number (S/P), whether the lemma is a verb (dexonline model V or VT), whether it is a lowercase feminine noun or unclassified (model F, T or IL; for long infinitives in -iare), and whether it is DEX-MDA-DOOM: it has an active definition of its own (whose headword is the lexeme) from a source whose short name starts with MDA, DEX, NODEX or DOOM (MDA2, DEX '09, NODEX, DOOM 3, ...; not the internal *dexonline*), and the form's inflection and variant, which pair the forms of an obsolete lemma with those of its current lemma.

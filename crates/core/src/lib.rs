@@ -140,12 +140,14 @@ pub fn revert(text: &str, dict: &dyn Dictionary, ee: bool) -> Reversion {
 }
 
 /// Words converted one by one: each word's default spelling (lowercase), the
-/// unknown words, and all the spellings of those with several, default first.
+/// unknown words, all the spellings of those with several, default first, and the
+/// current form of the obsolete ones (lowercase: alineare -> aliniere).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Lookup {
     pub results: IndexMap<String, String>,
     pub unknown: Vec<String>,
     pub alternatives: IndexMap<String, Vec<String>>,
+    pub obsolete: IndexMap<String, String>,
 }
 
 /// Converts each word on its own, as `convert` does.
@@ -160,10 +162,16 @@ pub fn lookup(words: &[&str], dict: &dyn Dictionary, options: Options) -> Lookup
         results: IndexMap::new(),
         unknown: Vec::new(),
         alternatives: IndexMap::new(),
+        obsolete: IndexMap::new(),
     };
     for &w in words {
         let key = rules::normalize(w);
-        let Some((spellings, unknown)) = resolved.get(&key) else {
+        let Some(rules::Resolution {
+            spellings,
+            unknown,
+            current,
+        }) = resolved.get(&key)
+        else {
             out.results.insert(w.to_string(), key);
             continue;
         };
@@ -173,6 +181,9 @@ pub fn lookup(words: &[&str], dict: &dyn Dictionary, options: Options) -> Lookup
         }
         if *unknown {
             out.unknown.push(w.to_string());
+        }
+        if let Some(current) = current {
+            out.obsolete.insert(w.to_string(), current.clone());
         }
     }
     if options.ai {

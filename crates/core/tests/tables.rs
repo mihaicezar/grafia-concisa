@@ -7,8 +7,7 @@ use std::sync::LazyLock;
 
 use grafia_concisa::build::{Record, Stats, Tables, build};
 use grafia_concisa::rules::{
-    concise_ee, concise_from_reference, concise_from_syllables, current_form, iere_spelling, long_infinitive,
-    revert_text, syllabify,
+    concise_ee, concise_from_reference, concise_from_syllables, iere_spelling, long_infinitive, revert_text, syllabify,
 };
 use grafia_concisa::{DataFile, Dictionary, Options, RULES_HASH, convert, datafile, lookup, revert};
 
@@ -269,7 +268,7 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
     ("vianu", "", "vianu", "rules", ""),
     ("ghiare", "", "ghiare", "rules", ""), // like ghiară
     ("ghiarele", "", "ghiarele", "rules", ""),
-    ("rachiareasă", "", "rachiareasă", "rules", ""), // like rachiar
+    ("chiarele", "", "chiarele", "rules", ""), // chiar before e too
     // ...and each exception
     ("unghiar", "", "unghi-ar", "rules", ""),
     ("gorghias", "", "gorghi-as", "rules", ""),
@@ -402,21 +401,33 @@ const HOMOGRAPHS: &[(&str, &[&str])] = &[
     ("piei", &[]),                  // SYLLABIFICATIONS: the form's only spelling
     ("vier", &["vẹr", "vier"]),     // the boar (default), păzitor de vie
     ("vierul", &["vẹrul", "vierul"]),
-    ("agreare", &[]), // the rules-only agrēre is no alternative
-    ("zzoa", &[]),    // an unknown word with one spelling has no switch
+    ("agreare", &[]),                         // the rules-only agrēre is no alternative
+    ("zzoa", &[]),                            // an unknown word with one spelling has no switch
+    ("alineează", &["aliniėză", "alineēză"]), // obsolete: the current form, then its own (a-li-ne-a)
+    ("alineez", &["aliniez", "alineez"]),
+    ("alineară", &["aliniară", "alineară"]),
+    ("alineare", &["aliniere", "alineare"]), // a-li-ne-a-re: a hiatus
+    ("rachiareasă", &["rachierēsă", "rachiarēsă"]),
+    ("rachiareasa", &["rachierēsa", "rachiarēsa"]), // unknown
+    ("apreciarea", &["aprecierē", "apreciarē"]),    // a long infinitive in -iare: obsolete
+    ("tăiarea", &["tăẹrē", "tăėrē"]),
+    ("înjunghiare", &["înjunghiere", "înjunghiare"]), // a hiatus, like înjunghiere (not înjunghėre)
 ];
 // (text, number of segments): plain text is merged into one segment, others stay apart
 const SEGMENTS: &[(&str, usize)] = &[
-    ("Soare și ia", 2), // "Sōre și ", ia
-    ("ia mare", 2),     // ia, " mare"
-    ("zzoa mare", 2),   // zzō (unknown), " mare"
+    ("Soare și ia", 2),  // "Sōre și ", ia
+    ("ia mare", 2),      // ia, " mare"
+    ("zzoa mare", 2),    // zzō (unknown), " mare"
+    ("Un fier", 1),      // plain text, then a word with one spelling: one segment
+    ("alineez mare", 2), // an obsolete word stays apart
 ];
 // Long infinitives in -iare (flag F) are written -iere: records for the test DB.
 const LONG_INFINITIVE_RECORDS: &[&[&str]] = &[
     &["apreciarea", "apreciare", "a-pre-ci-a-re", "S", "F"],
     &["apreciărilor", "apreciare", "a-pre-ci-a-re", "P", "F"],
     &["tăiarea", "tăiare", "", "S", "F"],
-    &["fiare", "fiare", "", "S", "F"], // rules::IARE_KEPT: no long infinitive
+    &["înjunghiare", "înjunghiare", "", "S", "F"], // no hyphenation: its own spelling keeps the -iere cuts
+    &["fiare", "fiare", "", "S", "F"],             // rules::IARE_KEPT: no long infinitive
     &["mobiliare", "mobiliare", "", "S", "F"],
     &["variare", "variare", "", "S"],            // no flag F: no long infinitive
     &["conciliare", "conciliare", "", "S", "F"], // loses to any other record...
@@ -522,11 +533,40 @@ const STATS: &[(&str, i64)] = &[
     ("lemma_rules", 5),
     ("long_infinitive", 1),
     ("no_candidate", 1),
+    ("obsolete", 1),
     ("read", 16),
     ("stored", 12),
 ];
 // Obsolete forms (rules::OBSOLETE): records for the test DB
-const OBSOLETE_RECORDS: &[&[&str]] = &[&["rachiareasă", "rachiareasă", "", "S"]];
+const OBSOLETE_RECORDS: &[&[&str]] = &[
+    &["alineează", "alinea", "", "S", "V", "I51.0"], // paired by inflection with...
+    &["aliniază", "alinia", "-ni-a", "S", "V", "I51.0"], // ...the current lemma's form
+    &["alineez", "alinea", "", "S", "V", "I54.0"],   // no digraph, but an obsolete stem
+    &["aliniez", "alinia", "-ni-a", "S", "V", "I54.0"],
+    &["alineat", "alinea", "", "S", "V", "I52.0"], // also the noun alineat: not obsolete
+    &["aliniat", "alinia", "-ni-a", "S", "V", "I52.0"],
+    &["alineat", "alineat", "", "S"],
+    &["rachiereasă", "rachiereasă", "", "S", "", "I85.0"], // the current lemma first
+    &["rachiareasă", "rachiareasă", "", "S", "", "I85.0"],
+    &["alinea", "alinea", "", "S", "V", "I49.0"], // also the imperfect of the current alini...
+    &["alinia", "alinia", "-ni-a", "S", "V", "I49.0"],
+    &["alinea", "alini", "", "S", "V", "I68.0"],
+    &["alineară", "alinea", "", "S", "V", "I77.0"], // alinea + -ră: its own cut ne-a
+    &["aliniară", "alinia", "-ni-a", "S", "V", "I77.0"],
+    &["aliniere", "aliniere", "-ni-e-re", "S", "", "I30.0"],
+    &["alineare", "alineare", "", "S", "", "I30.0"],
+];
+// Obsolete words: (word, its current form, in its case; None if not obsolete)
+const OBSOLETE_WORDS: &[(&str, Option<&str>)] = &[
+    ("Alineează", Some("Aliniază")),
+    ("alineez", Some("aliniez")),
+    ("alineat", None), // a current word too
+    ("alinea", None),  // ...so not obsolete
+    ("rachiareasă", Some("rachiereasă")),
+    ("rachiareasa", Some("rachiereasa")), // unknown: by its stem
+    ("Apreciarea", Some("Aprecierea")),   // a long infinitive in -iare
+    ("conciliare", None),                 // also the adjective conciliar
+];
 // Records the build skips: a form or a lemma that is not one word
 const INVALID_RECORDS: &[&[&str]] = &[&["zzoare", "zz1", "", "S"], &["zzoa1re", "zzoare", "", "S"]];
 // Lemmas for the test DB with no forms of their own: -eu (no -eele/-eelor), -iesc.
@@ -680,6 +720,13 @@ const TEXTS: &[(&str, bool, &str, &[&str], bool)] = &[
     ),
     ("agreare", false, "agreare", &[], true),        // backed beats rules alone
     ("Rachiareasă", false, "Rachierēsă", &[], true), // obsolete: as rachiereasă
+    (
+        "Alineează, alineez, alineat",
+        false,
+        "Aliniėză, aliniez, alineat",
+        &[],
+        true,
+    ), // obsolete, but the noun alineat
     (
         "rachiareasa rachiaresele",
         false,
@@ -915,7 +962,7 @@ fn round_trip_whole_db() {
         // ...and an obsolete form to its current form
         let allowed = if long_inf.contains(form.as_str()) {
             vec![form.clone(), iere_spelling(form)]
-        } else if let Some(current) = current_form(form) {
+        } else if let Some(current) = &row.current {
             vec![current.to_string()]
         } else {
             vec![form.clone()]
@@ -980,6 +1027,22 @@ fn homographs() {
             if let Some(first) = spellings.first() {
                 f.check((name, word), s.t.as_str(), first); // default in the text
             }
+        }
+    }
+    f.assert();
+}
+
+#[test]
+fn obsolete_words() {
+    let mut f = Failures::default();
+    for (name, dict) in dicts() {
+        for (word, current) in OBSOLETE_WORDS {
+            let s = &convert(word, dict, Options::default()).segments[0];
+            let got = s.obsolete.as_ref().map(|[old, new]| (old.as_str(), new.as_str()));
+            f.check((name, word), got, current.map(|c| (*word, c)));
+            let r = lookup(&[word], dict, Options::default());
+            let lowercase = current.map(|c| c.to_lowercase());
+            f.check((name, word, "lookup"), r.obsolete.get(*word).cloned(), lowercase);
         }
     }
     f.assert();

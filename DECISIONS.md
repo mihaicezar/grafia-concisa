@@ -69,10 +69,15 @@ This file is the log of closed decisions: what was decided, when, and why, with 
 - **2026-10-09: a long infinitive in -iare is written -iere**, then follows the -iere rules (*apreciare* → *apreciere*, *tăiare* → *tăẹre*). **Why:** long infinitives in -iare are incorrect; the correct form always ends in -iere.
   - A form that another lemma also gives keeps that lemma's spelling (*conciliare*, the adjective). **Why:** the other word is the current one.
   - It replaces the earlier diphthong reading of -iare after a labial or palatal consonant, which now applies only to words that are not long infinitives (*fiare*).
+  - **2026-10-11:** it is an obsolete form (see *Obsolete forms*): the switch offers the -iare spelling, with a footnote. This reverses the earlier rule that the -iere spelling has no alternative.
 
-## Obsolete forms (spec: *Syllabification source*)
-- **2026-10-11: an obsolete form is written as its current form**, like a long infinitive in -iare, in every form of the obsolete stem, known or not (*rachiareasă*, *rachiareasa* → *rachierēsă*, *rachierēsa* ← *rachiereasă*). **Why:** the obsolete form is incorrect, and its current form is what the text means.
-  - A category of officially obsolete forms is planned: the switch will offer the obsolete spelling, with the current one selected, and a footnote (*alinea*, *alineare* → *alinia*, *aliniere*). Until then, only the stems listed in `rules::OBSOLETE` are rewritten.
+## Obsolete forms (spec: *Obsolete forms*)
+- **2026-10-11: an obsolete form is written as its current form**, and the switch offers its own spelling, with a footnote naming the current form („Forma *alineare* e învechită; forma actuală e *aliniere*.”). **Why:** the obsolete form is incorrect, and its current form is what the text means; the switch keeps the old spelling at hand.
+  - The obsolete lemmas are listed by hand with their current lemma (*alinea* → *alinia*, *alineare* → *aliniere*, *rachiareasă* → *rachiereasă*), and each form is paired with the current lemma's form of the same inflection (*alineează* → *aliniază*, *alineând* → *aliniind*). **Why:** the two paradigms differ beyond the stem.
+  - The old spelling follows the old syllabification (*alineare*: *a-li-ne-a-re*, a hiatus, not *alinēre*; *rachiareasă*: *rachiarēsă*).
+  - A form that a current lemma also gives keeps that lemma's spelling, with no switch (*alineat*, the noun; *alinea*, the imperfect of *alini*).
+  - A word missing from the database with the stem of an obsolete lemma takes the current stem (*rachiareasa* → *rachierēsa*, or *rachiarēsa*).
+  - Long infinitives in -iare are obsolete forms too (*apreciare* → *apreciere*, *ambreiere*, *inventariere*, *înjunghiere*).
 
 ## Optional -ee rule (spec: *Optional rule: final -ee*)
 - **A separate switch, default off.** Word-final *-ee* is read as *-eie* and written *-eẹ* (*idee* → *ideẹ*), and the forms of *-ee* lemmas follow the *femeie* pattern (*ideea* → *ideė*, *ideei* → *ideii*).
