@@ -85,7 +85,7 @@ pub fn known_lemmas(dict: &dyn Dictionary, words: &BTreeSet<String>) -> HashMap<
         .collect()
 }
 
-/// The switches: the optional -ee rule (default off) and â -> î (default on).
+/// The switches: the optional -ee rule, -eẹ/aẹ/oẹ (default off), and â -> î (default on).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Options {
     pub ee: bool,
@@ -108,9 +108,9 @@ pub struct Conversion {
 
 /// Standard -> concise. Words missing from the database are converted by rules
 /// alone and listed in `unknown`. A homograph's segment lists all its spellings,
-/// default first; so does an unknown word with the -ee switch in -eei (unchanged
-/// or -eii) or -eele/-eelor (plural of an -ee or an -eu lemma), unless its lemma
-/// is in the database (Andreei <- Andreea, bombeele <- bombeu: one spelling).
+/// default first; so does an unknown word with the -ee switch in -eei (-eẹi or
+/// -eii) or -eele/-eelor (plural of an -ee or an -eu lemma), unless its lemma is
+/// known (Niceei <- Niceea, bombeele <- bombeu, Andreei <- the name Andreea: one spelling).
 pub fn convert(text: &str, dict: &dyn Dictionary, options: Options) -> Conversion {
     let segments = rules::convert_text(text, dict, options.ee, options.ai);
     let unknown: BTreeSet<String> = segments.iter().filter_map(|s| s.unknown.clone()).collect();
@@ -140,12 +140,15 @@ pub fn revert(text: &str, dict: &dyn Dictionary, ee: bool) -> Reversion {
 }
 
 /// Words converted one by one: each word's default spelling (lowercase), the
-/// unknown words, and all the spellings of those with several, default first.
+/// unknown words, all the spellings of those with several, default first, and the
+/// current forms of the obsolete ones (lowercase: alineare -> aliniere; alineam -> alinam,
+/// aliniam).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Lookup {
     pub results: IndexMap<String, String>,
     pub unknown: Vec<String>,
     pub alternatives: IndexMap<String, Vec<String>>,
+    pub obsolete: IndexMap<String, Vec<String>>,
 }
 
 /// Converts each word on its own, as `convert` does.
@@ -160,10 +163,16 @@ pub fn lookup(words: &[&str], dict: &dyn Dictionary, options: Options) -> Lookup
         results: IndexMap::new(),
         unknown: Vec::new(),
         alternatives: IndexMap::new(),
+        obsolete: IndexMap::new(),
     };
     for &w in words {
         let key = rules::normalize(w);
-        let Some((spellings, unknown)) = resolved.get(&key) else {
+        let Some(rules::Resolution {
+            spellings,
+            unknown,
+            current,
+        }) = resolved.get(&key)
+        else {
             out.results.insert(w.to_string(), key);
             continue;
         };
@@ -173,6 +182,9 @@ pub fn lookup(words: &[&str], dict: &dyn Dictionary, options: Options) -> Lookup
         }
         if *unknown {
             out.unknown.push(w.to_string());
+        }
+        if !current.is_empty() {
+            out.obsolete.insert(w.to_string(), current.clone());
         }
     }
     if options.ai {
@@ -201,5 +213,11 @@ mod tests {
         // ...the code does, and so does a comment after it
         assert_ne!(hash(code), hash("fn a() -> u8 {\n    2 // one\n}\n"));
         assert_ne!(hash(code), hash("fn a() -> u8 {\n    1 // two\n}\n"));
+        // a single / starts no comment, even as the last byte; a comment may end the file
+        assert_ne!(hash("a\n/ b"), hash("a\n/ c"));
+        assert_ne!(hash("a\n/"), hash("a\n"));
+        assert_eq!(hash("a\n// x"), hash("a"));
+        // FNV-1a
+        assert_eq!(hash("a"), 0xaf63_dc4c_8601_ec8c);
     }
 }

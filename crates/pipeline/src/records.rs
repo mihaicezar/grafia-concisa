@@ -14,7 +14,7 @@ use mysql::{Conn, OptsBuilder, Value, from_value_opt};
 
 use crate::Server;
 
-// One row per inflected form with seven columns:
+// One row per inflected form with nine columns:
 //   form ('ideea'), lemma ('idee'), the lemma's dexonline hyphenation
 //   (complete, partial such as '-li-e', or ''), number ('S' or 'P'),
 //   'V' if the lemma is a verb, else '',
@@ -23,7 +23,11 @@ use crate::Server;
 //   under coș) from a source named MDA*, DEX*, NODEX* or DOOM* (MDA2, DEX '09, NODEX,
 //   DOOM 3; not 'dexonline'),
 //   'F' if the lexeme is lowercase and of model F, T or IL (a feminine noun or
-//   unclassified), else '': a lemma in -iare is then a long infinitive (apreciare).
+//   unclassified), else '': a lemma in -iare is then a long infinitive (apreciare),
+//   'I' + the form's inflection and variant ('I52.0'), which pair the forms of an obsolete
+//   lemma with those of its current lemma (rules::OBSOLETE: alineează -> aliniază),
+//   'M' if the lexeme is of model M or A (a masculine noun or an adjective), else '': a lemma
+//   in -eu is then the masculine of its -ee feminine for the -ee rule (zee <- zeu).
 // Partial and missing hyphenations are completed by rules::syllabify.
 // The order is fixed, since the first record wins a tie (the spec's priority list):
 // the oldest lexeme first, then its oldest form.
@@ -31,7 +35,8 @@ const SOURCE_QUERY: &str = "
 SELECT f.formNoAccent, l.formNoAccent, IFNULL(l.hyphenations, ''), IF(i.number = 2, 'P', 'S'),
        IF(l.modelType IN ('V', 'VT'), 'V', ''), IF(dex.lexemeId IS NULL, '', 'D'),
        IF(l.modelType IN ('F', 'T', 'IL') AND l.formNoAccent COLLATE utf8mb4_bin REGEXP '^[a-zăâîșț]',
-          'F', '')
+          'F', ''),
+       CONCAT('I', f.inflectionId, '.', f.variant), IF(l.modelType IN ('M', 'A'), 'M', '')
 FROM InflectedForm f
 JOIN Lexeme l ON l.id = f.lexemeId
 JOIN Inflection i ON i.id = f.inflectionId
@@ -190,13 +195,16 @@ mod tests {
 
     #[test]
     fn exported_records() {
-        // as SOURCE_QUERY gives them: seven fields, some empty
+        // as SOURCE_QUERY gives them: nine fields, some empty
         let records = [
-            Record::new(&["ideea", "idee", "i-de-e", "S", "", "D", ""]),
-            Record::new(&["familia", "familie", "", "S", "", "", ""]),
+            Record::new(&["ideea", "idee", "i-de-e", "S", "", "D", "", "I13.0", ""]),
+            Record::new(&["zeii", "zeu", "", "P", "", "D", "", "I37.0", "M"]),
         ];
         let text: String = records.iter().map(|r| text_line(r).unwrap()).collect();
-        assert_eq!(text, "ideea\tidee\ti-de-e\tS\t\tD\t\nfamilia\tfamilie\t\tS\t\t\t\n");
+        assert_eq!(
+            text,
+            "ideea\tidee\ti-de-e\tS\t\tD\t\tI13.0\t\nzeii\tzeu\t\tP\t\tD\t\tI37.0\tM\n"
+        );
         assert_eq!(from_text(&text).unwrap().collect::<Vec<_>>(), records);
         assert!(text_line(&Record::new(&["a\tb", "a", "", "S"])).is_err());
     }

@@ -16,8 +16,10 @@
 //! n, then n bytes, for `key[..p]` + those bytes + `key[p + d..]` (soare -> sōre:
 //! 1, 2, "ō"). Many keys share an edit (boare -> bōre too), and identical entries
 //! are stored once.
-//!   - `forms`: a byte (bit 0: has an -ee spelling; bits 1-7: the number of
-//!     alternatives), the concise spelling, the -ee spelling, then the alternatives;
+//!   - `forms`: a byte (bit 0: has an -ee spelling; bit 1: is obsolete; bits 2-7: the
+//!     number of alternatives), the concise spelling, the -ee spelling, for an obsolete
+//!     form the number of its current forms (a byte) and the current forms, then the
+//!     alternatives;
 //!   - `ee_revert`: the number of alternatives, the form, then the alternatives;
 //!   - `iesc_lemmas`: the syllabification.
 //!
@@ -33,7 +35,7 @@ use crate::{Dictionary, RULES_HASH, Row};
 
 const MAGIC: &[u8; 8] = b"GRAFIAC\0";
 /// The format version, changed with the layout.
-pub const VERSION: u32 = 2;
+pub const VERSION: u32 = 4;
 
 const DATE: usize = 0;
 const FORMS: usize = 1;
@@ -124,12 +126,19 @@ pub fn write(tables: &Tables, date: &str) -> Result<Vec<u8>, Error> {
 
     let mut forms = MapBuilder::memory();
     for (form, row) in &tables.forms {
-        let alts = count(&row.alternatives, 127, form)?;
-        let mut entry = vec![alts << 1 | u8::from(row.concise_ee.is_some())];
-        for word in std::iter::once(&row.concise)
-            .chain(&row.concise_ee)
-            .chain(&row.alternatives)
-        {
+        let alts = count(&row.alternatives, 63, form)?;
+        let obsolete = !row.current.is_empty();
+        let mut entry = vec![alts << 2 | u8::from(obsolete) << 1 | u8::from(row.concise_ee.is_some())];
+        for word in std::iter::once(&row.concise).chain(&row.concise_ee) {
+            push_word(&mut entry, form, word)?;
+        }
+        if obsolete {
+            entry.push(count(&row.current, 255, form)?);
+            for word in &row.current {
+                push_word(&mut entry, form, word)?;
+            }
+        }
+        for word in &row.alternatives {
             push_word(&mut entry, form, word)?;
         }
         forms.insert(form, entries.add(entry))?;
@@ -279,11 +288,18 @@ impl<B: AsRef<[u8]>> Dictionary for DataFile<B> {
         let header = entry.byte()?;
         let concise = entry.word()?;
         let concise_ee = if header & 1 == 1 { Some(entry.word()?) } else { None };
-        let alternatives = entry.words(header >> 1)?;
+        let current = if header & 2 == 2 {
+            let n = entry.byte()?;
+            entry.words(n)?
+        } else {
+            Vec::new()
+        };
+        let alternatives = entry.words(header >> 2)?;
         Some(Row {
             concise,
             concise_ee,
             alternatives,
+            current,
         })
     }
 

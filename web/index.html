@@ -108,7 +108,7 @@
     </select>
     <span id="switches">
       <label id="ai-switch"><input type="checkbox" id="ai" checked> î</label>
-      <label><input type="checkbox" id="ee"> -ee → -eẹ</label>
+      <label><input type="checkbox" id="ee"> -eẹ/aẹ/oẹ</label>
     </span>
     <button id="go" disabled>Convertește</button>
     <button id="copy" class="quiet" disabled>Copiază</button>
@@ -169,24 +169,26 @@
         : engine.revert(input.value, $("ee").checked);
       output.replaceChildren();
       notes.replaceChildren();
-      const stems = [];  // unknown -eele/-eelor words, one footnote per stem
-      let homographs = 0;
+      // footnotes, one per key: an unknown -eele/-eelor stem, or an obsolete word
+      const footnotes = [];
+      const word = (text) => Object.assign(document.createElement("i"), { textContent: text });
+      const footnote = (key, text) => {
+        let i = footnotes.findIndex((f) => f.key === key);
+        if (i < 0) i = footnotes.push({ key, text }) - 1;
+        const sup = document.createElement("sup");
+        sup.className = "fn";
+        sup.textContent = i + 1;
+        output.append(sup);
+      };
+      let homographs = 0, obsolete = 0;
       for (const seg of data.segments) {
         if (seg.alts) {
-          homographs++;
+          homographs += !seg.obsolete;
           const group = switcher(seg.alts);
           output.append(group);
-          const m = seg.unknown?.toLowerCase().match(/^(.*)ee(le|lor)$/);
           if (seg.unknown) {
             group.classList.add("unknown");
             group.title = "Negăsit în bază: convertit doar prin reguli";
-          }
-          if (m) {
-            if (!stems.includes(m[1])) stems.push(m[1]);
-            const sup = document.createElement("sup");
-            sup.className = "fn";
-            sup.textContent = stems.indexOf(m[1]) + 1;
-            output.append(sup);
           }
         } else if (seg.unknown) {
           const s = document.createElement("span");
@@ -197,19 +199,31 @@
         } else {
           output.append(seg.t);
         }
+        const m = seg.alts && seg.unknown?.toLowerCase().match(/^(.*)ee(le|lor)$/);
+        if (m) {
+          const s = m[1];
+          footnote(`ee:${s}`, ["Dacă singularul e ", word(`${s}ee`), " și nu are masculinul ", word(`${s}eu`),
+                               ", alege forma ", word(`${s}eile/lor`), ". Dacă e ", word(`${s}eu`), ", sau ",
+                               word(`${s}ee`), " cu masculinul ", word(`${s}eu`), ", alege ", word(`${s}eẹle/lor`), "."]);
+        }
+        if (seg.obsolete) {
+          obsolete++;
+          const [old, ...current] = seg.obsolete;  // one current form, or several (alineam: alinam, aliniam)
+          const forms = current.flatMap((c, i) => (i ? [" sau ", word(c)] : [word(c)]));
+          footnote(`old:${old.toLowerCase()}`, ["Forma ", word(old), " e învechită; forma actuală e ", ...forms, "."]);
+        }
       }
-      for (const s of stems) {
+      for (const { text } of footnotes) {
         const li = document.createElement("li");
-        const word = (text) => Object.assign(document.createElement("i"), { textContent: text });
-        li.append("Dacă singularul e ", word(`${s}ee`), ", alege forma ", word(`${s}eile/lor`), ". ",
-                  "Dacă e ", word(`${s}eu`), ", alege ", word(`${s}eẹle/lor`), ".");
+        li.append(...text);
         notes.append(li);
       }
-      notes.hidden = !stems.length;
+      notes.hidden = !footnotes.length;
       const n = (data.unknown || []).length;
       status.textContent = [
         n && `${n} ${n === 1 ? "cuvînt negăsit" : "cuvinte negăsite"}`,
         homographs && `${homographs} ${homographs === 1 ? "cuvînt" : "cuvinte"} cu două citiri`,
+        obsolete && `${obsolete} ${obsolete === 1 ? "formă învechită" : "forme învechite"}`,
       ].filter(Boolean).join(" · ");
       $("copy").disabled = !data.text;
     } catch (e) {

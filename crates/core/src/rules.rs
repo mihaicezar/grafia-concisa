@@ -4,7 +4,7 @@
 //! syllable (no hiatus). Within a syllable the scan is left to right and
 //! matches never overlap.
 //!
-//! Optional rule "ee" (switch): -ee lemmas follow the femeie pattern.
+//! Optional rule "ee", -eẹ/aẹ/oẹ (switch): -ee lemmas follow the femeie pattern.
 //! ```text
 //!   - final -ee, singular:             idee    -> ideẹ
 //!   - final -ee, plural of -eu lemma:  bombee  -> bombeẹ
@@ -18,6 +18,12 @@
 //!   - final -eei, same lemmas as -eea: ideei   -> ideii    (femeii), Galileei -> Galileii
 //!   - final -eele, -ee lemma:          orhideele  -> orhideile  (femeile)
 //!   - final -eelor, -ee lemma:         orhideelor -> orhideilor (femeilor)
+//!   - a kept lemma (in -eu, in -ee with a masculine, or in NAMES) keeps its e:
+//!                                      zeei -> zeẹi, zeele -> zeẹle, zee (pl.) -> zeẹ,
+//!                                      spontaneei -> spontaneẹi, Andreei -> Andreẹi
+//!   - final -oae, any word:            Băboae -> Băbōẹ
+//!   - a lemma in AE_OE:                Nae -> Naẹ, aloe -> aloẹ, aloea -> aloė, aloei -> aloii,
+//!                                      aloele -> aloile; a name: Zoei -> Zoẹi, Zoele -> Zoẹle
 //! ```
 //! When one spelling is both a singular and a plural, the singular wins.
 //!
@@ -62,10 +68,13 @@ pub static A_KEPT: LazyLock<Regex> = LazyLock::new(|| re(r"(?i)r[ou]mân"));
 
 pub static DIGRAPH: LazyLock<Regex> = LazyLock::new(|| re("ie|ia|ea|oa"));
 pub static CANDIDATE: LazyLock<Regex> = LazyLock::new(|| re("ie|ia|ea|oa|iăr")); // iăr: apreciări -> aprecieri
-pub static EE_FINAL: LazyLock<Regex> = LazyLock::new(|| re(r"(ee(a|i|le|lor)?|euri(le|lor)?)$")); // forms the -ee rule may change
+// forms the -ee rule may change, besides those of the lemmas in AE_OE (ae_oe_lemma)
+pub static EE_FINAL: LazyLock<Regex> = LazyLock::new(|| re(r"(ee(a|i|le|lor)?|euri(le|lor)?|oae)$"));
 pub static EURI: LazyLock<Regex> = LazyLock::new(|| re(r"euri(le|lor)?$")); // -euri plurals, which the -ee rule writes -eẹ, like -ee
-// Every spelling the -ee rule gives ends so (ideẹ, bombeẹle, ideė, ideii, orhideile, logorei)
-pub static EE_SPELLING: LazyLock<Regex> = LazyLock::new(|| re(r"e(ẹ|ẹle|ẹlor|ė|i|ii|ile|ilor)$"));
+// Every spelling the -ee rule gives ends so (ideẹ, bombeẹle, ideė, ideii, zeẹi, orhideile, logorei;
+// Naẹ, Băbōẹ, merēẹ; aloė, aloii, Zoẹi, aloile, Zoẹle)
+pub static EE_SPELLING: LazyLock<Regex> =
+    LazyLock::new(|| re(r"e(ẹ|ẹle|ẹlor|ė|i|ii|ẹi|ile|ilor)$|[aoōē]ẹ$|o(ė|ii|ẹi|ile|ilor|ẹle|ẹlor)$"));
 // Python's [^\W\d_]: letters and the non-decimal numbers
 pub static WORD: LazyLock<Regex> = LazyLock::new(|| re(r"[\p{L}\p{Nl}\p{No}]+"));
 
@@ -89,10 +98,17 @@ pub fn normalize(word: &str) -> String {
     nfc.to_lowercase()
 }
 
-/// True if the word can differ in grafia concisă (so needs a lookup).
+/// True if the word can differ in grafia concisă (so needs a lookup): a digraph, iăr, an
+/// -ee ending with the -ee switch, or an obsolete stem (alineez).
 pub fn has_candidate(word: &str, ee: bool) -> bool {
     let w = normalize(word);
-    found(&CANDIDATE, &w) || (ee && found(&EE_FINAL, &w))
+    found(&CANDIDATE, &w) || (ee && ee_final(&w)) || has_obsolete_stem(&w)
+}
+
+/// True if the -ee rule may change `word` (normalized): an -ee ending (EE_FINAL), or a
+/// form of a lemma in AE_OE (Nae, aloei).
+pub fn ee_final(word: &str) -> bool {
+    found(&EE_FINAL, word) || ae_oe_lemma(word).is_some()
 }
 
 const VOWELS: &str = "aeiouăâî";
@@ -108,9 +124,9 @@ static IENT: LazyLock<Regex> = LazyLock::new(|| re(r"^ien[tț](?:[aăei]|$)"));
 // specializat), except in these native stems (chiar, biată, piatră, amiază).
 pub static IA_DIPHTHONG: LazyLock<Regex> = LazyLock::new(|| {
     re(concat!(
-        r"chiar(?!e)|chiab|(?<!s)chiag|chiaun|unchiaș", // not -chiare (trunchiare), schiagrafie
-        r"|(?<!n)(?<!litur)(?<!^gor)ghia(?![tnl]|re|ce)", // not unghiar, -ghiat, -ghian, -ghial,
-        // -ghiare, liturghiar, Gorghias, eleghiacesc
+        r"chiar|chiab|(?<!s)chiag|chiaun|unchiaș",     // not schiagrafie
+        r"|(?<!n)(?<!litur)(?<!^gor)ghia(?![tnl]|ce)", // not unghiar, -ghiat, -ghian, -ghial,
+        // liturghiar, Gorghias, eleghiacesc
         r"|^biat(?!l)|(?<!hi)piatr|viaț(?!i)",   // not biatlon, hipiatric, deviație
         r"|(?:^|[aă])miaz(?!m)|(?<!e)miau(?!l)", // not distomiază, miazmă, semiautomat, Miaulis
         r"|megiaș|caragial|barcian|vianu$|chiajn|^obial",
@@ -120,11 +136,11 @@ pub static IA_DIPHTHONG: LazyLock<Regex> = LazyLock::new(|| {
 // realizat); native deal, beat, asear, greșeală stay diphthongs.
 pub static EA_HIATUS: LazyLock<Regex> = LazyLock::new(|| {
     re(concat!(
-        r"(?<![cgdb])eal$",                                // real, leal, boreal; not deal, podbeal
-        r"|(?:lin|hl|baln)ear$|nuclear",                   // linear, cohlear, balnear, nuclearizat
-        r"|(?:gr|aur|or|lin|cl|un|ct|id|al|pl)eat$|creat", // laureat, alineat, nucleat, creator
-        r"|(?:real|ideal)i|boreal|cereal",                 // realizat, idealist, cereale
-        r"|reac[tț]|steat|meandr|aleat|beatif",            // reactor, reacție, steatoză, aleator
+        r"(?<![gdb])eal$",               // real, leal, boreal, interliceal; not mangeal, deal, podbeal
+        r"|(?:lin|hl|baln)ear$|nuclear", // linear, cohlear, balnear, nuclearizat
+        r"|(?:gr|aur|lor|lin|ucl|un|ct|id|upl)eat|creat", // laureat(ă), nucleat(ă), delineator; not cleat, pleată
+        r"|(?:real|ideal)i|(?<!ră)(?<!sto)boreal|cereal", // realizat, idealist, cereale; not răboreală
+        r"|reac[tț]|steat|meandr|aleat|beatif", // reactor, reacție, steatoză, aleator
     ))
 });
 // Medial ie after p/b/f/v/m or c/g/ch/gh is a hiatus in these neologism stems and
@@ -132,18 +148,78 @@ pub static EA_HIATUS: LazyLock<Regex> = LazyLock::new(|| {
 pub static IE_HIATUS: LazyLock<Regex> =
     LazyLock::new(|| re(r"gien|pieton|cviet|societ|soviet|vien|miel(?:o|in|it|ie)|ietoa?r|(?<=[^zs])bier"));
 // oa is a hiatus in these neologism stems and endings (coagulat, coaliție, protozoar).
-pub static OA_HIATUS: LazyLock<Regex> = LazyLock::new(|| re(r"coagul|coabit|coali[tțz]|zoar$"));
+pub static OA_HIATUS: LazyLock<Regex> = LazyLock::new(|| re(r"coagul|coabit|coali[țz]|zoar$"));
 // A long infinitive in -iere after p/b/f/v/m or c/g/ch/gh is a hiatus in all its forms
 // (copiere, învierea, aprecierilor), except in these native words and their forms
 // (mierea, pieri). After a vowel it is a diphthong anyway (tăiere, înmuiere).
 pub const IERE_ENDINGS: [&str; 6] = ["e", "ea", "i", "ii", "ile", "ilor"]; // after -ier: -iere, -ierea, -ieri, ...
+// After -ier, ending an agent noun: -ier, -ieră, -iereasă and its forms (plumier, legumieră,
+// rachiereasă, rachieresele)
+pub const IER_ENDINGS: [&str; 8] = ["", "ă", "easă", "easa", "ese", "esei", "esele", "eselor"];
 pub const IERE_DIPHTHONG: [&str; 4] = ["miere", "înmiere", "fiere", "piere"];
 // Lemmas in -iare that are no long infinitives (fiare: s.f. pl.; mobiliare: s.n.)
 pub const IARE_KEPT: [&str; 2] = ["fiare", "mobiliare"];
 static IAR: LazyLock<Regex> = LazyLock::new(|| re(r"(.*i-?)[aă](-?r)")); // the last -iar-/-iăr- of a word
+// Obsolete lemmas: (the lemma, syllabified, its current lemma, the stem its forms start
+// with, whether dexonline lists it without its forms). A form of one is written as the
+// current lemma's form with the same inflection (alineează -> aliniėză), and offers its own
+// spelling, from this syllabification, on the switch (alineēză). Words with the stem are
+// looked up even with no candidate digraph (alineez). For a lemma listed without its forms,
+// a word missing from the database that starts with the stem takes the current lemma's
+// stem instead (rachiareasa -> rachiereasa, or rachiarēsa); for the others it would only
+// catch other words (Alinei). A form of several obsolete lemmas with different current
+// lemmas is not rewritten: its own spellings, in the order of this list, are offered
+// (alineam, of alinea and alini: alineam or alinēm).
+pub const OBSOLETE: &[(&str, &str, &str, bool)] = &[
+    ("a-li-ne-a", "alinia", "aline", false),
+    ("a-li-ne-a-re", "aliniere", "aline", false),
+    ("a-li-ni", "alina", "alin", false), // its imperfect is alinea's: alineam (alinea first)
+    ("ra-chi-a-rea-să", "rachiereasă", "rachiare", true),
+];
+
 // Headwords in -eea take -eė with the -ee switch (Niceė, Andreė), except the
 // pronoun aceea and its kin, which keep -eē.
 pub const EEA_UNCHANGED: [&str; 2] = ["aceea", "oareceea"];
+// Lemmas whose final -ae/-oe the -ee switch writes -aẹ/-oẹ (Nae -> Naẹ, aloe -> aloẹ); the forms
+// of those in -oe follow femeie (aloea -> aloė, aloei -> aloii, aloele -> aloile), or, for a
+// name in NAMES, keep their e (Zoei -> Zoẹi). Most other dexonline words in -ae/-oe are foreign
+// (vitae, reggae, Poe); those with a foreign spelling (y, th, ph, rh, ch not before e/i) are left
+// out. Words in -oae need no entry: -oae is -ōẹ in any word (Băboae).
+#[rustfmt::skip]
+pub const AE_OE: &[&str] = &[
+    // names in -ae
+    "nae", "necolae", "neculae", "nicolae", "niculae", "lae", "vlae", "brătae", "drăgae", "vlădae", "dănae", "străhae",
+    "zgae", "bodogae", "băzdigae", "călae", "codae", "cobae", "decae", "flăndrae", "nămae", "halbae", "bae", "dae", "mae",
+    "rae", "brae", "vrae", "andrae", "andornae", "aglae", "danae", "pasifae",
+    // common words in -ae (variants of those in -aie)
+    "babae", "bălae", "bălbătae", "bețae", "ciumăfae", "cusurae", "cârnae", "dudae", "dugae", "dăblae", "fae", "gae",
+    "ghilăvae", "lețcae", "lăscae", "mereae", "mesereae", "nedeae",
+    // names in -oe
+    "noe", "zoe", "cloe", "arsinoe", "autonoe", "beroe", "ociroe", "teonoe", "averoe", "cosroe", "feroe", "neagoe",
+    "stroe", "sisoe", "rădivoe", "popoe", "stăncoe", "brătoe", "banboe", "bartoe", "begoe", "beloe", "bogoe", "bucoe",
+    "buhoe", "băloe", "băndoe", "bășcoe", "calcoe", "cascoe", "cragoe", "docoe", "doljoe", "geagoe", "gheoroe", "goe",
+    "grigoe", "găfoe", "hodoe", "hosmăndioe", "ileroe", "iricioe", "lențoe", "lifoe", "mormoe", "mârmoe", "măndroe",
+    "mănoe", "nacoe", "papoe", "pipoe", "pitolcoe", "pleșoe", "rostoe", "sicoe", "teahoe", "temoe", "troe", "usoe",
+    "verevoe", "vlădoe", "voe", "țipoe",
+    // common words in -oe
+    "aloe", "benzoe", "canoe", "diploe", "meloe", "hoboe", "eroe", "geroe", "oboe", "evoe",
+];
+// Feminines in -ee whose -eu look-alike is another word, not their masculine: coree (the
+// disease; coreu is the metrical foot). They follow femeie: coreei -> coreii.
+pub const EE_NOT_MASCULINE: [&str; 1] = ["coree"];
+// Feminine names of persons. With the -ee switch they keep the e of their genitive and
+// articulated plural, written ẹ: Andreei -> Andreẹi, Andreelor -> Andreẹlor, Zoei -> Zoẹi (not
+// Andreii, Zoii, like femeii). dexonline doesn't tell persons from places, which follow femeie
+// (Galileei -> Galileii).
+#[rustfmt::skip]
+pub const NAMES: &[&str] = &[
+    // in -eea, -ee
+    "amalteea", "andreea", "casiopeea", "deleneea", "doroteea", "dulcineea", "euricleea", "filoteea", "galateea", "geea",
+    "idoteea", "leea", "leucoteea", "medeea", "miraneea", "nesteea", "panopeea", "pasiteea", "pentesileea", "peribeea",
+    "popeea", "salomeea", "stenebeea", "darclee",
+    // in -oe (also in AE_OE)
+    "zoe", "cloe", "arsinoe", "autonoe", "beroe", "ociroe", "teonoe",
+];
 // A digraph right after one of these is a hiatus when the rest is a known word
 // (re-abilitat, auto-analiză). The rest must have at least 4 letters (not neam,
 // autoare), and prea- + a known word is one syllable (prea-curat, not pre-acurat).
@@ -273,7 +349,7 @@ fn dexonline_cuts(word: &[char], hyphenation: &str) -> Option<(HashSet<usize>, u
 ///   - e-e: hiatus (idee -> ide-e; the -ee switch builds on this);
 ///   - a prefix (PREFIXES) followed by a known word: hiatus (re-abilitat);
 ///   - -ient, -ienț/-ient + a/ă/e/i: hiatus (client, ambient, experiență);
-///   - -iabil, -eabil: hiatus (fiabil, agreabil);
+///   - -iabil, -eabil after a consonant: hiatus (fiabil, agreabil; not debreiabil);
 ///   - prefix bi- before en: hiatus (bienal);
 ///   - ea in the EA_HIATUS neologism endings and stems: hiatus (real, nuclear,
 ///     creat, realizat; not deal, beat, greșeală);
@@ -289,7 +365,7 @@ fn dexonline_cuts(word: &[char], hyphenation: &str) -> Option<(HashSet<usize>, u
 ///     -iere, final -iare after p/b/f/v/m or c/g/ch/gh (fiare);
 ///   - ie medial after p/b/f/v/m or c/g/ch/gh: diphthong (fier, piept),
 ///     except the IE_HIATUS stems (igienă, bărbierit, așchietor), the
-///     adjectives in -iesc (zapciesc, surugiesc), final -ier/-ieră after a
+///     adjectives in -iesc (zapciesc, surugiesc), final -ier/-ieră/-iereasă (IER_ENDINGS) after a
 ///     vowel and a consonant (plumier, legumieră; not fier, zbier) and the
 ///     long infinitives in -iere with all their endings (copiere, învierea,
 ///     aprecierilor, schiere), though not in IERE_DIPHTHONG (miere, mierea,
@@ -308,8 +384,11 @@ fn rule_cut(word: &[char], b: usize, known: &HashSet<String>, verb: bool) -> boo
     if pair == ['i', 'e'] && found(&IENT, &text(&word[b - 1..])) {
         return true;
     }
-    if (pair == ['i', 'a'] || pair == ['e', 'a']) && starts_with_at(word, &['a', 'b', 'i', 'l'], b) {
-        return true;
+    if (pair == ['i', 'a'] || pair == ['e', 'a'])
+        && starts_with_at(word, &['a', 'b', 'i', 'l'], b)
+        && (b == 1 || !is_vowel(word[b - 2]))
+    {
+        return true; // fiabil, agreabil; not debreiabil (de-bre-ia)
     }
     if b == 2 && word.starts_with(&['b', 'i', 'e', 'n']) {
         return true;
@@ -337,16 +416,18 @@ fn rule_cut(word: &[char], b: usize, known: &HashSet<String>, verb: bool) -> boo
         return !inside(&IA_DIPHTHONG, word, b);
     }
     if labial_or_palatal {
-        if starts_with_at(word, &['i', 'e', 'r'], b - 1) && IERE_ENDINGS.contains(&text(&word[b + 2..]).as_str()) {
-            // copiere, învierea; not mierea, pieri
-            return !IERE_DIPHTHONG.contains(&(text(&word[..b + 2]) + "e").as_str());
+        if starts_with_at(word, &['i', 'e', 'r'], b - 1) {
+            let end = text(&word[b + 2..]);
+            if IERE_ENDINGS.contains(&end.as_str()) {
+                // copiere, învierea; not mierea, pieri
+                return !IERE_DIPHTHONG.contains(&(text(&word[..b + 2]) + "e").as_str());
+            }
+            if IER_ENDINGS.contains(&end.as_str()) {
+                // plumier, legumieră, rachiereasă, rachieresele; not fier, zbier
+                return word[..b - 2].iter().any(|&c| is_vowel(c));
+            }
         }
-        let from = text(&word[b - 1..]);
-        if from == "ier" || from == "ieră" {
-            // plumier, legumieră; not fier, zbier
-            return word[..b - 2].iter().any(|&c| is_vowel(c));
-        }
-        return from == "iesc" || inside(&IE_HIATUS, word, b);
+        return text(&word[b - 1..]) == "iesc" || inside(&IE_HIATUS, word, b);
     }
     true
 }
@@ -357,6 +438,34 @@ fn inside(pattern: &Regex, word: &[char], b: usize) -> bool {
     pattern
         .find_iter(&text(word))
         .any(|m| m.map(|m| m.start() < at && at < m.end()).expect("regex match"))
+}
+
+/// The place in OBSOLETE, the syllabification and the current lemma of an obsolete
+/// `lemma` (alinea: 0, a-li-ne-a, alinia).
+pub fn obsolete(lemma: &str) -> Option<(usize, &'static str, &'static str)> {
+    OBSOLETE
+        .iter()
+        .position(|(old, ..)| old.chars().filter(|&c| c != '-').eq(lemma.chars()))
+        .map(|i| (i, OBSOLETE[i].0, OBSOLETE[i].1))
+}
+
+/// True if `word` starts with the stem of an obsolete lemma in OBSOLETE (alineez).
+pub fn has_obsolete_stem(word: &str) -> bool {
+    OBSOLETE.iter().any(|(_, _, stem, _)| word.starts_with(stem))
+}
+
+/// A `word` missing from the database with the stem of an obsolete lemma that dexonline
+/// lists without its forms: the word with the current lemma's stem instead, and the
+/// obsolete lemma, syllabified (rachiareasa -> rachiereasa, ra-chi-a-rea-să; not Alinei).
+pub fn obsolete_stem(word: &str) -> Option<(String, &'static str)> {
+    OBSOLETE
+        .iter()
+        .find(|&&(_, _, stem, missing)| missing && word.starts_with(stem))
+        .map(|&(old, new, stem, _)| {
+            let n = stem.chars().count();
+            let current: String = new.chars().take(n).chain(word.chars().skip(n)).collect();
+            (current, old)
+        })
 }
 
 /// True if `lemma`, a feminine noun or unclassified in dexonline, is a long
@@ -429,6 +538,9 @@ pub fn syllabify_all(word: &str, hyphenation: &str, known: &HashSet<String>, ver
 ///     lemma's cut decides (familia <- fa-mi-li-e: hiatus; femeia <-
 ///     fe-me-ie: diphthong), except that replacing the final u of an -iu
 ///     lemma gives a hiatus (argintie <- ar-gin-tiu, cheflie <- che-fliu);
+///   - an ending appended after the final i of a verb (`verb`) whose i
+///     follows a consonant: hiatus (știa, știam <- ști, neștie <- ne-ști;
+///     not locuia <- lo-cu-i);
 ///   - otherwise (appended ending, stem alternation, or o/e before a
 ///     replaced vowel): diphthong (ideea <- i-de-e, creează <- cre-a,
 ///     doarme <- dor-mi, ploaie <- plo-ua, scheaună <- sche-u-na).
@@ -437,7 +549,7 @@ pub fn syllabify_all(word: &str, hyphenation: &str, known: &HashSet<String>, ver
 /// forms: -ază of an i-a verb -> -ėză (studiază <- stu-di-a, like studiez),
 /// -ască of an i-i verb -> -ėscă (sfiască <- sfi-i, like sfiesc), -ască/-asca
 /// of an i-esc adjective -> -ėscă/-ėsca (fiască, fiasca <- fi-esc, like fiesc).
-pub fn concise_from_reference(form: &str, reference: &str) -> String {
+pub fn concise_from_reference(form: &str, reference: &str, verb: bool) -> String {
     let lemma: Vec<char> = reference.chars().filter(|&c| c != '-').collect();
     let f = chars(form);
     let parts: Vec<&str> = reference.split('-').collect();
@@ -458,7 +570,8 @@ pub fn concise_from_reference(form: &str, reference: &str) -> String {
         if i + 1 == p && p < lemma.len() && is_vowel(lemma[p]) && f[i] == 'i' {
             return cuts.contains(&p) || lemma[p - 1..] == ['i', 'u'];
         }
-        false
+        // știa, știam <- ști; not locuia <- lo-cu-i
+        verb && i + 1 == p && p == lemma.len() && f[i] == 'i' && p >= 2 && !is_vowel(lemma[p - 2])
     };
 
     let mut out = Vec::with_capacity(f.len());
@@ -495,7 +608,30 @@ fn digraph(a: char, b: char) -> Option<char> {
 
 /// 'soa-re' -> 'sōre'; 're-al' -> 'real'. Input must be normalized.
 pub fn concise_from_syllables(syllabified: &str) -> String {
-    concise_from_reference(&syllabified.replace('-', ""), syllabified)
+    concise_from_reference(&syllabified.replace('-', ""), syllabified, false)
+}
+
+/// The lemma in AE_OE of `word` (normalized): the word itself, or the -oe lemma of a form in
+/// -oea, -oei, -oele, -oelor (Nae -> nae, aloei -> aloe; not vitae, naei).
+pub fn ae_oe_lemma(word: &str) -> Option<&'static str> {
+    ["", "a", "i", "le", "lor"].iter().find_map(|end| {
+        let stem = word.strip_suffix(end)?;
+        AE_OE
+            .iter()
+            .copied()
+            .find(|&w| w == stem && (end.is_empty() || w.ends_with("oe")))
+    })
+}
+
+/// The name in NAMES of a genitive or an articulated plural in -eei, -eele, -eelor:
+/// Andreei, Andreelor -> andreea; Leei -> leea.
+pub fn name_lemma(word: &str) -> Option<&'static str> {
+    let end = ["eei", "eele", "eelor"].into_iter().find(|end| word.ends_with(end))?;
+    let stem = &word[..word.len() - end.len() + 2]; // andree
+    NAMES
+        .iter()
+        .copied()
+        .find(|&name| name == stem || name.strip_suffix('a') == Some(stem))
 }
 
 /// The -eu lemma of a plural in -eele/-eelor: bombeele, bombeelor -> bombeu.
@@ -521,7 +657,7 @@ pub fn iesc_lemma(word: &str) -> Option<String> {
 
 /// Lemmas an unknown word may have, in order of preference.
 ///
-/// For the -ee rule: andreei -> andreea, andree; bombeele, bombeuri, bombeurile
+/// For the -ee rule: andreei -> andreea, andree; galileele -> galileea, galileu; bombeuri, bombeurile
 /// -> bombeu. For an -iesc adjective: harabagiasca -> harabagiesc. A candidate
 /// in -eea, -eu or -iesc counts as known when it is a lemma, one in -ee when it
 /// is any form.
@@ -537,7 +673,11 @@ pub fn lemma_candidates(word: &str) -> Vec<String> {
         let eu = word.rfind("eu").expect("an -eu ending");
         return vec![word[..eu + 2].to_string()];
     }
-    eu_lemma(word).into_iter().collect()
+    // -eele/-eelor: an -eea lemma (Galileelor <- Galileea), else an -eu one (bombeele <- bombeu)
+    eu_lemma(word)
+        .into_iter()
+        .flat_map(|eu| [format!("{}eea", &eu[..eu.len() - 2]), eu])
+        .collect()
 }
 
 /// Concise spellings of a word missing from the database, by rules alone.
@@ -545,57 +685,81 @@ pub fn lemma_candidates(word: &str) -> Vec<String> {
 /// Input normalized; the default spelling comes first. `known` maps known
 /// lemma candidates to their syllabification ('' when not needed). A form of
 /// an -iesc adjective in `known` is derived from it (harabagiasca ->
-/// harabagiėsca, harabagiești <- harabagi-esc). With the -ee switch the word is read as a
-/// singular, except:
+/// harabagiėsca, harabagiești <- harabagi-esc). With the -ee switch the word is read
+/// as a singular, except:
+///   - the genitive or articulated plural of a name in NAMES (name_lemma): Andreẹi,
+///     Andreẹlor <- Andreea, Leẹi <- Leea;
+///   - a form of a lemma in AE_OE (ae_oe_lemma): Zoẹi <- Zoe, aloii <- aloe;
 ///   - -eei: the genitive of the first of its `lemma_candidates` in `known`
-///     (Andreii <- Andreea, ideii <- idee), otherwise unchanged (the default)
-///     or -eii (Zzeei, Zzeii);
+///     (Niceii <- Niceea, ideii <- idee), otherwise -eẹi (the default) or -eii
+///     (Zzeẹi, Zzeii); the masculine of an -ee lemma is not looked for;
 ///   - -euri/-eurile/-eurilor: -eẹ/-eẹle/-eẹlor if its -eu lemma is in `known`
 ///     (bombeuri <- bombeu), otherwise unchanged;
-///   - -eele/-eelor: the plural of its -eu lemma if that is in `known`
-///     (bombeẹle <- bombeu), otherwise of an -ee lemma (bombeile, the default)
-///     or of an -eu lemma (bombeẹle).
+///   - -eele/-eelor: the plural of its -eea lemma if that is in `known` and not
+///     EEA_UNCHANGED (Galileilor <- Galileea, not by the false masculine galileu); else
+///     of coree (EE_NOT_MASCULINE: coreile, not by coreu); else of its -eu lemma if
+///     that is in `known` (bombeẹle <- bombeu); otherwise of an -ee lemma (bombeile,
+///     the default) or of an -eu lemma (bombeẹle).
 pub fn concise_by_rules(word: &str, ee: bool, known: &HashMap<String, String>) -> Vec<String> {
     if let Some(reference) = iesc_lemma(word).and_then(|iesc| known.get(&iesc)) {
-        return vec![concise_from_reference(word, reference)];
+        return vec![concise_from_reference(word, reference, false)];
     }
     let concise = concise_from_syllables(&syllabify(word, "", &HashSet::new(), false).0);
+    if ee && let Some(name) = name_lemma(word) {
+        // the number matters only for a word in -ee
+        return vec![concise_ee(word, &concise, name, false, false).unwrap_or(concise)];
+    }
+    if ee && let Some(lemma) = ae_oe_lemma(word) {
+        return vec![concise_ee(word, &concise, lemma, false, false).unwrap_or(concise)];
+    }
     if ee && word.ends_with("eei") {
         if let Some(lemma) = lemma_candidates(word).iter().find(|x| known.contains_key(*x)) {
-            return vec![concise_ee(word, &concise, lemma, false).unwrap_or(concise)];
+            return vec![concise_ee(word, &concise, lemma, false, false).unwrap_or(concise)];
         }
-        let genitive = drop_last(&chars(&concise), 3) + "eii";
-        return vec![concise, genitive];
+        let stem = drop_last(&chars(&concise), 2);
+        return vec![stem.clone() + "ẹi", stem + "ii"];
     }
     if ee && ["euri", "eurile", "eurilor"].iter().any(|end| word.ends_with(end)) {
         let lemmas: Vec<String> = lemma_candidates(word)
             .into_iter()
             .filter(|x| known.contains_key(x))
             .collect();
-        let spelling = lemmas.first().and_then(|lemma| concise_ee(word, &concise, lemma, true));
+        let spelling = lemmas
+            .first()
+            .and_then(|lemma| concise_ee(word, &concise, lemma, true, false));
         return vec![spelling.unwrap_or(concise)];
     }
     if ee && let Some(eu) = eu_lemma(word) {
-        let lemmas = if known.contains_key(&eu) {
+        let stem = &eu[..eu.len() - 2];
+        let (eea, ee_lemma) = (format!("{stem}eea"), format!("{stem}ee"));
+        let lemmas = if known.contains_key(&eea) && !EEA_UNCHANGED.contains(&eea.as_str()) {
+            // the plural of a known -eea lemma, not of a false masculine (Iudeelor <- Iudeea, not iudeu)
+            vec![eea]
+        } else if EE_NOT_MASCULINE.contains(&ee_lemma.as_str()) {
+            vec![ee_lemma] // coreele <- coree, not coreu
+        } else if known.contains_key(&eu) {
             vec![eu]
         } else {
-            vec![eu[..eu.len() - 2].to_string() + "ee", eu]
+            vec![ee_lemma, eu]
         };
         return lemmas
             .iter()
-            .map(|lemma| concise_ee(word, &concise, lemma, true).unwrap_or(concise.clone()))
+            .map(|lemma| concise_ee(word, &concise, lemma, true, false).unwrap_or(concise.clone()))
             .collect();
     }
     if ee && found(&EE_FINAL, word) {
-        return vec![concise_ee(word, &concise, word, false).unwrap_or(concise)];
+        return vec![concise_ee(word, &concise, word, false, false).unwrap_or(concise)];
     }
     vec![concise]
 }
 
 /// Apply the -ee rule on top of the base concise form; None if it doesn't apply.
 ///
-/// All arguments normalized; `form` is the standard spelling of `concise`.
-pub fn concise_ee(form: &str, concise: &str, lemma: &str, plural: bool) -> Option<String> {
+/// All arguments normalized; `form` is the standard spelling of `concise`. `masculine`: the
+/// lemma, in -ee, has a masculine in -eu (zee <- zeu). A kept lemma (in -eu, in -ee with a
+/// masculine, or a name in NAMES) keeps the e of its genitive and plural: zeẹi, zeẹle, zeẹ
+/// (not zeii, zeile, zei, like femeii, femeile, femei).
+pub fn concise_ee(form: &str, concise: &str, lemma: &str, plural: bool, masculine: bool) -> Option<String> {
     let c = chars(concise);
     for (end, new) in [("euri", "eẹ"), ("eurile", "eẹle"), ("eurilor", "eẹlor")] {
         if form.ends_with(end) {
@@ -606,6 +770,13 @@ pub fn concise_ee(form: &str, concise: &str, lemma: &str, plural: bool) -> Optio
             return None;
         }
     }
+    if form.ends_with("oae") {
+        return Some(drop_last(&c, 1) + "ẹ"); // Băbōe
+    }
+    if AE_OE.contains(&lemma) {
+        return concise_ae_oe(form, &c, NAMES.contains(&lemma));
+    }
+    let kept = lemma.ends_with("eu") || lemma.ends_with("ee") && masculine || NAMES.contains(&lemma);
     if form.ends_with("eea") || form.ends_with("eei") {
         let lemma_ok =
             lemma.ends_with("ee") || lemma.ends_with("eu") || lemma.ends_with("eea") && !EEA_UNCHANGED.contains(&lemma);
@@ -613,7 +784,7 @@ pub fn concise_ee(form: &str, concise: &str, lemma: &str, plural: bool) -> Optio
             return None;
         }
         if form.ends_with("eei") {
-            return Some(drop_last(&c, 3) + "eii");
+            return Some(drop_last(&c, 2) + if kept { "ẹi" } else { "ii" });
         }
         if concise.ends_with("eē") {
             // i-de-ea
@@ -622,7 +793,7 @@ pub fn concise_ee(form: &str, concise: &str, lemma: &str, plural: bool) -> Optio
         return None;
     }
     if form.ends_with("ee") {
-        if !plural || lemma.ends_with("eu") {
+        if !plural || kept {
             return Some(drop_last(&c, 2) + "eẹ");
         }
         if lemma.ends_with("ee") {
@@ -630,7 +801,7 @@ pub fn concise_ee(form: &str, concise: &str, lemma: &str, plural: bool) -> Optio
         }
         return None;
     }
-    if lemma.ends_with("eu") {
+    if kept {
         if form.ends_with("eele") {
             return Some(drop_last(&c, 4) + "eẹle");
         }
@@ -639,7 +810,8 @@ pub fn concise_ee(form: &str, concise: &str, lemma: &str, plural: bool) -> Optio
         }
         return None;
     }
-    if !lemma.ends_with("ee") {
+    // an -ee lemma, or an -eea one that is not a name (Galileelor -> Galileilor)
+    if !lemma.ends_with("ee") && !(lemma.ends_with("eea") && !EEA_UNCHANGED.contains(&lemma)) {
         return None;
     }
     if form.ends_with("eele") {
@@ -649,6 +821,24 @@ pub fn concise_ee(form: &str, concise: &str, lemma: &str, plural: bool) -> Optio
         return Some(drop_last(&c, 5) + "eilor");
     }
     None
+}
+
+/// The -ee rule on a form of a lemma in AE_OE, of `concise` (its characters): -ae/-oe ->
+/// -aẹ/-oẹ (Naẹ, aloẹ), -oea -> -oė (aloė), and -oei, -oele, -oelor like femeii, femeile
+/// (aloii, aloile, aloilor) or, for a `name`, with ẹ (Zoẹi, Zoẹle, Zoẹlor).
+fn concise_ae_oe(form: &str, concise: &[char], name: bool) -> Option<String> {
+    if form.ends_with("ae") || form.ends_with("oe") {
+        return Some(drop_last(concise, 1) + "ẹ");
+    }
+    if form.ends_with("oea") {
+        // a-lo-ea
+        return concise.ends_with(&['o', 'ē']).then(|| drop_last(concise, 1) + "ė");
+    }
+    let e = if name { "ẹ" } else { "i" };
+    ["i", "le", "lor"]
+        .into_iter()
+        .find(|end| form.ends_with(&format!("oe{end}")))
+        .map(|end| drop_last(concise, end.len() + 1) + e + end)
 }
 
 /// â -> î in every word of `text` (NFC), except those with the root român/rumân.
@@ -698,17 +888,21 @@ pub fn apply_case(template: &str, word: &str) -> String {
 }
 
 /// A `forms` row: the concise spelling, the one with the -ee rule (None if
-/// identical), and a homograph's other spellings.
+/// identical), a homograph's other spellings, and an obsolete form's current forms
+/// (alineare: aliniere, its concise spelling the current form's and its own the
+/// alternative; alineam: alinam and aliniam, its spellings its own two).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Row {
     pub concise: String,
     pub concise_ee: Option<String>,
     pub alternatives: Vec<String>,
+    pub current: Vec<String>,
 }
 
 /// A piece of converted text: `t`, plus `alts` (all its spellings, default
-/// first; empty if one) and `unknown` (the original word, if missing from the
-/// database). In JSON, `alts` and `unknown` are left out when empty.
+/// first; empty if one), `unknown` (the original word, if missing from the
+/// database) and `obsolete` (an obsolete word, then its current forms, in the word's case:
+/// [Alineare, Aliniere], [Alineam, Alinam, Aliniam]). In JSON, `alts`, `unknown` and `obsolete` are left out when empty.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 pub struct Segment {
     pub t: String,
@@ -716,17 +910,27 @@ pub struct Segment {
     pub alts: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub unknown: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub obsolete: Vec<String>,
 }
 
-/// Spellings of a word: default first; and whether it is unknown.
-pub type Resolved = HashMap<String, (Vec<String>, bool)>;
+/// A word's spellings, default first; whether it is unknown; and an obsolete word's current forms.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Resolution {
+    pub spellings: Vec<String>,
+    pub unknown: bool,
+    pub current: Vec<String>,
+}
 
-/// Normalized candidate words -> (their concise spellings, default first; unknown?).
+/// Normalized candidate words -> their resolution.
 ///
 /// Words missing from the database are converted by rules alone (concise_by_rules),
 /// and are unknown unless they have no digraph or -ee ending (zziăr: nothing to change).
-/// Their lemma candidates are looked up with known_lemmas.
-pub fn resolve(keys: &BTreeSet<String>, dict: &dyn Dictionary, ee: bool) -> Resolved {
+/// Their lemma candidates are looked up with known_lemmas. One with an obsolete stem
+/// (OBSOLETE) is converted with the current stem, and its own spelling, from the
+/// obsolete lemma's syllabification, is the alternative (rachiareasa: rachierēsa or
+/// rachiarēsa).
+pub fn resolve(keys: &BTreeSet<String>, dict: &dyn Dictionary, ee: bool) -> HashMap<String, Resolution> {
     let rows: HashMap<&String, Row> = keys.iter().filter_map(|k| Some((k, dict.form(k)?))).collect();
     let candidates: BTreeSet<String> = keys
         .iter()
@@ -742,14 +946,33 @@ pub fn resolve(keys: &BTreeSet<String>, dict: &dyn Dictionary, ee: bool) -> Reso
                     Some(e) if ee => e.clone(),
                     _ => row.concise.clone(),
                 };
-                (
-                    std::iter::once(first).chain(row.alternatives.iter().cloned()).collect(),
-                    false,
-                )
+                Resolution {
+                    spellings: std::iter::once(first).chain(row.alternatives.iter().cloned()).collect(),
+                    unknown: false,
+                    current: row.current.clone(),
+                }
             }
             None => {
-                let changeable = found(&DIGRAPH, k) || ee && found(&EE_FINAL, k);
-                (concise_by_rules(k, ee, &known), changeable)
+                let changeable = found(&DIGRAPH, k) || ee && ee_final(k);
+                match obsolete_stem(k) {
+                    Some((current, reference)) => {
+                        let mut spellings = vec![concise_by_rules(&current, ee, &known).swap_remove(0)];
+                        let old = concise_from_reference(k, reference, false);
+                        if old != spellings[0] {
+                            spellings.push(old);
+                        }
+                        Resolution {
+                            spellings,
+                            unknown: changeable,
+                            current: vec![current],
+                        }
+                    }
+                    None => Resolution {
+                        spellings: concise_by_rules(k, ee, &known),
+                        unknown: changeable,
+                        current: Vec::new(),
+                    },
+                }
             }
         };
         out.insert(k.clone(), entry);
@@ -763,7 +986,9 @@ fn plain(segments: &mut Vec<Segment>, chunk: &str) {
         return;
     }
     match segments.last_mut() {
-        Some(last) if last.alts.is_empty() && last.unknown.is_none() => last.t.push_str(chunk),
+        Some(last) if last.alts.is_empty() && last.unknown.is_none() && last.obsolete.is_empty() => {
+            last.t.push_str(chunk)
+        }
         _ => segments.push(Segment {
             t: chunk.to_string(),
             ..Segment::default()
@@ -795,7 +1020,18 @@ pub fn convert_text(text: &str, dict: &dyn Dictionary, ee: bool, ai: bool) -> Ve
     for m in &matches {
         plain(&mut segments, &text[pos..m.start()]);
         let (word, key) = (m.as_str(), normalize(m.as_str()));
-        let (spellings, unknown) = &resolved[&key];
+        let Resolution {
+            spellings,
+            unknown,
+            current,
+        } = &resolved[&key];
+        let obsolete: Vec<String> = if current.is_empty() {
+            Vec::new()
+        } else {
+            std::iter::once(word.to_string())
+                .chain(current.iter().map(|c| apply_case(word, c)))
+                .collect()
+        };
         // all hiatus: keep the original spelling untouched
         let options: Vec<String> = spellings
             .iter()
@@ -807,18 +1043,13 @@ pub fn convert_text(text: &str, dict: &dyn Dictionary, ee: bool, ai: bool) -> Ve
                 }
             })
             .collect();
-        if *unknown {
+        if *unknown || options.len() > 1 || !obsolete.is_empty() {
             let alts = if options.len() > 1 { options.clone() } else { Vec::new() };
             segments.push(Segment {
                 t: options[0].clone(),
                 alts,
-                unknown: Some(word.to_string()),
-            });
-        } else if options.len() > 1 {
-            segments.push(Segment {
-                t: options[0].clone(),
-                alts: options,
-                unknown: None,
+                unknown: unknown.then(|| word.to_string()),
+                obsolete,
             });
         } else {
             plain(&mut segments, &options[0]);
@@ -879,7 +1110,8 @@ fn reverse(c: char) -> Option<[char; 2]> {
 ///
 /// Exact for the base rules (but fiiască -> fiėscă reverts to fiască, fiiasca likewise).
 /// With the -ee rule, exact for the database forms it picks (aleẹ: alee, not aleie);
-/// unknown words keep the character map (zzeẹ -> zzeie).
+/// unknown words keep the character map (zzeẹ -> zzeie), except the spellings of the names
+/// in NAMES and the words of AE_OE (Andreẹi -> Andreei, Cloẹ -> Cloe: see listed_form).
 /// î is left as is, so not exact either once â -> î was applied (cîine stays cîine).
 pub fn revert_segments(text: &str, dict: Option<&dyn Dictionary>) -> Vec<Segment> {
     let text: String = text.nfc().collect();
@@ -888,10 +1120,13 @@ pub fn revert_segments(text: &str, dict: Option<&dyn Dictionary>) -> Vec<Segment
     if let Some(dict) = dict {
         for m in &words {
             let key = normalize(m.as_str());
-            if found(&EE_SPELLING, &key)
-                && let Some(entry) = dict.ee_revert(&key)
-            {
+            if !found(&EE_SPELLING, &key) {
+                continue;
+            }
+            if let Some(entry) = dict.ee_revert(&key) {
                 found_ee.insert(key, entry);
+            } else if let Some(form) = listed_form(&key, dict) {
+                found_ee.insert(key, (form, Vec::new()));
             }
         }
     }
@@ -909,7 +1144,7 @@ pub fn revert_segments(text: &str, dict: Option<&dyn Dictionary>) -> Vec<Segment
                     segments.push(Segment {
                         t: options[0].clone(),
                         alts: options,
-                        unknown: None,
+                        ..Segment::default()
                     });
                 }
             }
@@ -919,6 +1154,27 @@ pub fn revert_segments(text: &str, dict: Option<&dyn Dictionary>) -> Vec<Segment
     }
     plain(&mut segments, &text[pos..]);
     segments
+}
+
+/// The form that `key` (normalized), an -ee spelling missing from `ee_revert`, reverts to when it
+/// is the spelling of a name in NAMES or of a word in AE_OE, though missing from the database
+/// (Andreẹi -> andreei, Leẹi -> leei, Andreẹlor -> andreelor, Zoẹi -> zoei, Cloẹ -> cloe; with
+/// its other digraphs written or not: nēgoẹ, neagoẹ -> neagoe); None when its character-map
+/// reading is a known word (laẹ: laie, mamaẹi: mamaiei).
+fn listed_form(key: &str, dict: &dyn Dictionary) -> Option<String> {
+    // the last ẹ is the rule's e (andreẹi, zoẹi, cloẹ), the last ė its ea (aloė)
+    let (at, c) = key.char_indices().rev().find(|&(_, c)| c == 'ẹ' || c == 'ė')?;
+    let e = if c == 'ẹ' { "e" } else { "ea" };
+    let form = revert_word(&format!("{}{e}{}", &key[..at], &key[at + c.len_utf8()..]));
+    if (name_lemma(&form).is_none() && ae_oe_lemma(&form).is_none()) || dict.form(&revert_word(key)).is_some() {
+        return None;
+    }
+    // the rule's spelling, read like the key: other digraphs may be left as they are (Neagoẹ: Nēgoẹ)
+    let spelled = concise_by_rules(&form, true, &HashMap::new());
+    spelled
+        .first()
+        .is_some_and(|s| revert_word(s) == revert_word(key))
+        .then_some(form)
 }
 
 /// Concise -> standard by character map (see revert_segments), without the -ee switch.

@@ -37,6 +37,11 @@ fn convert() {
         json(engine.convert("Soare, ia zzoa", false, true)),
         r#"{"text":"Sōre, ė zzō","segments":[{"t":"Sōre, "},{"t":"ė","alts":["ė","ia"]},{"t":" "},{"t":"zzō","unknown":"zzoa"}],"unknown":["zzoa"]}"#
     );
+    // an obsolete form: the current spelling first, the obsolete word and its current form
+    assert_eq!(
+        json(engine.convert("Alineare", false, true)),
+        r#"{"text":"Aliniere","segments":[{"t":"Aliniere","alts":["Aliniere","Alineare"],"obsolete":["Alineare","Aliniere"]}],"unknown":[]}"#
+    );
     // the switches, in order: ee, then ai
     assert_eq!(text(engine.convert("idee câine", true, false)), "ideẹ câine");
     assert_eq!(text(engine.convert("idee câine", false, true)), "idee cîine");

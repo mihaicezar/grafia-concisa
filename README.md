@@ -7,8 +7,8 @@ Rules: [`concise-writing-spec.md`](concise-writing-spec.md) (in Romanian: [`READ
 ## The web app
 
 <https://mihaicezar.github.io/grafia-concisa/> (once GitHub Pages is enabled: see *Deploying*) converts a text in either direction:
-- **Standard → concis**, with two switches: **î** writes â as î (on by default; *român* and its family keep â), and **-ee → -eẹ** applies the optional -ee rule (*idee* → *ideẹ*).
-- **Concis → standard**: the reverse. With **-ee → -eẹ**, the text is read as written with the -ee rule.
+- **Standard → concis**, with two switches: **î** writes â as î (on by default; *român* and its family keep â), and **-eẹ/aẹ/oẹ** applies the optional rule of that name (*idee* → *ideẹ*, *Nae* → *Naẹ*).
+- **Concis → standard**: the reverse. With **-eẹ/aẹ/oẹ**, the text is read as written with that rule.
 - A word with two readings (*ia*: *ė* or *ia*) shows both on a switch; a click picks one. **Copiază** copies the text with the picked spellings.
 - A word missing from the word data is converted by the rules alone and underlined with dots.
 
@@ -93,7 +93,7 @@ The web app is hosted on [GitHub Pages](https://docs.github.com/en/pages), which
 1. Once, in the repository's settings: *Pages* → *Build and deployment* → *Source*: **GitHub Actions**.
 2. On each push to `main`, the `ci` workflow runs the tests and `cargo xtask web`, then its `deploy` job publishes `web/dist/`. A failing test stops the deployment.
 3. The site is at <https://mihaicezar.github.io/grafia-concisa/>, over HTTPS, which the service worker needs. Every URL in the site is relative, so it works under `/grafia-concisa/`. A custom domain can be set under *Pages*.
-4. After a deployment, check the site in a browser: convert a text with a homograph (*Soare, ia!*) and switch it, copy, revert with the -ee switch (*Bordeẹ, aleẹ*), then go offline (developer tools, *Network* → *Offline*), reload, and convert again. The browser should offer to install the app.
+4. After a deployment, check the site in a browser: convert a text with a homograph (*Soare, ia!*) and switch it, copy, revert with the -eẹ/aẹ/oẹ switch (*Bordeẹ, aleẹ*), then go offline (developer tools, *Network* → *Offline*), reload, and convert again. The browser should offer to install the app.
 
 CI can't build the data file, since it has neither MariaDB nor the dexonline dump: `web/grafia.dat` is built locally and committed (see *Updating the data*).
 

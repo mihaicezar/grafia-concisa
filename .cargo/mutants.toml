@@ -1,0 +1,39 @@
+# cargo-mutants: mutants that cannot change any output (equivalent mutants), with why.
+# Line numbers move with the code: after an edit, `cargo mutants --list` shows the new ones.
+exclude_re = [
+    # dexonline_cuts: a cut at the word end is never read (cuts are placed for b < len), and
+    # lo/hi only matter inside 1..len: parts.len() / 1, start * 1 (start is 0 there), end + 1, end / 1
+    'rules\.rs:272:38: replace - with / in dexonline_cuts',
+    'rules\.rs:284:40: replace \+ with \* in dexonline_cuts',
+    'rules\.rs:285:37: replace - with [+/] in dexonline_cuts',
+    # inside: no regex of the rules starts at the second vowel of its pair, or ends at the first,
+    # in any word (only EA_HIATUS's aleat and IA_DIPHTHONG's [aă]miaz could, after another vowel)
+    'replace < with <= in inside',
+    # syllabify: w[b / 1] is w[b]; rule_cut then also sees consonant + vowel, where only the prefix
+    # rule can cut, and every prefix ends in a vowel
+    'rules\.rs:458:26: replace - with / in syllabify',
+    # rule_cut: ia + -abil after a consonant is a hiatus anyway (fiabil), and after a vowel the
+    # -abil rule does not apply; no other vowel pair + -abil follows a consonant in any word
+    'rules\.rs:332:14: replace == with != in rule_cut',
+    # concise_from_reference: a cut at the lemma's end is never read (only cuts < p or at p < len are)
+    'rules\.rs:502:38: replace - with / in concise_from_reference',
+    # titlecase letters (ǅ, ǈ, ǋ) do not occur in Romanian
+    'in is_titlecase',
+    'replace is_titlecase -> bool with false',
+    # apply_case: a one-letter template is never a word with a candidate digraph or an -ee spelling
+    'rules\.rs:743:33: replace > with >= in apply_case',
+    # ro_order: the forms of an ee_revert tie share their stem and differ only in -ee/-eie/-euri,
+    # so only the order of e, i, u matters (the test zzbeleẹ: e before u)
+    # build: the map of current forms would also hold the forms of other lemmas, never looked up
+    'build\.rs:215:64: replace == with != in build',
+    'build\.rs:94:33: replace == with != in ro_order',
+    'build\.rs:95:47: replace \+ with \* in ro_order',
+    # code_hash: bytes[i * 1] is the / itself, which is no newline: the comment still ends at the
+    # newline, and line_start stays true
+    'lib\.rs:40:50: replace \+ with \* in code_hash',
+    # has_candidate only spares lookups: a word it skips is not in the database (the build stores
+    # only candidates), has no digraph or rule ending, so resolve would give it back unchanged and
+    # not unknown
+    'replace has_candidate -> bool with true',
+    'replace && with \|\| in has_candidate',
+]

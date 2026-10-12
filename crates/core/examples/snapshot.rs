@@ -6,14 +6,16 @@
 //!   - `references.tsv`: each distinct lemma, hyphenation and verb flag, with its
 //!     readings by `syllabify_all` (syllabified/source);
 //!   - `stats.tsv`: the build's stats;
-//!   - the five tables: `forms.tsv` (form, concise, concise_ee, alternatives),
+//!   - the five tables: `forms.tsv` (form, concise, concise_ee, alternatives, and the
+//!     current forms of an obsolete one, /-separated),
 //!     `eu_lemmas.txt`, `ea_lemmas.txt`, `iesc_lemmas.tsv` and `ee_revert.tsv`;
 //!   - `convert.tsv`: each form as the text "form Form FORM", converted with the four
 //!     combinations of the ee and ai switches;
 //!   - `unknown.tsv`: each form converted by the rules alone, with ee off and on;
 //!   - `revert.tsv`: each spelling in `forms`, reverted without and with the -ee switch.
 //!
-//! A conversion is one line: each segment as text<alternatives>?unknown word, joined by ¦.
+//! A conversion is one line: each segment as text<alternatives>?unknown word!current forms
+//! (of an obsolete word, /-separated), joined by ¦.
 //! Run: cargo run --release -p grafia-concisa --example snapshot -- [DATA [OUT]]
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)] // the example does file I/O; the core lib may not
 use std::collections::{BTreeSet, HashMap, HashSet};
@@ -26,7 +28,7 @@ use grafia_concisa::{Dictionary, Segment};
 
 const SWITCHES: [(bool, bool); 4] = [(false, true), (true, true), (false, false), (true, false)]; // (ee, ai)
 
-/// One line per text: each segment's text, <its alternatives>, ?its unknown word.
+/// One line per text: each segment's text, <its alternatives>, ?its unknown word, !its current forms.
 fn render(segments: &[Segment]) -> String {
     let rendered: Vec<String> = segments
         .iter()
@@ -37,6 +39,9 @@ fn render(segments: &[Segment]) -> String {
             }
             if let Some(unknown) = &s.unknown {
                 x += &format!("?{unknown}");
+            }
+            if let [_, current @ ..] = s.obsolete.as_slice() {
+                x += &format!("!{}", current.join("/"));
             }
             x
         })
@@ -102,8 +107,13 @@ fn main() {
     write(
         &out.join("forms.tsv"),
         tables.forms.iter().map(|(f, r)| {
+            let current = if r.current.is_empty() {
+                String::new()
+            } else {
+                format!("\t{}", r.current.join("/"))
+            };
             format!(
-                "{f}\t{}\t{}\t{}",
+                "{f}\t{}\t{}\t{}{current}",
                 r.concise,
                 r.concise_ee.as_deref().unwrap_or(""),
                 r.alternatives.join(" ")
