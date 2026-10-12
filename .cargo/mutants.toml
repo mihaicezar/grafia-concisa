@@ -31,4 +31,9 @@ exclude_re = [
     # code_hash: bytes[i * 1] is the / itself, which is no newline: the comment still ends at the
     # newline, and line_start stays true
     'lib\.rs:40:50: replace \+ with \* in code_hash',
+    # has_candidate only spares lookups: a word it skips is not in the database (the build stores
+    # only candidates), has no digraph or rule ending, so resolve would give it back unchanged and
+    # not unknown
+    'replace has_candidate -> bool with true',
+    'replace && with \|\| in has_candidate',
 ]

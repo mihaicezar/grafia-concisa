@@ -85,7 +85,7 @@ pub fn known_lemmas(dict: &dyn Dictionary, words: &BTreeSet<String>) -> HashMap<
         .collect()
 }
 
-/// The switches: the optional -ee rule (default off) and â -> î (default on).
+/// The switches: the optional -ee rule, -eẹ/aẹ/oẹ (default off), and â -> î (default on).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Options {
     pub ee: bool,
@@ -108,9 +108,9 @@ pub struct Conversion {
 
 /// Standard -> concise. Words missing from the database are converted by rules
 /// alone and listed in `unknown`. A homograph's segment lists all its spellings,
-/// default first; so does an unknown word with the -ee switch in -eei (unchanged
-/// or -eii) or -eele/-eelor (plural of an -ee or an -eu lemma), unless its lemma
-/// is in the database (Andreei <- Andreea, bombeele <- bombeu: one spelling).
+/// default first; so does an unknown word with the -ee switch in -eei (-eẹi or
+/// -eii) or -eele/-eelor (plural of an -ee or an -eu lemma), unless its lemma is
+/// known (Niceei <- Niceea, bombeele <- bombeu, Andreei <- the name Andreea: one spelling).
 pub fn convert(text: &str, dict: &dyn Dictionary, options: Options) -> Conversion {
     let segments = rules::convert_text(text, dict, options.ee, options.ai);
     let unknown: BTreeSet<String> = segments.iter().filter_map(|s| s.unknown.clone()).collect();

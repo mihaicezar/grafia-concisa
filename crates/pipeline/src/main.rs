@@ -65,7 +65,8 @@ struct BuildArgs {
     /// Read the records from FILE, one per line, tab-separated: form, lemma, the lemma's
     /// hyphenation (complete, partial or empty), number (S/P), then optional flags in any
     /// order: V (a verb), D (DEX-MDA-DOOM), F (a lowercase feminine noun or unclassified),
-    /// I and the inflection and variant (I52.0: pairs the forms of an obsolete lemma).
+    /// I and the inflection and variant (I52.0: pairs the forms of an obsolete lemma),
+    /// M (a masculine noun or an adjective: zeu, the masculine of zee).
     /// A line with one column is a syllabified headword; empty lines and # comments are skipped.
     #[arg(long, value_name = "FILE")]
     text: Option<PathBuf>,

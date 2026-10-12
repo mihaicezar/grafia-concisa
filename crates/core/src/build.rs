@@ -10,7 +10,9 @@
 //!     lowercase feminine noun or unclassified (dexonline model F, T or IL), which
 //!     marks a lemma in -iare as a long infinitive (rules::long_infinitive); 'I' and the
 //!     form's inflection and variant (I52.0), which pair the forms of an obsolete lemma
-//!     with those of its current lemma (rules::OBSOLETE).
+//!     with those of its current lemma (rules::OBSOLETE); 'M' if it is a masculine noun or
+//!     an adjective (dexonline model M or A), which makes a lemma in -eu the masculine of
+//!     its -ee feminine for the -ee rule (zee <- zeu: zeẹle, not zeile).
 //!
 //! A record with fewer than four fields is a syllabified headword (dev/test input).
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
@@ -21,8 +23,9 @@ use indexmap::IndexMap;
 
 use crate::Dictionary;
 use crate::rules::{
-    CANDIDATE, EE_FINAL, EE_SPELLING, EURI, HIATUS_SUFFIX, OBSOLETE, Row, Source, concise_ee, concise_from_reference,
-    found, iere_spelling, long_infinitive, normalize, obsolete, revert_text, syllabifications, syllabify_all,
+    AE_OE, CANDIDATE, EE_NOT_MASCULINE, EE_SPELLING, EURI, HIATUS_SUFFIX, NAMES, OBSOLETE, Row, Source, concise_ee,
+    concise_from_reference, concise_from_syllables, ee_final, found, iere_spelling, long_infinitive, normalize,
+    obsolete, revert_text, syllabifications, syllabify_all,
 };
 
 /// A record: its fields as read (see the module documentation).
@@ -116,6 +119,10 @@ struct Entry {
     dex: bool,
     /// a record of a lemma that is not obsolete
     current_word: bool,
+    /// a record of a lowercase lemma: not only a name
+    common: bool,
+    /// the lemmas of its records
+    lemmas: Vec<String>,
     /// (place in rules::OBSOLETE, current lemma, inflection, own spelling) of each obsolete
     /// lemma's first record
     obsolete: Vec<(usize, String, String, String)>,
@@ -128,7 +135,8 @@ struct Entry {
 /// `known`: all normalized dexonline word forms, for the rules' prefix check.
 ///
 /// Only forms that can differ are stored (ie/ia/ea/oa/iăr, final -ee/-eea/-eei/-eele/
-/// -eelor/-euri/-eurile/-eurilor, or the stem of an obsolete lemma).
+/// -eelor/-euri/-eurile/-eurilor/-oae, the forms of the lemmas in rules::AE_OE, or the
+/// stem of an obsolete lemma).
 /// A form of a long infinitive in -iare (flag 'F', rules::long_infinitive) is
 /// converted as its -iere spelling (apreciare, apreciări -> apreciere, aprecieri),
 /// unless another record gives the same form (conciliare: the adjective conciliar).
@@ -150,7 +158,8 @@ struct Entry {
 /// beats one derived from another lemma; then an explicit syllabification beats
 /// dexonline, which beats a partial one; otherwise the first record wins. The
 /// winner is the default spelling; the others become alternatives (see below).
-/// -ee form: computed from the final base form; a singular reading beats a plural.
+/// -ee form: computed from the final base form; a singular reading beats a plural. An -ee
+/// lemma has a masculine when its -eu form is a lemma with the flag 'M' (zee <- zeu).
 ///
 /// Alternatives: the other spellings a form gets from its records (a
 /// homograph: ia = the verb lua or the articulated ie). Only spellings backed
@@ -166,6 +175,14 @@ struct Entry {
 /// apogeuri). The forms still tied are all offered (bordeẹ: bordeie or bordee),
 /// the default being the character map's result, else the first in Romanian
 /// alphabetical order. Stored only where the character map alone is not the answer.
+/// A DEX-MDA-DOOM plural in -eie beats the -ee plural of the same lemma (curcubeẹ: curcubeie).
+/// The genitive and articulated plural of the names of rules::NAMES that the records list are
+/// added when missing (Andreei, Andreele, Andreelor <- Andreea).
+/// Except: a spelling of a word in -ae/-oe/-oae, or a genitive or plural that a kept feminine
+/// writes with ẹ, whose character-map reading is a form too (Naẹ: naie, zeẹi: zeiei), reverts to
+/// its source when that is a name (a capitalized lemma, not in -oae), with the other form on
+/// the switch (Naẹ: Nae or naie), and otherwise to the character map's form (baẹ -> baie,
+/// Fōẹ -> foaie, zeẹi -> zeiei).
 pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>) -> (Tables, Stats) {
     let mut stats: Stats = [
         "read",
@@ -186,6 +203,11 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
     let mut unchanged: IndexMap<String, bool> = IndexMap::new();
     // (current lemma, inflection) -> its form, for the forms of obsolete lemmas
     let mut currents: HashMap<(String, String), String> = HashMap::new();
+    // lemmas in -ee with a masculine: their -eu form is a masculine noun or an adjective (flag 'M'),
+    // for the -ee rule (zee <- zeu; not coree <- coreu: EE_NOT_MASCULINE)
+    let mut with_masculine: HashSet<String> = HashSet::new();
+    // the names of rules::NAMES that dexonline lists, for their genitive and plural
+    let mut names: HashSet<String> = HashSet::new();
     let mut tables = Tables::default();
 
     for Record(fields) in records {
@@ -218,9 +240,16 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
         }
         if lemma.ends_with("eu") {
             tables.eu_lemmas.insert(lemma.clone());
+            let feminine = format!("{}ee", &lemma[..lemma.len() - 2]);
+            if flags.contains("M") && !EE_NOT_MASCULINE.contains(&feminine.as_str()) {
+                with_masculine.insert(feminine);
+            }
         }
         if lemma.ends_with("ea") {
             tables.ea_lemmas.insert(lemma.clone());
+        }
+        if NAMES.contains(&lemma.as_str()) {
+            names.insert(lemma.clone());
         }
         if lemma.ends_with("iesc") && !tables.iesc_lemmas.contains_key(&lemma) {
             let reference = syllabify_all(&lemma, &hyph, known, verb).swap_remove(0).0;
@@ -228,7 +257,8 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
         }
         // a form with no candidate digraph is stored only for an obsolete lemma (alineez,
         // not alinat)
-        let candidate = found(&CANDIDATE, &form) || found(&EE_FINAL, &form) || obsolete(&lemma).is_some();
+        let ee_form = ee_final(&form);
+        let candidate = found(&CANDIDATE, &form) || ee_form || obsolete(&lemma).is_some();
         if !candidate {
             add(&mut stats, "no_candidate", 1);
             if found(&EE_SPELLING, &form) {
@@ -292,6 +322,8 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
                         spellings: IndexMap::new(),
                         dex: false,
                         current_word: false,
+                        common: false,
+                        lemmas: Vec::new(),
                         obsolete: Vec::new(),
                         long_infinitive: None,
                     };
@@ -311,6 +343,12 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
         }
         let row = &mut rows[&form];
         row.dex = row.dex || dex;
+        // the form as read, before normalization: Nae, of a name (dexonline capitalizes the forms of
+        // names), or lae
+        row.common = row.common || !fields.first().is_some_and(|f| f.trim().starts_with(char::is_uppercase));
+        if !row.lemmas.contains(&lemma) {
+            row.lemmas.push(lemma.clone());
+        }
         match (own, current_lemma) {
             (Some(own), _) => {
                 if row.long_infinitive.is_none() {
@@ -329,13 +367,15 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
         }
 
         let reading = (number.to_uppercase() == "P", lemma);
-        if found(&EE_FINAL, &form) && !row.readings.contains(&reading) {
+        if ee_form && !row.readings.contains(&reading) {
             row.readings.push(reading);
         }
     }
 
     // spelling with the -ee rule -> [(form, -ee rule applied)]
     let mut by_spelling: IndexMap<String, Vec<(String, bool)>> = IndexMap::new();
+    // a spelling like that of an -aie/-oaie/-eie word -> (its form, a name)
+    let mut like_aie: HashMap<String, (String, bool)> = HashMap::new();
     for (form, row) in &rows {
         // an obsolete form: (its spellings, default first; its current forms)
         let obsolete = if row.current_word {
@@ -386,14 +426,28 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
         }
         let mut readings = row.readings.clone();
         readings.sort_by_key(|(plural, _)| *plural);
-        let ee = readings
-            .iter()
-            .find_map(|(plural, lemma)| concise_ee(form, &row.concise, lemma, *plural));
+        let ee = readings.iter().find_map(|(plural, lemma)| {
+            concise_ee(form, &row.concise, lemma, *plural, with_masculine.contains(lemma)).map(|e| (e, lemma))
+        });
         add(
             &mut stats,
             "ee_no_rule",
             i64::from(!readings.is_empty() && ee.is_none()),
         );
+        // the spelling of a word in -ae/-oe/-oae, or of the genitive or plural that a kept
+        // feminine writes with ẹ (not an -eu lemma's plural, as before: bombeẹle), reads by
+        // character map as a word in -aie/-oaie/-eie, which may exist too (Naẹ: naie, zeẹi: zeiei)
+        if let Some((e, lemma)) = &ee
+            && (form.ends_with("oae")
+                || AE_OE.contains(&lemma.as_str())
+                || e.ends_with("ẹi")
+                || (e.ends_with("ẹle") || e.ends_with("ẹlor")) && !lemma.ends_with("eu"))
+        {
+            // a name, unless in -oae (Foae: foaie)
+            let name = !row.common && !form.ends_with("oae");
+            like_aie.insert(e.clone(), (form.clone(), name));
+        }
+        let ee = ee.map(|(e, ..)| e);
         let suffix = row.spellings.keys().any(|x| found(&HIATUS_SUFFIX, x));
         let alts: Vec<String> = row
             .spellings
@@ -418,6 +472,36 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
             },
         );
     }
+    // the genitive and articulated plural of the names of rules::NAMES that dexonline lists
+    // without them (Andreei, Andreele, Andreelor <- Andreea; Zoei <- Zoe)
+    let mut generated: Vec<String> = Vec::new();
+    for name in NAMES.iter().filter(|n| names.contains(**n)) {
+        let base = name.strip_suffix('a').unwrap_or(name);
+        for (end, plural) in [("i", false), ("le", true), ("lor", true)] {
+            let form = format!("{base}{end}");
+            if tables.forms.contains_key(&form) {
+                continue;
+            }
+            let concise = concise_from_syllables(&syllabify_all(&form, "", known, false).swap_remove(0).0);
+            let ee = concise_ee(&form, &concise, name, plural, false).filter(|e| *e != concise);
+            if let Some(e) = &ee {
+                like_aie.insert(e.clone(), (form.clone(), true));
+            }
+            let spelling = ee.clone().unwrap_or_else(|| concise.clone());
+            by_spelling
+                .entry(spelling)
+                .or_default()
+                .push((form.clone(), ee.is_some()));
+            let row = Row {
+                concise,
+                concise_ee: ee,
+                alternatives: Vec::new(),
+                current: Vec::new(),
+            };
+            tables.forms.insert(form.clone(), row);
+            generated.push(form);
+        }
+    }
     for form in unchanged.keys() {
         by_spelling.entry(form.clone()).or_default().push((form.clone(), false));
     }
@@ -425,16 +509,40 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
         .iter()
         .map(|(f, row)| (f.as_str(), row.dex))
         .chain(unchanged.iter().map(|(f, &d)| (f.as_str(), d)))
+        .chain(generated.iter().map(|f| (f.as_str(), false)))
         .collect();
+    let lemmas = |f: &str| rows.get(f).map_or(&[][..], |r| r.lemmas.as_slice());
     for (spelling, forms) in &by_spelling {
         if !forms.iter().any(|&(_, changed)| changed) {
             continue;
         }
         let plain = revert_text(spelling);
+        // the -aie/-oaie/-eie word of a spelling like_aie exists: a name is the default, with
+        // that word on the switch (Naẹ: Nae or naie); a common word is an old spelling of it,
+        // which the character map gives (baẹ -> baie, Fōẹ -> foaie, zeẹi -> zeiei)
+        if let Some((form, name)) = like_aie.get(spelling)
+            && forms.iter().any(|(f, _)| *f == plain)
+        {
+            if *name {
+                tables.ee_revert.insert(spelling.clone(), (form.clone(), vec![plain]));
+            }
+            continue;
+        }
         let rank = |f: &str| (dex[f], dex[f] && !found(&EURI, f));
         let top = forms.iter().map(|(f, _)| rank(f)).max().expect("a form");
         let mut tied: Vec<&String> = forms.iter().map(|(f, _)| f).filter(|f| rank(f) == top).collect();
         tied.sort_by_key(|f| ro_order(f));
+        // a DEX-MDA-DOOM plural in -eie beats the -ee plural of its own lemma (curcubeẹ: curcubeie,
+        // not curcubee), but not another lemma's (bordeẹ: bordeie of bordei, or bordee of bordeu)
+        if ["eie", "eiele", "eielor"].iter().any(|end| plain.ends_with(end))
+            && tied.contains(&&plain)
+            && dex[plain.as_str()]
+            && tied
+                .iter()
+                .all(|f| **f == plain || lemmas(f).iter().any(|l| lemmas(&plain).contains(l)))
+        {
+            tied.retain(|f| **f == plain);
+        }
         let best = if tied.contains(&&plain) {
             plain.clone()
         } else {
@@ -448,6 +556,7 @@ pub fn build(records: impl IntoIterator<Item = Record>, known: &HashSet<String>)
 
     let count = |n: usize| i64::try_from(n).expect("a count");
     add(&mut stats, "stored", count(rows.len()));
+    add(&mut stats, "names_generated", count(generated.len()));
     add(
         &mut stats,
         "ee",

@@ -7,7 +7,8 @@ use std::sync::LazyLock;
 
 use grafia_concisa::build::{Record, Stats, Tables, build};
 use grafia_concisa::rules::{
-    concise_ee, concise_from_reference, concise_from_syllables, iere_spelling, long_infinitive, revert_text, syllabify,
+    concise_by_rules, concise_ee, concise_from_reference, concise_from_syllables, iere_spelling, long_infinitive,
+    revert_text, syllabify,
 };
 use grafia_concisa::{DataFile, Dictionary, Options, RULES_HASH, convert, datafile, lookup, revert};
 
@@ -105,16 +106,41 @@ const EE_WORDS: &[(&str, &str, &str, &str)] = &[
     ("orhideea", "or-hi-de-e", "S", "orhideė"),
     ("niceea", "ni-ce-ea", "S", "niceė"), // headword in -eea
     ("andreea", "an-dre-ea", "S", "andreė"),
-    ("aceea", "a-ce-ea", "S", "aceē"),               // ...except the pronoun
-    ("oareceea", "oa-re-ce-ea", "S", "ōreceē"),      // ...and its kin
-    ("spontaneea", "spon-ta-neu", "S", "spontaneė"), // -eu adjective
-    ("galileei", "ga-li-le-ea", "S", "galileii"),    // -eei: same lemmas as -eea
-    ("spontaneei", "spon-ta-neu", "S", "spontaneii"),
+    ("aceea", "a-ce-ea", "S", "aceē"),                // ...except the pronoun
+    ("oareceea", "oa-re-ce-ea", "S", "ōreceē"),       // ...and its kin
+    ("spontaneea", "spon-ta-neu", "S", "spontaneė"),  // -eu adjective
+    ("galileei", "ga-li-le-ea", "S", "galileii"),     // -eei: same lemmas as -eea
+    ("spontaneei", "spon-ta-neu", "S", "spontaneẹi"), // a feminine with a masculine keeps its e
     ("plebeea", "ple-beu", "S", "plebeė"),
     ("orhideei", "or-hi-de-e", "S", "orhideii"),
     ("orhideele", "or-hi-de-e", "P", "orhideile"),   // like femeile
     ("orhideelor", "or-hi-de-e", "P", "orhideilor"), // like femeilor
     ("agavacee", "a-ga-va-ce-e", "P", "agavacei"),   // a plural-only -ee lemma
+    ("zeele", "ze-e", "P", "zeẹle"),                 // zee, with the masculine zeu (EE_RECORDS)
+    ("zeelor", "ze-e", "P", "zeẹlor"),
+    ("zeei", "ze-e", "S", "zeẹi"),
+    ("zeea", "ze-e", "S", "zeė"),
+    ("ateele", "a-te-e", "P", "ateẹle"),
+    ("ateei", "a-te-e", "S", "ateẹi"),
+    ("zeiele", "ze-ie", "P", "zeẹle"), // -eie: the base rules already
+    ("zeiei", "ze-ie", "S", "zeẹi"),
+    ("rotofeiele", "ro-to-fei", "P", "rotofeẹle"),
+    ("propilee", "pro-pi-le-e", "P", "propilei"), // propileu is a neuter (EE_RECORDS)
+    ("propileele", "pro-pi-le-e", "P", "propileile"),
+    ("medeei", "me-de-ea", "S", "medeẹi"), // a name (rules::NAMES)
+    ("coreei", "co-re-e", "S", "coreii"),  // rules::EE_NOT_MASCULINE: coreu is no masculine of coree
+    ("coreele", "co-re-e", "P", "coreile"),
+    ("noe", "no-e", "S", "noẹ"), // -ae, -oe: rules::AE_OE (Nae, Nicolae: EE_RECORDS)
+    ("zoe", "zo-e", "S", "zoẹ"),
+    ("zoei", "zo-e", "S", "zoẹi"), // a name keeps its e
+    ("zoele", "zo-e", "P", "zoẹle"),
+    ("zoelor", "zo-e", "P", "zoẹlor"),
+    ("aloe", "a-lo-e", "S", "aloẹ"),
+    ("aloea", "a-lo-e", "S", "aloė"),
+    ("aloei", "a-lo-e", "S", "aloii"),
+    ("aloele", "a-lo-e", "P", "aloile"),
+    ("aloelor", "a-lo-e", "P", "aloilor"),
+    ("băboae", "bă-boa-e", "S", "băbōẹ"), // -oae: any word
 ];
 
 // (word, dexonline hyphenation, expected syllabified, expected source, "V" for a verb).
@@ -448,13 +474,21 @@ const IERE_SPELLINGS: &[(&str, &str)] = &[
 const UNKNOWN_EE: &[(&str, &[&str])] = &[
     ("zzeele", &["zzeile", "zzeẹle"]), // plural of zzee (default) or of zzeu
     ("Zzeelor", &["Zzeilor", "Zzeẹlor"]),
-    ("zzee", &["zzeẹ"]),                  // read as a singular
-    ("Andreei", &["Andreii"]),            // genitive of the known andreea
+    ("zzee", &["zzeẹ"]),         // read as a singular
+    ("Leei", &["Leẹi"]),         // (Leea)
+    ("niceei", &["niceii"]),     // genitive of the known niceea, not a name
+    ("Iudeelor", &["Iudeilor"]), // the plural of the place Iudeea, not of iudeu (false masculine)
+    ("Galileele", &["Galileile"]),
+    ("coreelor", &["coreilor"]),          // coree: EE_NOT_MASCULINE, not by coreu
     ("aleei", &["aleii"]),                // no aleea, but alee is known
     ("aceei", &["aceei"]),                // aceea is known, but keeps -eea
-    ("plebeei", &["plebeei", "plebeii"]), // plebeea is a form, not a lemma
-    ("Zzeei", &["Zzeei", "Zzeii"]),       // no known lemma: unchanged (default) or -eii
-    ("muzeele", &["muzeẹle"]),            // plural of a known -eu lemma: one spelling
+    ("plebeei", &["plebeẹi", "plebeii"]), // plebeea is a form, not a lemma
+    ("Zzeei", &["Zzeẹi", "Zzeii"]),       // no known lemma: -eẹi (default) or -eii
+    ("Cloei", &["Cloẹi"]),                // rules::AE_OE, and a name
+    ("Cloele", &["Cloẹle"]),
+    ("Cloelor", &["Cloẹlor"]),
+    ("Zzoae", &["Zzōẹ"]),      // -oae: any word
+    ("muzeele", &["muzeẹle"]), // plural of a known -eu lemma: one spelling
     ("Muzeelor", &["Muzeẹlor"]),
     ("muzeurile", &["muzeẹle"]), // known -eu lemma
     ("Muzeuri", &["Muzeẹ"]),
@@ -473,10 +507,10 @@ const EE_REVERT_RECORDS: &[&[&str]] = &[
     &["careuri", "careu", "ca-reu", "P", "", "D"],
     &["bordee", "bordeu", "bor-deu", "P", "", "D"], // both DEX-MDA-DOOM, neither in -euri: a tie
     &["bordeie", "bordei", "bor-dei", "P", "", "D"],
-    &["zeii", "zeu", "zeu", "P", "", "D"], // no candidate, but spelled like zeei's -ee
-    &["zeei", "zee", "ze-e", "S"],         // spelling: zeii (DEX-MDA-DOOM) wins
-    &["pigmeei", "pigmee", "pig-me-e", "S", "D"], // flags in any order: D alone
-    &["pigmeii", "pigmeu", "pig-meu", "P", "D"],
+    &["zzpeii", "zzpeu", "zzpeu", "P", "", "D"], // no candidate, but spelled like zzpeei's -ee
+    &["zzpeei", "zzpee", "zzpe-e", "S"],         // spelling: zzpeii (DEX-MDA-DOOM) wins
+    &["zzmeei", "zzmee", "zzme-e", "S", "D"],    // flags in any order: D alone
+    &["zzmeii", "zzmeu", "zzmeu", "P", "D"],
     &["rarelee", "rareleu", "ra-re-leu", "P"], // neither DEX-MDA-DOOM: -ee and -euri tie
     &["rareleuri", "rareleu", "ra-re-leu", "P"],
     &["zzbeleuri", "zzbeleu", "", "P"], // a tie: alphabetical order, not the records' order
@@ -495,8 +529,208 @@ const REVERT_HOMOGRAPHS: &[(&str, &[&str])] = &[
     ("apogeẹle", &[]),
     ("apogeẹlor", &[]),
     ("zzbeleẹ", &["zzbelee", "zzbeleuri"]), // no zzbeleie: the first alphabetically
-    ("pigmeii", &["pigmeii", "pigmeei"]),   // both DEX-MDA-DOOM, pigmeii unchanged: a tie
+    ("zzmeii", &["zzmeii", "zzmeei"]),      // both DEX-MDA-DOOM, zzmeii unchanged: a tie
     ("rareleẹ", &["rarelee", "rareleuri"]), // -ee over -euri only among DEX-MDA-DOOM forms
+    ("zeẹi", &[]),                          // zeie's genitive (zee's is an old spelling of it): the character map's
+    ("zeẹle", &[]),
+    ("Naẹ", &["Nae", "Naie"]), // a name: itself first, then the -aie word
+    ("Nicolaẹ", &["Nicolae", "Nicolaie"]),
+    ("laẹ", &[]),              // a common word: the -aie word, by the character map
+    ("Fōẹ", &[]),              // -oae: likewise
+    ("noẹ", &[]),              // decided: noe (no noie)
+    ("zeẹ", &["zeie", "zee"]), // the ties of the -ee rule as before stay
+    ("zzbeẹle", &["zzbeiele", "zzbeele"]),
+    ("curcubeẹ", &[]),   // decided: curcubeie, the -eie plural of the same lemma, DEX-MDA-DOOM
+    ("curcubeẹle", &[]), // ...curcubeiele
+    ("zzchindeẹ", &["zzchindeie", "zzchindee"]), // no DEX-MDA-DOOM: a tie
+    ("Andreẹle", &[]),   // a generated form of a name: decided
+    ("aloii", &[]),
+];
+// -ee rule: records with flags for the test DB (M: a masculine noun or an adjective)
+const EE_RECORDS: &[&[&str]] = &[
+    &["zeu", "zeu", "zeu", "S", "M"], // zee has a masculine: zeẹle, zeẹi
+    &["ateu", "ateu", "a-teu", "S", "", "M"],
+    &["propileu", "propileu", "pro-pi-leu", "S"], // a neuter: propilee keeps propilei
+    &["coreu", "coreu", "co-reu", "S", "M"],      // the metrical foot, not coree's masculine
+    &["Nae", "Nae", "", "S"],                     // a name: Naẹ reverts to it, or to naie
+    &["naie", "naie", "", "S", "", "D"],
+    &["Nicolae", "Nicolae", "ni-co-la-e", "S"],
+    &["Nicolaie", "Nicolaie", "", "S"],
+    &["lae", "lae", "", "S"], // a common word, an old spelling: laẹ reverts to laie
+    &["laie", "laie", "", "S", "", "D"],
+    &["Foae", "Foae", "", "S"], // -oae, even in a name: Fōẹ reverts to foaie
+    &["foaie", "foaie", "", "S", "", "D"],
+    &["zee", "zee", "ze-e", "S"], // the singular is the -ee rule as before: a tie with zeie
+    &["zeie", "zeie", "ze-ie", "S"],
+    &["zzbeele", "zzbeu", "", "P"], // an -eu lemma's plural too: a tie with zzbeiele
+    &["zzbeiele", "zzbeie", "", "P"],
+    &["curcubee", "curcubeu", "cur-cu-beu", "P", "", "D"], // two plurals of one lemma: the -eie
+    &["curcubeie", "curcubeu", "cur-cu-beu", "P", "", "D"], // one, DEX-MDA-DOOM, wins
+    &["curcubeele", "curcubeu", "cur-cu-beu", "P", "", "D"],
+    &["curcubeiele", "curcubeu", "cur-cu-beu", "P", "", "D"],
+    &["zzchindee", "zzchindeu", "", "P"], // ...not if it is no DEX-MDA-DOOM form
+    &["zzchindeie", "zzchindeu", "", "P"],
+    &["Iudeea", "Iudeea", "", "S"], // a place: its plural is not iudeu's (false masculine)
+    &["iudeu", "iudeu", "iu-deu", "S", "M"],
+];
+// The words of rules::AE_OE and the genitives of rules::NAMES, with the -ee switch: one line per
+// entry, since mutation testing cannot see list entries. (word, expected)
+const LISTED: &[(&str, &str)] = &[
+    ("nae", "naẹ"),
+    ("necolae", "necolaẹ"),
+    ("neculae", "neculaẹ"),
+    ("nicolae", "nicolaẹ"),
+    ("niculae", "niculaẹ"),
+    ("lae", "laẹ"),
+    ("vlae", "vlaẹ"),
+    ("brătae", "brătaẹ"),
+    ("drăgae", "drăgaẹ"),
+    ("vlădae", "vlădaẹ"),
+    ("dănae", "dănaẹ"),
+    ("străhae", "străhaẹ"),
+    ("zgae", "zgaẹ"),
+    ("bodogae", "bodogaẹ"),
+    ("băzdigae", "băzdigaẹ"),
+    ("călae", "călaẹ"),
+    ("codae", "codaẹ"),
+    ("cobae", "cobaẹ"),
+    ("decae", "decaẹ"),
+    ("flăndrae", "flăndraẹ"),
+    ("nămae", "nămaẹ"),
+    ("halbae", "halbaẹ"),
+    ("bae", "baẹ"),
+    ("dae", "daẹ"),
+    ("mae", "maẹ"),
+    ("rae", "raẹ"),
+    ("brae", "braẹ"),
+    ("vrae", "vraẹ"),
+    ("andrae", "andraẹ"),
+    ("andornae", "andornaẹ"),
+    ("aglae", "aglaẹ"),
+    ("danae", "danaẹ"),
+    ("pasifae", "pasifaẹ"),
+    ("babae", "babaẹ"),
+    ("bălae", "bălaẹ"),
+    ("bălbătae", "bălbătaẹ"),
+    ("bețae", "bețaẹ"),
+    ("ciumăfae", "ciumăfaẹ"),
+    ("cusurae", "cusuraẹ"),
+    ("cârnae", "cârnaẹ"),
+    ("dudae", "dudaẹ"),
+    ("dugae", "dugaẹ"),
+    ("dăblae", "dăblaẹ"),
+    ("fae", "faẹ"),
+    ("gae", "gaẹ"),
+    ("ghilăvae", "ghilăvaẹ"),
+    ("lețcae", "lețcaẹ"),
+    ("lăscae", "lăscaẹ"),
+    ("mereae", "merēẹ"),
+    ("mesereae", "meserēẹ"),
+    ("nedeae", "nedēẹ"),
+    ("noe", "noẹ"),
+    ("zoe", "zoẹ"),
+    ("cloe", "cloẹ"),
+    ("arsinoe", "arsinoẹ"),
+    ("autonoe", "autonoẹ"),
+    ("beroe", "beroẹ"),
+    ("ociroe", "ociroẹ"),
+    ("teonoe", "teonoẹ"),
+    ("averoe", "averoẹ"),
+    ("cosroe", "cosroẹ"),
+    ("feroe", "feroẹ"),
+    ("neagoe", "nēgoẹ"),
+    ("stroe", "stroẹ"),
+    ("sisoe", "sisoẹ"),
+    ("rădivoe", "rădivoẹ"),
+    ("popoe", "popoẹ"),
+    ("stăncoe", "stăncoẹ"),
+    ("brătoe", "brătoẹ"),
+    ("banboe", "banboẹ"),
+    ("bartoe", "bartoẹ"),
+    ("begoe", "begoẹ"),
+    ("beloe", "beloẹ"),
+    ("bogoe", "bogoẹ"),
+    ("bucoe", "bucoẹ"),
+    ("buhoe", "buhoẹ"),
+    ("băloe", "băloẹ"),
+    ("băndoe", "băndoẹ"),
+    ("bășcoe", "bășcoẹ"),
+    ("calcoe", "calcoẹ"),
+    ("cascoe", "cascoẹ"),
+    ("cragoe", "cragoẹ"),
+    ("docoe", "docoẹ"),
+    ("doljoe", "doljoẹ"),
+    ("geagoe", "gēgoẹ"),
+    ("gheoroe", "gheoroẹ"),
+    ("goe", "goẹ"),
+    ("grigoe", "grigoẹ"),
+    ("găfoe", "găfoẹ"),
+    ("hodoe", "hodoẹ"),
+    ("hosmăndioe", "hosmăndioẹ"),
+    ("ileroe", "ileroẹ"),
+    ("iricioe", "iricioẹ"),
+    ("lențoe", "lențoẹ"),
+    ("lifoe", "lifoẹ"),
+    ("mormoe", "mormoẹ"),
+    ("mârmoe", "mârmoẹ"),
+    ("măndroe", "măndroẹ"),
+    ("mănoe", "mănoẹ"),
+    ("nacoe", "nacoẹ"),
+    ("papoe", "papoẹ"),
+    ("pipoe", "pipoẹ"),
+    ("pitolcoe", "pitolcoẹ"),
+    ("pleșoe", "pleșoẹ"),
+    ("rostoe", "rostoẹ"),
+    ("sicoe", "sicoẹ"),
+    ("teahoe", "tēhoẹ"),
+    ("temoe", "temoẹ"),
+    ("troe", "troẹ"),
+    ("usoe", "usoẹ"),
+    ("verevoe", "verevoẹ"),
+    ("vlădoe", "vlădoẹ"),
+    ("voe", "voẹ"),
+    ("țipoe", "țipoẹ"),
+    ("aloe", "aloẹ"),
+    ("benzoe", "benzoẹ"),
+    ("canoe", "canoẹ"),
+    ("diploe", "diploẹ"),
+    ("meloe", "meloẹ"),
+    ("hoboe", "hoboẹ"),
+    ("eroe", "eroẹ"),
+    ("geroe", "geroẹ"),
+    ("oboe", "oboẹ"),
+    ("evoe", "evoẹ"),
+    ("amalteei", "amalteẹi"),
+    ("andreei", "andreẹi"),
+    ("casiopeei", "casiopeẹi"),
+    ("deleneei", "deleneẹi"),
+    ("doroteei", "doroteẹi"),
+    ("dulcineei", "dulcineẹi"),
+    ("euricleei", "euricleẹi"),
+    ("filoteei", "filoteẹi"),
+    ("galateei", "galateẹi"),
+    ("geei", "geẹi"),
+    ("idoteei", "idoteẹi"),
+    ("leei", "leẹi"),
+    ("leucoteei", "leucoteẹi"),
+    ("medeei", "medeẹi"),
+    ("miraneei", "miraneẹi"),
+    ("nesteei", "nesteẹi"),
+    ("panopeei", "panopeẹi"),
+    ("pasiteei", "pasiteẹi"),
+    ("pentesileei", "pentesileẹi"),
+    ("peribeei", "peribeẹi"),
+    ("popeei", "popeẹi"),
+    ("salomeei", "salomeẹi"),
+    ("stenebeei", "stenebeẹi"),
+    ("darcleei", "darcleẹi"),
+    ("zoei", "zoẹi"),
+    ("cloei", "cloẹi"),
+    ("arsinoei", "arsinoẹi"),
+    ("autonoei", "autonoẹi"),
+    ("beroei", "beroẹi"),
+    ("ociroei", "ociroẹi"),
+    ("teonoei", "teonoẹi"),
 ];
 // The build's stats: records (one or more per stat)...
 const STATS_RECORDS: &[&[&str]] = &[
@@ -527,6 +761,7 @@ const STATS: &[(&str, i64)] = &[
     ("ee_revert_ties", 1),
     ("eu_lemmas", 2),
     ("homographs", 1),
+    ("names_generated", 0),
     ("iesc_lemmas", 1),
     ("invalid", 1),
     ("lemma_dexonline", 6),
@@ -620,31 +855,79 @@ const KNOWN: &[&str] = &[
     "autograf",
 ];
 
-// (form, concise, lemma, plural, expected) for the rule function itself
-const EE_RULE: &[(&str, &str, &str, bool, Option<&str>)] = &[
-    ("idee", "idee", "idee", false, Some("ideẹ")),
-    ("bombee", "bombee", "bombeu", true, Some("bombeẹ")),
-    ("bombeele", "bombeele", "bombeu", true, Some("bombeẹle")),
-    ("bombeelor", "bombeelor", "bombeu", true, Some("bombeẹlor")),
-    ("bombeurilor", "bombeurilor", "bombeu", true, Some("bombeẹlor")),
-    ("pneurilor", "pneurilor", "pneu", true, None),
-    ("bombeuri", "bombeuri", "bombeu", true, Some("bombeẹ")),
-    ("piureuri", "piureuri", "piure", true, None), // lemma in -e, not -eu
-    ("liceul", "liceul", "liceu", false, None),    // -eu lemma: only -ee/-eele/-eelor
-    ("logoree", "logoree", "logoree", true, Some("logorei")),
-    ("ideea", "ideē", "idee", false, Some("ideė")),
-    ("ideei", "ideei", "idee", false, Some("ideii")),
-    ("orhideele", "orhideele", "orhidee", true, Some("orhideile")),
-    ("orhideelor", "orhideelor", "orhidee", true, Some("orhideilor")),
-    ("xee", "xee", "xa", true, None),        // plural of another lemma
-    ("aceea", "aceē", "acela", false, None), // -eea of another lemma
-    ("aceea", "aceē", "aceea", false, None), // the pronoun as a headword
-    ("niceea", "niceē", "niceea", false, Some("niceė")),
-    ("spontaneea", "spontaneē", "spontaneu", false, Some("spontaneė")),
-    ("galileei", "galileei", "galileea", false, Some("galileii")),
-    ("spontaneei", "spontaneei", "spontaneu", false, Some("spontaneii")),
-    ("zzeei", "zzeei", "zzea", false, None),
-    ("femeie", "femeẹ", "femeie", false, None),
+// (form, concise, lemma, plural, the -ee lemma has a masculine, expected) for the rule function itself
+type Word = &'static str;
+type EeRule = (Word, Word, Word, bool, bool, Option<Word>);
+const EE_RULE: &[EeRule] = &[
+    ("idee", "idee", "idee", false, false, Some("ideẹ")),
+    ("bombee", "bombee", "bombeu", true, false, Some("bombeẹ")),
+    ("bombeele", "bombeele", "bombeu", true, false, Some("bombeẹle")),
+    ("bombeelor", "bombeelor", "bombeu", true, false, Some("bombeẹlor")),
+    ("bombeurilor", "bombeurilor", "bombeu", true, false, Some("bombeẹlor")),
+    ("pneurilor", "pneurilor", "pneu", true, false, None),
+    ("bombeuri", "bombeuri", "bombeu", true, false, Some("bombeẹ")),
+    ("piureuri", "piureuri", "piure", true, false, None), // lemma in -e, not -eu
+    ("liceul", "liceul", "liceu", false, false, None),    // -eu lemma: only -ee/-eele/-eelor
+    ("logoree", "logoree", "logoree", true, false, Some("logorei")),
+    ("ideea", "ideē", "idee", false, false, Some("ideė")),
+    ("ideei", "ideei", "idee", false, false, Some("ideii")),
+    ("orhideele", "orhideele", "orhidee", true, false, Some("orhideile")),
+    ("orhideelor", "orhideelor", "orhidee", true, false, Some("orhideilor")),
+    ("xee", "xee", "xa", true, false, None),        // plural of another lemma
+    ("aceea", "aceē", "acela", false, false, None), // -eea of another lemma
+    ("aceea", "aceē", "aceea", false, false, None), // the pronoun as a headword
+    ("aceei", "aceei", "aceea", false, false, None),
+    ("niceea", "niceē", "niceea", false, false, Some("niceė")),
+    ("spontaneea", "spontaneē", "spontaneu", false, false, Some("spontaneė")),
+    ("galileei", "galileei", "galileea", false, false, Some("galileii")),
+    ("galileelor", "galileelor", "galileea", true, false, Some("galileilor")), // an -eea lemma, not a name
+    ("galileele", "galileele", "galileea", true, false, Some("galileile")),
+    ("aceele", "aceele", "aceea", true, false, None), // ...not EEA_UNCHANGED
+    (
+        "spontaneei",
+        "spontaneei",
+        "spontaneu",
+        false,
+        false,
+        Some("spontaneẹi"),
+    ), // -eu: its feminine keeps the e
+    ("zzeei", "zzeei", "zzea", false, false, None),
+    ("femeie", "femeẹ", "femeie", false, false, None),
+    // an -ee lemma with a masculine (zee <- zeu) keeps its plural and genitive
+    ("zeele", "zeele", "zee", true, true, Some("zeẹle")),
+    ("zeelor", "zeelor", "zee", true, true, Some("zeẹlor")),
+    ("zeele", "zeele", "zee", true, false, Some("zeile")), // ...not without one
+    ("zee", "zee", "zee", true, true, Some("zeẹ")),        // the bare plural like the articulated one
+    ("zeei", "zeei", "zee", false, true, Some("zeẹi")),
+    ("zeea", "zeē", "zee", false, true, Some("zeė")),
+    ("orhideei", "orhideei", "orhidee", false, true, Some("orhideẹi")),
+    ("xee", "xee", "xa", true, true, None), // the masculine is only for an -ee lemma
+    // a name (rules::NAMES) too
+    ("andreei", "andreei", "andreea", false, false, Some("andreẹi")),
+    ("andreelor", "andreelor", "andreea", true, false, Some("andreẹlor")),
+    ("andreele", "andreele", "andreea", true, false, Some("andreẹle")),
+    ("andreea", "andreē", "andreea", false, false, Some("andreė")),
+    ("darclee", "darclee", "darclee", true, false, Some("darcleẹ")),
+    // -ae, -oe: rules::AE_OE
+    ("nae", "nae", "nae", false, false, Some("naẹ")),
+    ("bălae", "bălae", "bălae", true, false, Some("bălaẹ")),
+    ("aloe", "aloe", "aloe", false, false, Some("aloẹ")),
+    ("vitae", "vitae", "vitae", false, false, None), // not listed
+    ("poe", "poe", "poe", false, false, None),
+    ("aloea", "aloē", "aloe", false, false, Some("aloė")),
+    ("aloea", "aloea", "aloe", false, false, None), // a hiatus e-a: nothing to write ė
+    ("aloei", "aloei", "aloe", false, false, Some("aloii")),
+    ("aloele", "aloele", "aloe", true, false, Some("aloile")),
+    ("aloelor", "aloelor", "aloe", true, false, Some("aloilor")),
+    ("zoei", "zoei", "zoe", false, false, Some("zoẹi")), // a name
+    ("zoele", "zoele", "zoe", true, false, Some("zoẹle")),
+    ("zoelor", "zoelor", "zoe", true, false, Some("zoẹlor")),
+    ("quinoe", "quinoe", "quinoa", false, false, None), // a form of an -oa lemma
+    ("quinoei", "quinoei", "quinoa", false, false, None),
+    ("naei", "naei", "nae", false, false, None), // only -oe lemmas have -oei
+    // -oae: any word
+    ("băboae", "băbōe", "băboae", false, false, Some("băbōẹ")),
+    ("zzoae", "zzōe", "zzoa", true, false, Some("zzōẹ")),
 ];
 
 // (input text, ee switch, expected output text, expected unknown words, ai switch)
@@ -708,10 +991,60 @@ const TEXTS: &[(&str, bool, &str, &[&str], bool)] = &[
         &[],
         true,
     ),
-    ("Galileei, spontaneei", true, "Galileii, spontaneii", &[], true),
+    ("Galileei, spontaneei", true, "Galileii, spontaneẹi", &[], true),
+    ("Zeele zeelor, zeei", true, "Zeẹle zeẹlor, zeẹi", &[], true),
+    ("Zeele zeelor, zeei", false, "Zeele zeelor, zeei", &[], true),
+    (
+        "Nae, Nicolae, Zoe, Noe, aloe",
+        true,
+        "Naẹ, Nicolaẹ, Zoẹ, Noẹ, aloẹ",
+        &[],
+        true,
+    ),
+    (
+        "Nae, Nicolae, Zoe, Noe, aloe",
+        false,
+        "Nae, Nicolae, Zoe, Noe, aloe",
+        &[],
+        true,
+    ),
+    (
+        "Aloea aloei, aloele aloelor",
+        true,
+        "Aloė aloii, aloile aloilor",
+        &[],
+        true,
+    ),
+    (
+        "Aloea aloei, aloele aloelor",
+        false,
+        "Aloē aloei, aloele aloelor",
+        &[],
+        true,
+    ),
+    ("vitae, Poe, reggae", true, "vitae, Poe, reggae", &[], true), // not in rules::AE_OE: never looked up
+    ("Băboae", true, "Băbōẹ", &[], true),
+    ("Băboae", false, "Băbōe", &[], true),
+    ("zzoae", true, "zzōẹ", &["zzoae"], true),
     ("zzee soare", true, "zzeẹ sōre", &["zzee"], true),
     ("zzee", false, "zzee", &[], true), // -ee not a candidate with the switch off
     ("zzeele zzeelor", true, "zzeile zzeilor", &["zzeele", "zzeelor"], true),
+    // the genitive and plural of a name the database lists, generated by the build: known
+    (
+        "Andreei Andreele Andreelor",
+        true,
+        "Andreẹi Andreẹle Andreẹlor",
+        &[],
+        true,
+    ),
+    (
+        "Andreei Andreele Andreelor",
+        false,
+        "Andreei Andreele Andreelor",
+        &[],
+        true,
+    ),
+    ("Leei", true, "Leẹi", &["Leei"], true), // a name the database lacks: unknown
     ("Câinele mâncă, CÂND?", false, "Cîinele mîncă, CÎND?", &[], true), // â -> î, on by default
     ("Pâinea și soarele", false, "Pîinē și sōrele", &[], true),
     ("zzâia", false, "zzîė", &["zzâia"], true),          // unknown words too
@@ -797,9 +1130,33 @@ const REVERTS: &[(&str, &str, bool)] = &[
     ("apogeẹ, careẹ", "apogee, careuri", true), // -ee over -euri, if both DEX-MDA-DOOM
     ("bombeẹle, liceẹlor", "bombeele, liceelor", true),
     ("femeẹ, zzeẹ, studiėză", "femeie, zzeie, studiază", true), // not in ee_revert, unknown
-    ("Zeii", "Zeii", true),                                     // a form with no digraph beats zeei
-    ("Ẹ", "Ie", false),                                         // one capital: an initial capital
-    ("ziėzăr", "ziiazăr", false),                               // -iėză reverts to -iază only at the end
+    ("Zzpeii", "Zzpeii", true),                                 // a form with no digraph beats zzpeei
+    (
+        "Naẹ, Nicolaẹ, Zoẹ, aloẹ, aloė, aloii, aloile, aloilor, Băbōẹ",
+        "Nae, Nicolae, Zoe, aloe, aloea, aloei, aloele, aloelor, Băboae",
+        true,
+    ),
+    ("Zoẹi, Zoẹle, Zoẹlor", "Zoei, Zoele, Zoelor", true),
+    ("zeẹi, zeẹle, laẹ, Fōẹ, noẹ", "zeiei, zeiele, laie, Foaie, noe", true), // old spellings: the -aie/-eie word
+    // names and listed words missing from the database: by rules::NAMES and rules::AE_OE...
+    (
+        "Andreẹi Leẹi Medeẹi Mamaẹi Cloẹi Andreẹlor Cloẹ CLOẸLE Nēgoẹ",
+        "Andreei Leei Medeei Mamaiei Cloei Andreelor Cloe CLOELE Neagoe",
+        true,
+    ),
+    ("Neagoẹ, Teahoẹ, Tēhoẹ", "Neagoe, Teahoe, Teahoe", true), // the ea written or not
+    (
+        "curcubeẹ, curcubeẹle, Andreẹle",
+        "curcubeie, curcubeiele, Andreele",
+        true,
+    ),
+    ("Merēẹ", "Mereae", true),                             // -ēẹ is an -ee spelling too
+    ("Zzeẹi, zzaẹ, zzoẹi", "Zzeiei, zzaie, zzoiei", true), // ...not other words
+    ("Andreẹi Cloẹ", "Andreiei Cloie", false),             // switch off: character map
+    ("Naẹ, aloii", "Naie, aloii", false),                  // switch off: character map
+    ("zeẹlor, ateẹi, Medeẹi", "zeelor, ateei, Medeei", true),
+    ("Ẹ", "Ie", false),           // one capital: an initial capital
+    ("ziėzăr", "ziiazăr", false), // -iėză reverts to -iază only at the end
     ("apogeẹle, apogeẹlor", "apogeele, apogeelor", true),
     ("agavacei, orhideilor", "agavacee, orhideelor", true),
 ];
@@ -821,6 +1178,7 @@ fn records() -> Vec<Record> {
     );
     for table in [
         HOMOGRAPH_RECORDS,
+        EE_RECORDS,
         EE_REVERT_RECORDS,
         LONG_INFINITIVE_RECORDS,
         OBSOLETE_RECORDS,
@@ -903,10 +1261,10 @@ fn syllabify_table() {
 #[test]
 fn ee_rule() {
     let mut f = Failures::default();
-    for (form, concise, lemma, plural, expected) in EE_RULE {
+    for (form, concise, lemma, plural, masculine, expected) in EE_RULE {
         f.check(
-            (form, concise),
-            concise_ee(form, concise, lemma, *plural),
+            (form, concise, lemma, masculine),
+            concise_ee(form, concise, lemma, *plural, *masculine),
             expected.map(String::from),
         );
     }
@@ -1131,6 +1489,19 @@ fn unknown_ee() {
             };
             f.check((name, word), alts, strings(spellings));
         }
+    }
+    f.assert();
+}
+
+#[test]
+fn listed_words() {
+    let mut f = Failures::default();
+    for (word, expected) in LISTED {
+        f.check(
+            word,
+            concise_by_rules(word, true, &HashMap::new()),
+            vec![expected.to_string()],
+        );
     }
     f.assert();
 }

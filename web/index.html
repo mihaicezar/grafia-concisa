@@ -108,7 +108,7 @@
     </select>
     <span id="switches">
       <label id="ai-switch"><input type="checkbox" id="ai" checked> î</label>
-      <label><input type="checkbox" id="ee"> -ee → -eẹ</label>
+      <label><input type="checkbox" id="ee"> -eẹ/aẹ/oẹ</label>
     </span>
     <button id="go" disabled>Convertește</button>
     <button id="copy" class="quiet" disabled>Copiază</button>
@@ -202,8 +202,9 @@
         const m = seg.alts && seg.unknown?.toLowerCase().match(/^(.*)ee(le|lor)$/);
         if (m) {
           const s = m[1];
-          footnote(`ee:${s}`, ["Dacă singularul e ", word(`${s}ee`), ", alege forma ", word(`${s}eile/lor`), ". ",
-                               "Dacă e ", word(`${s}eu`), ", alege ", word(`${s}eẹle/lor`), "."]);
+          footnote(`ee:${s}`, ["Dacă singularul e ", word(`${s}ee`), " și nu are masculinul ", word(`${s}eu`),
+                               ", alege forma ", word(`${s}eile/lor`), ". Dacă e ", word(`${s}eu`), ", sau ",
+                               word(`${s}ee`), " cu masculinul ", word(`${s}eu`), ", alege ", word(`${s}eẹle/lor`), "."]);
         }
         if (seg.obsolete) {
           obsolete++;
