@@ -85,7 +85,7 @@ pub fn known_lemmas(dict: &dyn Dictionary, words: &BTreeSet<String>) -> HashMap<
         .collect()
 }
 
-/// The switches: the optional -ee rule, -eẹ/aẹ/oẹ (default off), and â -> î (default on).
+/// The switches: the optional -ee rule, -eẹ/aẹ/oẹ (default on), and â -> î (default on).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Options {
     pub ee: bool,
@@ -94,7 +94,7 @@ pub struct Options {
 
 impl Default for Options {
     fn default() -> Self {
-        Options { ee: false, ai: true }
+        Options { ee: true, ai: true }
     }
 }
 

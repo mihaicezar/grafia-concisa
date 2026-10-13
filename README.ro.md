@@ -77,7 +77,7 @@ Un infinitiv lung în -iare nu e corect și se scrie în forma lui în -iere, ca
 
 Și alte forme învechite se scriu în forma lor actuală (vezi *Forme învechite*).
 
-## Regula opțională -eẹ/aẹ/oẹ (comutator, oprit implicit)
+## Regula opțională -eẹ/aẹ/oẹ (comutator, pornit implicit)
 
 Lemele în *-ee* urmează modelul *femeie*: *-ee* final se citește *-eie* și se scrie *-eẹ*, la fel ca *femeie* → *femeẹ*. *-ae* și *-oe* finale se citesc *-aie*, *-oie* și se scriu *-aẹ*, *-oẹ*.
 
