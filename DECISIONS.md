@@ -7,6 +7,15 @@ This file is the log of closed decisions: what was decided, when, and why, with 
 ## Naming
 - The project is always named "grafia concisă" (slug `grafia-concisa`), never "scriere concisă".
 
+## Purpose (spec: *Rule*)
+- **2026-10-12: grafia concisă keeps word roots stable across Romanian's vowel–diphthong alternations.** Romanian alternates e with ea and o with oa, which changes the shape of a shared root, and ie with ia. Written with similar letters, the alternating forms keep one root, identical once diacritics are ignored:
+  - e/ea: *ales*, *alēsă* (masculine, feminine); *cēță*, *ceții* (nominative, genitive); *cere*, *să cēră* (indicative, subjunctive); *vedem*, *vedēm* (present, imperfect);
+  - o/oa: *frumos*, *frumōsă*; *șcōlă*, *școli* (singular, plural); *cos*, *cōse* (first, third person); *fōẹ*, *foiță* (diminutive);
+  - ie/ia: *pẹrde*, *pėrdă*; *ẹse*, *ėsă*; *miluẹște*, *miluėscă* (indicative, subjunctive); *ėrnă*, *ẹrni*; *poėnă*, *poẹni* (singular, plural).
+  - **2026-10-13:** it also brings native words closer to the later loanwords of the same root: *ėrbă* (*iarbă*) and *erbacee*, *erbivor*; *pẹrdere* (*pierdere*) and *perdant*; *fẹr* (*fier*) and *feros*; *pėtră* (*piatră*) and *petrol*; *sōre* (*soare*) and *solar*; *mōrte* (*moarte*) and *mortal*.
+  - **Why:** stable roots, close to their loanwords, make reading easier for children whose mother tongue is Romanian but whose school language is not, for children with one Romanian parent, whose contact with Romanian is halved from the start, for foreigners learning Romanian, and for Romanian citizens born in Romania whose mother tongue is not Romanian, and perhaps not the language of most of their town either.
+  - Saving space is not a goal.
+
 ## Core rule (spec: *Rule*)
 - **Concision applies whenever no hiatus is involved.** Both vowels of ie/ia/ea/oa in one syllable → ẹ/ė/ē/ō. A hiatus is never converted.
 - **2026-09: stress dropped.** The June 1, 2026 plan made stress a condition for ia/ea/oa. Syllabification alone decides.
@@ -81,7 +90,7 @@ This file is the log of closed decisions: what was decided, when, and why, with 
   - Long infinitives in -iare are obsolete forms too (*apreciare* → *apreciere*, *ambreiere*, *inventariere*, *înjunghiere*).
 
 ## Optional rule -eẹ/aẹ/oẹ (spec: *Optional rule: -eẹ/aẹ/oẹ*)
-- **A separate switch, default off.** Word-final *-ee* is read as *-eie* and written *-eẹ* (*idee* → *ideẹ*), and the forms of *-ee* lemmas follow the *femeie* pattern (*ideea* → *ideė*, *ideei* → *ideii*).
+- **A separate switch, default on since 2026-10-13** (it was off). Word-final *-ee* is read as *-eie* and written *-eẹ* (*idee* → *ideẹ*), and the forms of *-ee* lemmas follow the *femeie* pattern (*ideea* → *ideė*, *ideei* → *ideii*).
   - **2026-10-04:** extended to the articulated plurals in *-eele*/*-eelor* (*orhideile*; *bombeẹle* ← *bombeu*); to the *-uri* plurals of *-eu* lemmas longer than 4 letters (*bombeuri* → *bombeẹ*; not *pneuri*); to articulated *-eea* and genitive *-eei* beyond *-ee* lemmas (*spontaneė*, *Andreė*, *Galileii*), except the pronouns *aceea*, *ceea*, *oareceea*.
   - **2026-10-12, reopened:** the genitives of *spontaneu*'s feminine and of *Andreea* are now *spontaneẹi*, *Andreẹi* (see the kept feminines below).
 - **2026-10-12: the switch is named -eẹ/aẹ/oẹ, and extends to final -ae and -oe** (*Nae* → *Naẹ*, *Nicolae* → *Nicolaẹ*, *Zoe* → *Zoẹ*, *Noe* → *Noẹ*, *aloe* → *aloẹ*), read as *-aie*, *-oie*. **Why:** they are the same hiatus as *-ee*, written as the *-aie*/*-oie* that is said.
@@ -98,6 +107,7 @@ This file is the log of closed decisions: what was decided, when, and why, with 
 ## â → î (spec: *Optional rule: â → î*)
 - **2026-10-06: â is written î, except in words with the root *român*/*rumân*** (*câine* → *cîine*; *român*, *aromân*, *rumânesc* keep â). A separate switch, default on.
   - **Why:** â and î write the same sound.
+  - **2026-10-12, why restated:** it is not a saving of space, which is no goal of grafia concisă. It rejects a supposedly etymological spelling that, paradoxically, takes many words away from their Latin origin, where the vowel was not a (*a rîde* ← *ridere*, *lumînare* ← *luminare*, *legămînt* ← *ligamentum*, *rîu* ← *rivus*, *învîrti* ← *vertere*, *vînt* ← *ventus*), and imposes â where the origin is not Latin and the source word has no a (*gînd* ← Hungarian *gond*, *Kîrgîzstan*, Slavic names).
 
 ## Unknown words (spec: *Unknown words*)
 - **2026-09-27:** a word with a candidate digraph that is missing from the database goes through the fallback rules and is flagged. Before, it passed through unchanged.

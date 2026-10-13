@@ -20,5 +20,13 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   // ignoreSearch: the page also opens from a link with a query string (?utm_source=...)
   e.respondWith(caches.match(e.request, { cacheName: CACHE, ignoreSearch: true })
-    .then((hit) => hit || fetch(e.request)));
+    .then((hit) => hit ? unredirected(hit) : fetch(e.request).then(unredirected)));
 });
+
+// A server may redirect a cached file (npx serve: de-ce.html -> /de-ce), and the browser
+// refuses a redirected response to a page navigation, so it is served as a fresh one.
+function unredirected(response) {
+  if (!response.redirected) return response;
+  const { status, statusText, headers } = response;
+  return new Response(response.body, { status, statusText, headers });
+}

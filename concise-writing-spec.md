@@ -75,7 +75,7 @@ A long infinitive in -iare is not standard and is written in its -iere form, whi
 
 Other obsolete forms are written as their current form too (see *Obsolete forms*).
 
-## Optional rule: -eẹ/aẹ/oẹ (switch, default off)
+## Optional rule: -eẹ/aẹ/oẹ (switch, default on)
 
 Lemmas in *-ee* follow the *femeie* pattern: word-final *-ee* is read as *-eie* and written *-eẹ*, the same as *femeie* → *femeẹ*. Final *-ae* and *-oe* are read *-aie*, *-oie* and written *-aẹ*, *-oẹ*.
 
