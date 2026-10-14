@@ -3,6 +3,10 @@ name: ci
 on:
   push:
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -26,14 +30,14 @@ jobs:
           tool: wasm-bindgen@${{ steps.wasm-bindgen.outputs.version }}
       - run: cargo test -p grafia-wasm --target wasm32-unknown-unknown --locked
       - run: cargo xtask web
-      - if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      - if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v5
         with:
           path: web/dist
 
   # Publishes web/dist on GitHub Pages, after every test passed on main
   deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     needs: test
     runs-on: ubuntu-latest
     permissions:
