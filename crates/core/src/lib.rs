@@ -16,13 +16,31 @@ use serde::Serialize;
 pub use datafile::DataFile;
 pub use rules::{Row, Segment};
 
-/// The rules a data file is built with: a hash of the code of `rules.rs` and
-/// `build.rs`, without comments or whitespace. The data file records it, and the
-/// web app's build refuses a data file built with other rules.
-pub const RULES_HASH: u64 = code_hash(
-    code_hash(FNV_OFFSET, include_str!("rules.rs")),
+/// The rules a data file is built with: a hash of the code of the files of `rules/`
+/// and of `build.rs`, without comments or whitespace. The data file records it, and the
+/// web app's build refuses a data file built with other rules. A new file of `rules/`
+/// must be added to `RULES_SOURCES`.
+pub const RULES_HASH: u64 = {
+    let (mut hash, mut i) = (FNV_OFFSET, 0);
+    while i < RULES_SOURCES.len() {
+        hash = code_hash(hash, RULES_SOURCES[i]);
+        i += 1;
+    }
+    hash
+};
+
+const RULES_SOURCES: [&str; 10] = [
+    include_str!("rules/mod.rs"),
+    include_str!("rules/convert.rs"),
+    include_str!("rules/ee.rs"),
+    include_str!("rules/lists.rs"),
+    include_str!("rules/obsolete_forms.rs"),
+    include_str!("rules/revert.rs"),
+    include_str!("rules/spelling.rs"),
+    include_str!("rules/syllables.rs"),
+    include_str!("rules/words.rs"),
     include_str!("build.rs"),
-);
+];
 
 const FNV_OFFSET: u64 = 0xcbf2_9ce4_8422_2325;
 const FNV_PRIME: u64 = 0x0100_0000_01b3;

@@ -151,6 +151,12 @@ The case pattern of the word is carried over: *Soare* → *Sōre*, *SOARE* → *
 
 Text is normalized to NFC. For lookup, ş/ţ with cedilla are treated as ș/ț with comma below.
 
+## Text not converted
+
+The text between `[` and `]` is left as it is, byte for byte: no conversion, no â → î, no normalization. The brackets are dropped. It works in both directions: *Soare [fier ceai â] fier* → *Sōre fier ceai â fẹr*; *[fẹr] fẹr* → *fẹr fier*. The first `]` closes a span, so spans don't nest (*[a [fier] ceai]* → *a [fier cēi]*), and a `[` or `]` with no partner stays in the text as an ordinary character. An empty span (`[]`) vanishes. In the core's `convert` and `revert`, a span is a segment of its own with `literal: true` and `t` its inside; the rest is converted as usual, and the â → î switch skips the spans.
+
+Names of Latin origin are not converted. A word is a Latin name when it is in `rules::NO_CONVERT` (names ending in a vowel + -ian, exact forms only: *Traian*) or when it is capitalized and ends in -us (*Troianus*, *Gordianus*, *Helianthus*). It is never looked up, so it is not flagged as unknown, and it keeps its case: *Traian*, *TRAIAN*. The list covers exact forms only, for now: its other forms (*Traiana*, *Traiană* → *Traėnă*) and the other names in a vowel + -ian (*Troian* → *Troėn*, *Stoian*) are converted, and a text keeps them with a `[ ]` span (*[Traiana]*). Forms may be added to the list later.
+
 ## Unknown words
 
 A word that contains a candidate digraph but is missing from the database is converted by the fallback rules alone and flagged. With the -eẹ/aẹ/oẹ switch it is read as a singular, except as follows.
@@ -170,7 +176,7 @@ A word in -eele/-eelor:
 - Otherwise, final -ele/-elor is replaced by -u. If that gives a lemma in -eu from the database (`eu_lemmas`), the word is its plural, with one spelling: *bombeele* → *bombeẹle* (← *bombeu*, whose dexonline plural is *bombeuri*).
 - Otherwise it gets two spellings, as the plural of an -ee lemma with no masculine (*coloboleile*, *coloboleilor*, the default) or of a kept lemma, in -eu or in -ee with a masculine (*coloboleẹle*, *coloboleẹlor*). They are shown as a homograph switch, with a footnote using the word's stem: „Dacă singularul e *colobolee* și nu are masculinul *coloboleu*, alege forma *coloboleile/lor*. Dacă e *coloboleu*, sau *colobolee* cu masculinul *coloboleu*, alege *coloboleẹle/lor*.”
 
-Words with no candidate digraph, no iăr and no obsolete stem are never looked up.
+Words with no candidate digraph, no iăr and no obsolete stem are never looked up, and neither are the Latin names (see *Text not converted*).
 
 ## Reverse conversion
 
@@ -189,7 +195,7 @@ Any other word, unknown ones included, goes through the character map (*femeẹ*
 
 ## Data
 
-The word data comes in one file, `grafia.dat` (its layout is in `crates/core/src/datafile.rs`). Besides five tables, it holds the format version, the date of the dexonline data it was built from (the day of dexonline's latest change to a lexeme or a definition), the rules it was built with, and a checksum, checked when the file is opened. The rules are `RULES_HASH`, a hash of the code of `crates/core/src/rules.rs` and `build.rs` without comments or whitespace: the web app's build refuses a data file built with other rules. The tables are each keyed on a normalized word:
+The word data comes in one file, `grafia.dat` (its layout is in `crates/core/src/datafile.rs`). Besides five tables, it holds the format version, the date of the dexonline data it was built from (the day of dexonline's latest change to a lexeme or a definition), the rules it was built with, and a checksum, checked when the file is opened. The rules are `RULES_HASH`, a hash of the code of the files of `crates/core/src/rules/` and of `build.rs`, without comments or whitespace: the web app's build refuses a data file built with other rules. The tables are each keyed on a normalized word:
 - `forms`: a form → `concise`, its concise spelling; `concise_ee`, its spelling with the -eẹ/aẹ/oẹ rule when that differs from `concise`; `alternatives`, a homograph's other spellings; and `current`, an obsolete form's current form (see *Obsolete forms*).
 - `eu_lemmas`: every normalized lemma in -eu, for unknown plurals in -eele/-eelor (see *Unknown words*).
 - `ea_lemmas`: every normalized lemma in -ea, for unknown genitives in -eei (see *Unknown words*).

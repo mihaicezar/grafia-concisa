@@ -116,6 +116,15 @@ This file is the log of closed decisions: what was decided, when, and why, with 
   - **2026-10-12, the same day:** an unknown *-eele*/*-eelor* of a known *-eea* lemma that is no name, a place, is its plural, like *femeile*, before any *-eu* lemma (*Iudeelor* → *Iudeilor*, *Galileele* → *Galileile*), and *coree* keeps its exception there too (*coreelor* → *coreilor*). **Why:** *iudeu*, *Galileu* and *coreu* are false masculines; they gave *Iudeẹlor*, *coreẹlor*.
 - **2026-10-06:** an unknown form of an *-iesc* adjective is tied to its lemma and derived from it (*harabagiasca* → *harabagiėsca* ← *harabagiesc*). **Why:** dexonline lists some of these adjectives with no forms, and the rules alone would miss both the hiatus and the suffix rule.
 
+## Text not converted (spec: *Text not converted*)
+- **2026-10-14: the text between `[` and `]` is left as it is, and the brackets are dropped.** Both directions. **Why:** a text may hold passages that must stay as written (a quotation, a foreign word, a name), and only the writer knows which; the brackets mark them. Nothing is applied inside, not even â → î.
+  - Spans don't nest (the first `]` closes one), and a bracket with no partner is an ordinary character. **Why:** the simplest reading that never loses text.
+  - The page tells the user in its footer.
+- **2026-10-14: Latin names are left as they are** (*Traian*, not *Traėn*). **Why:** Cezar's request: a name of Latin origin keeps its spelling.
+  - The names ending in a vowel + *-ian* are a hand list (`rules::NO_CONVERT`, for now *Traian*), exact forms only, for now: *Traiana*, *Traiană* and the like are converted, and the user keeps them with `[ ]` (*[Traiana]*); they may join the list later. **Why:** dexonline doesn't tell Latin names from native or Slavic ones (*Stoian*, *Boian*, *Troian* are converted as ordinary words).
+  - The names in *-us* are left as they are too, with no list (*Troianus*, *Gordianus*, *Helianthus*). They must be capitalized, so that no common word is caught.
+    - **2026-10-14, accepted:** the rule also catches the capitalized *Bielorus* (it was *Bẹlorus*), the one Romanian word of the 18 the database has. **Why:** Cezar prefers the simple rule to an exception list.
+
 ## Reverse conversion (spec: *Reverse conversion*)
 - Concise → standard is currently a plain character map. Reverse conversion (*Concis → standard* in the web app) and its round-trip test are kept for now.
 - **2026-10-06:** the ė of a final -iėză/-iėscă/-iėsca reverts to a, so the suffix rule stays reversible (*studiėză* → *studiază*). The only conflicts are *fiiască*, *fiiasca* (*fiėscă*, *fiėsca*), which revert to *fiască*, *fiasca*.

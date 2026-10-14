@@ -13,7 +13,7 @@
 | ea | ē | U+0113 / U+0112 |
 | oa | ō | U+014D / U+014C |
 
-Concizia se aplică ori de câte ori nu e vorba de un hiat, adică atunci când cele două vocale sunt în aceeași silabă. Accentul nu contează și nu există cazuri speciale după ce/ci/ge/gi (*ceasornic* → *cēsornic*).
+Concizia se aplică ori de câte ori nu e vorba de un hiat, adică atunci când cele două sunete sunt în aceeași silabă. Accentul nu contează și nu există cazuri speciale după ce/ci/ge/gi (*ceasornic* → *cēsornic*).
 
 În interiorul unei silabe, căutarea merge de la stânga la dreapta, fără suprapuneri: *leoarcă* → *leōrcă*, *aripioară* → *aripiōră*.
 
@@ -153,6 +153,12 @@ Tiparul de majuscule al cuvântului se păstrează: *Soare* → *Sōre*, *SOARE*
 
 Textul e normalizat NFC. La căutare, ş/ţ cu sedilă sunt tratate ca ș/ț cu virgulă.
 
+## Text neconvertit
+
+Textul dintre `[` și `]` rămâne neschimbat, octet cu octet: fără conversie, fără â → î, fără normalizare. Parantezele dispar. Merge în ambele direcții: *Soare [fier ceai â] fier* → *Sōre fier ceai â fẹr*; *[fẹr] fẹr* → *fẹr fier*. Prima `]` încheie porțiunea, deci porțiunile nu se includ una în alta (*[a [fier] ceai]* → *a [fier cēi]*), iar o `[` sau `]` fără pereche rămâne în text ca un caracter obișnuit. O porțiune goală (`[]`) dispare. În `convert` și `revert` din nucleu, o porțiune e un segment aparte, cu `literal: true` și `t` conținutul ei; restul se convertește ca de obicei, iar comutatorul â → î sare peste porțiuni.
+
+Numele de origine latină nu se convertesc. Un cuvânt e nume latin când e în `rules::NO_CONVERT` (nume terminate într-o vocală + -ian, numai formele exacte: *Traian*) sau când are majusculă și se termină în -us (*Troianus*, *Gordianus*, *Helianthus*). Nu e căutat deloc, deci nu e marcat ca necunoscut, și își păstrează majusculele: *Traian*, *TRAIAN*. Lista cuprinde deocamdată numai formele exacte: celelalte forme ale lui (*Traiana*, *Traiană* → *Traėnă*) și alte nume terminate într-o vocală + -ian (*Troian* → *Troėn*, *Stoian*, *Boian*) se convertesc, iar un text le păstrează cu o porțiune `[ ]` (*[Traiana]*). Formele pot fi adăugate pe listă mai târziu.
+
 ## Cuvinte necunoscute
 
 Un cuvânt care conține un grup candidat, dar lipsește din baza de date, e convertit doar de regulile de rezervă și e marcat. Cu comutatorul -eẹ/aẹ/oẹ e citit ca singular, cu excepțiile de mai jos.
@@ -172,7 +178,7 @@ Un cuvânt în -eele/-eelor:
 - Altfel, -ele/-elor final se înlocuiește cu -u. Dacă rezultă o lemă în -eu din baza de date (`eu_lemmas`), cuvântul e pluralul ei și are o singură grafie: *bombeele* → *bombeẹle* (← *bombeu*, al cărui plural în dexonline este *bombeuri*).
 - Altfel primește două grafii, ca plural al unei leme în -ee fără masculin (*coloboleile*, *coloboleilor*, implicit) sau al unei leme păstrate, în -eu sau în -ee cu masculin (*coloboleẹle*, *coloboleẹlor*). Ele apar pe comutatorul de omografe, cu o notă de subsol care folosește rădăcina cuvântului: „Dacă singularul e *colobolee* și nu are masculinul *coloboleu*, alege forma *coloboleile/lor*. Dacă e *coloboleu*, sau *colobolee* cu masculinul *coloboleu*, alege *coloboleẹle/lor*.”
 
-Cuvintele fără grup candidat, fără iăr și fără rădăcină învechită nu sunt căutate deloc.
+Cuvintele fără grup candidat, fără iăr și fără rădăcină învechită nu sunt căutate deloc, nici numele latine (vezi *Text neconvertit*).
 
 ## Conversia inversă
 
@@ -191,7 +197,7 @@ Orice alt cuvânt, inclusiv cele necunoscute, trece prin înlocuirea de caracter
 
 ## Date
 
-Datele despre cuvinte vin într-un singur fișier, `grafia.dat` (structura lui e în `crates/core/src/datafile.rs`). Pe lângă cinci tabele, conține versiunea formatului, ziua la care sunt datele dexonline din care a fost construit (ziua ultimei modificări a unui lexem sau a unei definiții în dexonline), regulile cu care a fost construit și o sumă de control, verificată la deschiderea fișierului. Regulile sunt `RULES_HASH`, o sumă (hash) a codului din `crates/core/src/rules.rs` și `build.rs`, fără comentarii și spații: construirea aplicației web refuză un fișier de date construit cu alte reguli. Fiecare tabel are cheia un cuvânt normalizat:
+Datele despre cuvinte vin într-un singur fișier, `grafia.dat` (structura lui e în `crates/core/src/datafile.rs`). Pe lângă cinci tabele, conține versiunea formatului, ziua la care sunt datele dexonline din care a fost construit (ziua ultimei modificări a unui lexem sau a unei definiții în dexonline), regulile cu care a fost construit și o sumă de control, verificată la deschiderea fișierului. Regulile sunt `RULES_HASH`, o sumă (hash) a codului din fișierele din `crates/core/src/rules/` și din `build.rs`, fără comentarii și spații: construirea aplicației web refuză un fișier de date construit cu alte reguli. Fiecare tabel are cheia un cuvânt normalizat:
 - `forms`: o formă → `concise`, grafia ei concisă; `concise_ee`, grafia ei cu regula -eẹ/aẹ/oẹ, când diferă de `concise`; `alternatives`, celelalte grafii ale unui omograf; și `current`, forma actuală a unei forme învechite (vezi *Forme învechite*).
 - `eu_lemmas`: toate lemele normalizate în -eu, pentru pluralele necunoscute în -eele/-eelor (vezi *Cuvinte necunoscute*).
 - `ea_lemmas`: toate lemele normalizate în -ea, pentru genitivele necunoscute în -eei (vezi *Cuvinte necunoscute*).

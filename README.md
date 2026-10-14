@@ -156,7 +156,7 @@ How these are turned into spellings is in the spec. The records are read in a fi
 
 ### Updating the data
 
-`web/grafia.dat` holds the rules' output for every word, so it is rebuilt after a dexonline update and after every rule change. The data file records the rules it was built with, `RULES_HASH`: a hash of the code of `crates/core/src/rules.rs` and `build.rs`, without comments or whitespace. `cargo xtask web`, and so CI and the deployment, refuses a data file built with other rules. So any change to the code of these two files calls for a rebuild, even one that changes no spelling; a change to their comments alone doesn't. The steps:
+`web/grafia.dat` holds the rules' output for every word, so it is rebuilt after a dexonline update and after every rule change. The data file records the rules it was built with, `RULES_HASH`: a hash of the code of the files of `crates/core/src/rules/` and of `build.rs`, without comments or whitespace. `cargo xtask web`, and so CI and the deployment, refuses a data file built with other rules. So any change to the code of these files calls for a rebuild, even one that changes no spelling; a change to their comments alone doesn't. The steps:
 1. Start the server.
 2. For a dexonline update, run step 2 with `--download`.
 3. Run step 3, which writes `web/grafia.dat`.

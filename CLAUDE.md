@@ -6,7 +6,7 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
 @concise-writing-spec.md
 
 ## Layout
-- `crates/core/`: the Rust core: rules (`rules.rs`), the DB builder (`build.rs`), the data file `grafia.dat` (`datafile.rs`), lookups and conversion (`lib.rs`), tests (`tests/tables.rs`). Put rule logic here only.
+- `crates/core/`: the Rust core: rules (`rules/`, one file per concern: see its `mod.rs`), the DB builder (`build.rs`), the data file `grafia.dat` (`datafile.rs`), lookups and conversion (`lib.rs`), tests (`tests/tables.rs`). Put rule logic here only.
 - `crates/pipeline/`: the binary `grafia-pipeline`: `load` (dexonline dump → local MariaDB), `build` (MariaDB → `grafia.dat`), `export` (MariaDB → text records, for `build --text` and `crates/core/examples/snapshot.rs`), `seed` (dev data file, no MariaDB)
 - `crates/wasm/`: the core in WASM for the web app (`Engine`), tests under Node (`tests/node.rs`)
 - `web/`: the web app (a PWA): the page (`index.html`), the service worker (`sw.js`), the manifest, icons and fonts, and the data file it ships, `grafia.dat` (committed: CI can't build it)
@@ -19,7 +19,7 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
 - `cargo run --release -p grafia-pipeline -- seed`: build a small dev data file, `data/grafia.dat`.
 - Full data file: see README.md. A MariaDB server is required: on this machine, a portable one on port 3307; see "This machine" there. Then run:
   - `cargo run --release -p grafia-pipeline -- load --download --client <mariadb> --port 3307`: load or update dexonline;
-  - `cargo run --release -p grafia-pipeline -- build --mysql --port 3307 --out web/grafia.dat`: build the web app's data file. Rebuild and commit it after a dexonline update and after any change to the code of `rules.rs` or `build.rs` (not only their comments): the file records `RULES_HASH`, and `cargo xtask web` (so CI) refuses it otherwise.
+  - `cargo run --release -p grafia-pipeline -- build --mysql --port 3307 --out web/grafia.dat`: build the web app's data file. Rebuild and commit it after a dexonline update and after any change to the code of a file of `rules/` or of `build.rs` (not only their comments): the file records `RULES_HASH`, and `cargo xtask web` (so CI) refuses it otherwise.
 
 ## Conventions
 - Simple over clever, with best practices, and no speculative features.

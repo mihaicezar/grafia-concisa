@@ -42,6 +42,11 @@ fn convert() {
         json(engine.convert("Alineare", false, true)),
         r#"{"text":"Aliniere","segments":[{"t":"Aliniere","alts":["Aliniere","Alineare"],"obsolete":["Alineare","Aliniere"]}],"unknown":[]}"#
     );
+    // a [ ] span is a segment of its own, left as it is; a Latin name stays as it is
+    assert_eq!(
+        json(engine.convert("Soare [fier], Traian", false, true)),
+        r#"{"text":"Sōre fier, Traian","segments":[{"t":"Sōre "},{"t":"fier","literal":true},{"t":", Traian"}],"unknown":[]}"#
+    );
     // the switches, in order: ee, then ai
     assert_eq!(text(engine.convert("idee câine", true, false)), "ideẹ câine");
     assert_eq!(text(engine.convert("idee câine", false, true)), "idee cîine");
