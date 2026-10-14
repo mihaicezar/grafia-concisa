@@ -22,7 +22,8 @@ pub struct Row {
 /// A piece of converted text: `t`, plus `alts` (all its spellings, default
 /// first; empty if one), `unknown` (the original word, if missing from the
 /// database) and `obsolete` (an obsolete word, then its current forms, in the word's case:
-/// [Alineare, Aliniere], [Alineam, Alinam, Aliniam]). In JSON, `alts`, `unknown` and `obsolete` are left out when empty.
+/// [Alineare, Aliniere], [Alineam, Alinam, Aliniam]), or `literal` (the text of a `[ ]` span, brackets dropped, left
+/// as it is). In JSON, `alts`, `unknown`, `obsolete` and `literal` are left out when empty or false.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
 pub struct Segment {
     pub t: String,
@@ -32,6 +33,15 @@ pub struct Segment {
     pub unknown: Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub obsolete: Vec<String>,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub literal: bool,
+}
+
+impl Segment {
+    /// True for text with nothing to show or choose: no alternatives, no unknown or obsolete word, not a span.
+    pub fn is_plain(&self) -> bool {
+        self.alts.is_empty() && self.unknown.is_none() && self.obsolete.is_empty() && !self.literal
+    }
 }
 
 /// A word's spellings, default first; whether it is unknown; and an obsolete word's current forms.
@@ -106,9 +116,7 @@ pub(super) fn plain(segments: &mut Vec<Segment>, chunk: &str) {
         return;
     }
     match segments.last_mut() {
-        Some(last) if last.alts.is_empty() && last.unknown.is_none() && last.obsolete.is_empty() => {
-            last.t.push_str(chunk)
-        }
+        Some(last) if last.is_plain() => last.t.push_str(chunk),
         _ => segments.push(Segment {
             t: chunk.to_string(),
             ..Segment::default()
@@ -116,16 +124,11 @@ pub(super) fn plain(segments: &mut Vec<Segment>, chunk: &str) {
     }
 }
 
-/// Split text into segments.
-///
-/// `ai` switches on â -> î (see a_to_i), applied to every word after the lookup.
-///
-/// Words without a candidate digraph are never looked up. Candidate words
-/// missing from the database are converted by rules alone; their segment's
-/// `unknown` holds the original word. A homograph's segment, or an unknown
-/// word's with several spellings, has `alts`: all its spellings, the default
-/// (also in `t`) first.
-pub fn convert_text(text: &str, dict: &dyn Dictionary, ee: bool, ai: bool) -> Vec<Segment> {
+/// Converts a text with no span: segments, words without a candidate digraph never looked up,
+/// candidate words missing from the database converted by rules alone (`unknown` holds the
+/// original word). A homograph's segment, or an unknown word's with several spellings, has `alts`:
+/// all its spellings, the default (also in `t`) first.
+fn convert_chunk(text: &str, dict: &dyn Dictionary, ee: bool) -> Vec<Segment> {
     let text: String = text.nfc().collect();
     let matches: Vec<_> = WORD
         .find_iter(&text)
@@ -170,6 +173,7 @@ pub fn convert_text(text: &str, dict: &dyn Dictionary, ee: bool, ai: bool) -> Ve
                 alts,
                 unknown: unknown.then(|| word.to_string()),
                 obsolete,
+                ..Segment::default()
             });
         } else {
             plain(&mut segments, &options[0]);
@@ -177,8 +181,36 @@ pub fn convert_text(text: &str, dict: &dyn Dictionary, ee: bool, ai: bool) -> Ve
         pos = m.end();
     }
     plain(&mut segments, &text[pos..]);
+    segments
+}
+
+/// Split text into segments. The inside of a `[ ]` span (see split_literals) is left as it is, in
+/// a segment of its own (`literal`), without its brackets; the rest is converted (convert_chunk).
+///
+/// `ai` switches on â -> î (see a_to_i), applied to every word after the lookup, except those
+/// of a span.
+pub fn convert_text(text: &str, dict: &dyn Dictionary, ee: bool, ai: bool) -> Vec<Segment> {
+    let mut segments = Vec::new();
+    for piece in split_literals(text) {
+        match piece {
+            Piece::Text(chunk) => {
+                for s in convert_chunk(chunk, dict, ee) {
+                    if s.is_plain() {
+                        plain(&mut segments, &s.t);
+                    } else {
+                        segments.push(s);
+                    }
+                }
+            }
+            Piece::Literal(inside) => segments.push(Segment {
+                t: inside.to_string(),
+                literal: true,
+                ..Segment::default()
+            }),
+        }
+    }
     if ai {
-        for s in &mut segments {
+        for s in segments.iter_mut().filter(|s| !s.literal) {
             s.t = a_to_i(&s.t);
             s.alts = s.alts.iter().map(|x| a_to_i(x)).collect();
         }

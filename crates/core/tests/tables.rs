@@ -443,11 +443,15 @@ const HOMOGRAPHS: &[(&str, &[&str])] = &[
 ];
 // (text, number of segments): plain text is merged into one segment, others stay apart
 const SEGMENTS: &[(&str, usize)] = &[
-    ("Soare și ia", 2),  // "Sōre și ", ia
-    ("ia mare", 2),      // ia, " mare"
-    ("zzoa mare", 2),    // zzō (unknown), " mare"
-    ("Un fier", 1),      // plain text, then a word with one spelling: one segment
-    ("alineez mare", 2), // an obsolete word stays apart
+    ("Soare și ia", 2),     // "Sōre și ", ia
+    ("ia mare", 2),         // ia, " mare"
+    ("zzoa mare", 2),       // zzō (unknown), " mare"
+    ("Un fier", 1),         // plain text, then a word with one spelling: one segment
+    ("alineez mare", 2),    // an obsolete word stays apart
+    ("Fier [soare] ia", 4), // "Fẹr ", the span, " ", ia
+    ("[a][b]", 2),          // spans stay apart
+    ("[a] b", 2),           // a span is not merged with plain text
+    ("Fier[] []", 1),       // empty spans vanish, and the text around them merges
 ];
 // Long infinitives in -iare (flag F) are written -iere: records for the test DB.
 const LONG_INFINITIVE_RECORDS: &[&[&str]] = &[
@@ -1111,6 +1115,30 @@ const TEXTS: &[(&str, bool, &str, &[&str], bool)] = &[
     ),
     ("Câinele, pâinea", false, "Câinele, pâinē", &[], false), // switch off
     ("Câinele, pâinea", false, "Cîinele, pîinē", &[], true),
+    // [ ]: the text inside is left as it is, the brackets are dropped
+    ("Soare [fier ceai â] fier", false, "Sōre fier ceai â fẹr", &[], true), // no conversion, no â -> î
+    ("[Soare] soare", false, "Soare sōre", &[], true),
+    ("[zzoa] zzoa", false, "zzoa zzō", &["zzoa"], true), // not unknown inside
+    ("[idee] idee", true, "idee ideẹ", &[], true),
+    ("Fier[] []", false, "Fẹr ", &[], true), // empty spans vanish
+    ("[fier]", false, "fier", &[], true),    // a span alone, at both ends
+    ("[e\u{301}] e\u{301}", false, "e\u{301} \u{e9}", &[], true), // inside: no NFC
+    ("[fier", false, "[fẹr", &[], true),     // unmatched: ordinary characters
+    ("fier]", false, "fẹr]", &[], true),
+    ("] fier [", false, "] fẹr [", &[], true),
+    ("[a [fier] ceai]", false, "a [fier cēi]", &[], true), // no nesting: the first ] closes
+    // Latin names are left as they are: the list, and the names in -us
+    ("Traian și Traianus", false, "Traian și Traianus", &[], true),
+    ("traian TRAIAN TRAIANUS", true, "traian TRAIAN TRAIANUS", &[], true),
+    (
+        "Troianus Gordianus Helianthus",
+        false,
+        "Troianus Gordianus Helianthus",
+        &[],
+        true,
+    ),
+    ("Traiană Troian", false, "Traėnă Troėn", &["Traiană", "Troian"], true), // exact forms only; the others convert
+    ("zzoaus Zzoaus", false, "zzōus Zzoaus", &["zzoaus"], true),             // -us: a name, with a capital
 ];
 
 // (concise text, expected standard text, -ee switch)
@@ -1159,6 +1187,10 @@ const REVERTS: &[(&str, &str, bool)] = &[
     ("ziėzăr", "ziiazăr", false), // -iėză reverts to -iază only at the end
     ("apogeẹle, apogeẹlor", "apogeele, apogeelor", true),
     ("agavacei, orhideilor", "agavacee, orhideelor", true),
+    // [ ]: left as it is, the brackets dropped
+    ("[fẹr] fẹr", "fẹr fier", false),
+    ("[Ẹpure ōa] cēi, [idee] ideẹ", "Ẹpure ōa ceai, idee idee", true),
+    ("]fẹr[", "]fier[", false), // unmatched: ordinary characters
 ];
 
 static DB: LazyLock<Tables> = LazyLock::new(|| build(records(), &HashSet::new()).0);
@@ -1371,6 +1403,12 @@ fn lookup_words() {
         assert_eq!(r.unknown, ["zzoa"], "{name}");
         assert!(r.alternatives.is_empty(), "{name}");
 
+        // Latin names are left as they are, and are no unknown words
+        let r = lookup(&["Traian", "Traianus", "Troian"], dict, Options::default());
+        let results = [("Traian", "traian"), ("Traianus", "traianus"), ("Troian", "troėn")];
+        assert_eq!(pairs(&r), expected(&results), "{name}");
+        assert_eq!(r.unknown, ["Troian"], "{name}");
+
         let r = lookup(&["pâinea"], dict, Options { ee: false, ai: false });
         assert_eq!(r.results["pâinea"], "pâinē", "{name}");
 
@@ -1565,4 +1603,20 @@ fn bad_data_files() {
     }
     let error = DataFile::new(Vec::new()).err().expect("an error");
     assert_eq!(error.to_string(), "not a grafia concisă data file");
+}
+
+#[test]
+fn literal_segments() {
+    for (name, dict) in dicts() {
+        let r = convert("Fier [soare] ia", dict, Options::default());
+        let literal: Vec<_> = r.segments.iter().map(|s| s.literal).collect();
+        assert_eq!(literal, [false, true, false, false], "{name}");
+        assert_eq!(r.segments[1].t, "soare", "{name}");
+        let r = revert("[fẹr] fẹr", dict, false);
+        assert_eq!(
+            r.segments.iter().map(|s| s.literal).collect::<Vec<_>>(),
+            [true, false],
+            "{name}"
+        );
+    }
 }

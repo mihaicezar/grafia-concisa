@@ -111,3 +111,8 @@ pub fn syllabifications(word: &str) -> Option<&'static [&'static str]> {
 pub const IESC_ENDINGS: [&str; 9] = [
     "ești", "escu", "escul", "escului", "eștii", "eștile", "eștilor", "ască", "asca",
 ];
+
+// Latin names, which are no Romanian words and stay as they are (Traian, not Traėn): the names in
+// vowel + -ian, exact forms only (the native Stoian, Boian, Troian are converted). The names in
+// -us need no entry (no_convert).
+pub const NO_CONVERT: &[&str] = &["traian"];

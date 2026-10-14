@@ -39,21 +39,8 @@ pub(super) fn reverse(c: char) -> Option<[char; 2]> {
     DIGRAPHS.iter().find(|&&(_, x)| x == c).map(|&(pair, _)| pair)
 }
 
-/// Concise -> standard by character map, except the suffix
-/// -iėză/-iėscă/-iėsca -> -iază/-iască/-iasca (studiėză, sfiėscă, fiėsca).
-///
-/// With `dict` (the -ee switch), the `ee_revert` table maps normalized -ee
-/// spellings to (the standard form they revert to, the other forms of a tie)
-/// where the character map alone is not the answer (aleẹ -> alee, orhideile ->
-/// orhideele; bordeẹ -> bordeie or bordee). Segments as in convert_text: a tie's
-/// segment has `alts`, all its forms, default first.
-///
-/// Exact for the base rules (but fiiască -> fiėscă reverts to fiască, fiiasca likewise).
-/// With the -ee rule, exact for the database forms it picks (aleẹ: alee, not aleie);
-/// unknown words keep the character map (zzeẹ -> zzeie), except the spellings of the names
-/// in NAMES and the words of AE_OE (Andreẹi -> Andreei, Cloẹ -> Cloe: see listed_form).
-/// î is left as is, so not exact either once â -> î was applied (cîine stays cîine).
-pub fn revert_segments(text: &str, dict: Option<&dyn Dictionary>) -> Vec<Segment> {
+/// Reverts a text with no span: see revert_segments.
+fn revert_chunk(text: &str, dict: Option<&dyn Dictionary>) -> Vec<Segment> {
     let text: String = text.nfc().collect();
     let words: Vec<_> = WORD.find_iter(&text).map(|m| m.expect("regex match")).collect();
     let mut found_ee: HashMap<String, (String, Vec<String>)> = HashMap::new();
@@ -115,6 +102,46 @@ pub(super) fn listed_form(key: &str, dict: &dyn Dictionary) -> Option<String> {
         .first()
         .is_some_and(|s| revert_word(s) == revert_word(key))
         .then_some(form)
+}
+
+/// Concise -> standard by character map, except the suffix
+/// -iėză/-iėscă/-iėsca -> -iază/-iască/-iasca (studiėză, sfiėscă, fiėsca).
+///
+/// With `dict` (the -ee switch), the `ee_revert` table maps normalized -ee
+/// spellings to (the standard form they revert to, the other forms of a tie)
+/// where the character map alone is not the answer (aleẹ -> alee, orhideile ->
+/// orhideele; bordeẹ -> bordeie or bordee). Segments as in convert_text: a tie's
+/// segment has `alts`, all its forms, default first.
+///
+/// Exact for the base rules (but fiiască -> fiėscă reverts to fiască, fiiasca likewise).
+/// With the -ee rule, exact for the database forms it picks (aleẹ: alee, not aleie);
+/// unknown words keep the character map (zzeẹ -> zzeie), except the spellings of the names
+/// in NAMES and the words of AE_OE (Andreẹi -> Andreei, Cloẹ -> Cloe: see listed_form).
+/// î is left as is, so not exact either once â -> î was applied (cîine stays cîine).
+///
+/// The inside of a `[ ]` span (see split_literals) is left as it is, in a segment of its own
+/// (`literal`), without its brackets.
+pub fn revert_segments(text: &str, dict: Option<&dyn Dictionary>) -> Vec<Segment> {
+    let mut segments = Vec::new();
+    for piece in split_literals(text) {
+        match piece {
+            Piece::Text(chunk) => {
+                for s in revert_chunk(chunk, dict) {
+                    if s.is_plain() {
+                        plain(&mut segments, &s.t);
+                    } else {
+                        segments.push(s);
+                    }
+                }
+            }
+            Piece::Literal(inside) => segments.push(Segment {
+                t: inside.to_string(),
+                literal: true,
+                ..Segment::default()
+            }),
+        }
+    }
+    segments
 }
 
 /// Concise -> standard by character map (see revert_segments), without the -ee switch.

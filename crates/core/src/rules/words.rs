@@ -57,10 +57,10 @@ pub fn normalize(word: &str) -> String {
 }
 
 /// True if the word can differ in grafia concisă (so needs a lookup): a digraph, iăr, an
-/// -ee ending with the -ee switch, or an obsolete stem (alineez).
+/// -ee ending with the -ee switch, or an obsolete stem (alineez); not a Latin name (no_convert).
 pub fn has_candidate(word: &str, ee: bool) -> bool {
     let w = normalize(word);
-    found(&CANDIDATE, &w) || (ee && ee_final(&w)) || has_obsolete_stem(&w)
+    !no_convert(word) && (found(&CANDIDATE, &w) || (ee && ee_final(&w)) || has_obsolete_stem(&w))
 }
 
 /// True if the -ee rule may change `word` (normalized): an -ee ending (EE_FINAL), or a
@@ -131,4 +131,36 @@ pub fn apply_case(template: &str, word: &str) -> String {
             + w.as_str();
     }
     word.to_string()
+}
+
+/// A piece of a text: ordinary text, or the inside of a `[ ]` span.
+#[derive(Debug, PartialEq, Eq)]
+pub enum Piece<'a> {
+    Text(&'a str),
+    Literal(&'a str),
+}
+
+/// The text split at its `[ ]` spans, on the raw text. The first `]` closes a span, so spans
+/// don't nest, and a `[` or `]` with no partner stays in the text. An empty span is dropped.
+pub fn split_literals(text: &str) -> Vec<Piece<'_>> {
+    let mut pieces = Vec::new();
+    let mut pos = 0;
+    while let Some(open) = text[pos..].find('[').map(|i| pos + i)
+        && let Some(close) = text[open + 1..].find(']').map(|i| open + 1 + i)
+    {
+        pieces.push(Piece::Text(&text[pos..open]));
+        if close > open + 1 {
+            pieces.push(Piece::Literal(&text[open + 1..close]));
+        }
+        pos = close + 1;
+    }
+    pieces.push(Piece::Text(&text[pos..]));
+    pieces
+}
+
+/// True if `word` is a Latin name, left as it is: one of NO_CONVERT, or a name in -us (a
+/// capitalized word: Troianus, Gordianus).
+pub fn no_convert(word: &str) -> bool {
+    let w = normalize(word);
+    NO_CONVERT.contains(&w.as_str()) || (w.ends_with("us") && word.chars().next().is_some_and(char::is_uppercase))
 }
