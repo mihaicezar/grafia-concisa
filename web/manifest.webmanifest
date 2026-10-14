@@ -1,7 +1,7 @@
 {
   "name": "grafia concisă",
   "short_name": "grafia concisă",
-  "description": "Convertește un text românesc în grafia concisă: ie → ẹ, ia → ė, ea → ē, oa → ō, oriunde cele două vocale stau în aceeași silabă.",
+  "description": "Convertește un text românesc în grafia concisă: oa → ō, ea → ē, ie → ẹ, ia → ė, oriunde cele două sunete stau în aceeași silabă.",
   "lang": "ro",
   "start_url": "./",
   "scope": "./",

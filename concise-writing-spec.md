@@ -151,6 +151,12 @@ The case pattern of the word is carried over: *Soare* → *Sōre*, *SOARE* → *
 
 Text is normalized to NFC. For lookup, ş/ţ with cedilla are treated as ș/ț with comma below.
 
+## Text not converted
+
+The text between `[` and `]` is left as it is, byte for byte: no conversion, no â → î, no normalization. The brackets are dropped. It works in both directions: *Soare [fier ceai â] fier* → *Sōre fier ceai â fẹr*; *[fẹr] fẹr* → *fẹr fier*. The first `]` closes a span, so spans don't nest (*[a [fier] ceai]* → *a [fier cēi]*), and a `[` or `]` with no partner stays in the text as an ordinary character. An empty span (`[]`) vanishes. In the core's `convert` and `revert`, a span is a segment of its own with `literal: true` and `t` its inside; the rest is converted as usual, and the â → î switch skips the spans.
+
+Names of Latin origin are not converted. A word is a Latin name when it is in `rules::NO_CONVERT` (names ending in a vowel + -ian, exact forms only: *Traian*) or when it is capitalized and ends in -us (*Troianus*, *Gordianus*, *Helianthus*). It is never looked up, so it is not flagged as unknown, and it keeps its case: *Traian*, *TRAIAN*. The list covers exact forms only, for now: its other forms (*Traiana*, *Traiană* → *Traėnă*) and the other names in a vowel + -ian (*Troian* → *Troėn*, *Stoian*) are converted, and a text keeps them with a `[ ]` span (*[Traiana]*). Forms may be added to the list later.
+
 ## Unknown words
 
 A word that contains a candidate digraph but is missing from the database is converted by the fallback rules alone and flagged. With the -eẹ/aẹ/oẹ switch it is read as a singular, except as follows.
@@ -170,7 +176,7 @@ A word in -eele/-eelor:
 - Otherwise, final -ele/-elor is replaced by -u. If that gives a lemma in -eu from the database (`eu_lemmas`), the word is its plural, with one spelling: *bombeele* → *bombeẹle* (← *bombeu*, whose dexonline plural is *bombeuri*).
 - Otherwise it gets two spellings, as the plural of an -ee lemma with no masculine (*coloboleile*, *coloboleilor*, the default) or of a kept lemma, in -eu or in -ee with a masculine (*coloboleẹle*, *coloboleẹlor*). They are shown as a homograph switch, with a footnote using the word's stem: „Dacă singularul e *colobolee* și nu are masculinul *coloboleu*, alege forma *coloboleile/lor*. Dacă e *coloboleu*, sau *colobolee* cu masculinul *coloboleu*, alege *coloboleẹle/lor*.”
 
-Words with no candidate digraph, no iăr and no obsolete stem are never looked up.
+Words with no candidate digraph, no iăr and no obsolete stem are never looked up, and neither are the Latin names (see *Text not converted*).
 
 ## Reverse conversion
 
