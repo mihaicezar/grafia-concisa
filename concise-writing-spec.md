@@ -189,7 +189,7 @@ Any other word, unknown ones included, goes through the character map (*femeẹ*
 
 ## Data
 
-The word data comes in one file, `grafia.dat` (its layout is in `crates/core/src/datafile.rs`). Besides five tables, it holds the format version, the date of the dexonline data it was built from (the day of dexonline's latest change to a lexeme or a definition), the rules it was built with, and a checksum, checked when the file is opened. The rules are `RULES_HASH`, a hash of the code of `crates/core/src/rules.rs` and `build.rs` without comments or whitespace: the web app's build refuses a data file built with other rules. The tables are each keyed on a normalized word:
+The word data comes in one file, `grafia.dat` (its layout is in `crates/core/src/datafile.rs`). Besides five tables, it holds the format version, the date of the dexonline data it was built from (the day of dexonline's latest change to a lexeme or a definition), the rules it was built with, and a checksum, checked when the file is opened. The rules are `RULES_HASH`, a hash of the code of the files of `crates/core/src/rules/` and of `build.rs`, without comments or whitespace: the web app's build refuses a data file built with other rules. The tables are each keyed on a normalized word:
 - `forms`: a form → `concise`, its concise spelling; `concise_ee`, its spelling with the -eẹ/aẹ/oẹ rule when that differs from `concise`; `alternatives`, a homograph's other spellings; and `current`, an obsolete form's current form (see *Obsolete forms*).
 - `eu_lemmas`: every normalized lemma in -eu, for unknown plurals in -eele/-eelor (see *Unknown words*).
 - `ea_lemmas`: every normalized lemma in -ea, for unknown genitives in -eei (see *Unknown words*).
