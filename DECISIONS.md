@@ -25,6 +25,7 @@ This file is the log of closed decisions: what was decided, when, and why, with 
   - **2026-10-06, reopened the same day:** the adjectives in -iesc follow the same rule (*fiască* → *fiėscă*, *fiasca* → *fiėsca* ← *fi-esc*). It was first limited to verbs.
 
 ## Homographs (spec: *Homographs*)
+- **2026-11-11: the word *ie* has only the hiatus reading `i-e` and stays *ie*.** Cezar corrected the explicit entry that also listed a diphthong reading, labelled as an adverb, and offered *ẹ*. There is no alternative for this word.
 - **2026-09-29: a word form can have more than one correct spelling.** This replaces the earlier principle of one output per form (*"No ambiguous forms"*).
   - **Why:** some spellings can't be decided from the word alone: *ia* is the verb *lua* or the articulated *ie*; *miază* is noon or myiasis; *curie*; *bielă*.
   - Every form keeps one default; the others are offered on a switch in the UI.

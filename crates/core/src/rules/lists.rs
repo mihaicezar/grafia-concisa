@@ -93,7 +93,7 @@ pub const SYLLABIFICATIONS: &[(&str, &[&str])] = &[
     ("viere", &["vi-e-re"]),           // the long infinitive (not the boar's vocative)
     ("ia", &["ia", "i-a"]),            // the verb lua, the interjection; the articulated ie
     ("miază", &["mia-ză", "mi-a-ză"]), // noon (amiază), myiasis
-    ("ie", &["i-e", "ie"]),            // the blouse (articulated ia: i-a); the adverb ie
+    ("ie", &["i-e"]),                  // only hiatus (articulated ia: i-a)
     // co- + a known word, but not a prefix
     ("coardă", &["coar-dă"]),
     ("coastă", &["coas-tă"]),

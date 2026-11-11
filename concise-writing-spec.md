@@ -21,7 +21,7 @@ A word form may have more than one correct concise spelling. It always has one d
 
 A headword uses its own syllabification. Any other inflected form takes its cuts from its lemma's syllabification (see the derivation table below).
 
-A lemma's syllabification is Cezar's explicit one when listed (`rules::SYLLABIFICATIONS`: *neant* `ne-ant`, *coastă* `coas-tă`, *mielea* `mi-e-lea`, *înfieri* `în-fi-e-ri`, *răspieri* `răs-pie-ri`, ...; an entry may list several readings, the first being the default: *ie* `i-e` / `ie`, *miază* `mia-ză` / `mi-a-ză`, *vier* `vier` / `vi-er`), otherwise dexonline's hyphenation completed by fallback rules. A form listed there takes all its spellings from there, whatever its lemma: *piei* is only *pẹi* (not also *piei* ← *pia* `pi-a`).
+A lemma's syllabification is Cezar's explicit one when listed (`rules::SYLLABIFICATIONS`: *neant* `ne-ant`, *coastă* `coas-tă`, *mielea* `mi-e-lea`, *înfieri* `în-fi-e-ri`, *răspieri* `răs-pie-ri`, ...; an entry may list several readings, the first being the default: *miază* `mia-ză` / `mi-a-ză`, *vier* `vier` / `vi-er`), otherwise dexonline's hyphenation completed by fallback rules. The word *ie* has only the reading `i-e` and stays *ie*, with no alternative. A form listed there takes all its spellings from there, whatever its lemma: *piei* is only *pẹi* (not also *piei* ← *pia* `pi-a`).
 
 - **dexonline hyphenation.** Only the first variant is used. It may be complete (`fa-mi-li-e`), a word end (`-li-e`), a word start (`a-ce-tal-`) or a word interior (`-pioa-`). Inside the span it covers, its cuts always prevail over the rules. A hyphenation that does not fit the word is ignored.
 - **Fallback rules.** Everywhere else, the rules place only cuts between two vowels, since grafia concisă uses no other cuts. The rules are known to be incomplete and will be refined:
@@ -119,7 +119,6 @@ It applies to every word after the rest of the conversion, whether the word is i
 
 A form whose records give different spellings is a homograph. Examples:
 - *ia*: *ė* (the verb *lua*, the interjection) or *ia* (the articulated *ie*, *i-a*);
-- *ie*: *ie* (the blouse, *i-e*) or *ẹ* (the adverb);
 - *miază*: *mėză* (noon, *mia-ză*) or *miază* (myiasis, *mi-a-ză*);
 - *curie*: *curẹ* or *curie*;
 - *liază*: *liază* (the noun) or *liėză* (the verb *lia*);

@@ -23,7 +23,7 @@ O formă poate avea mai multe grafii concise corecte. Are întotdeauna una impli
 
 Un cuvânt-titlu își folosește propria despărțire. Orice altă formă flexionară își ia tăieturile din despărțirea lemei (vezi tabelul de deducție de mai jos).
 
-Despărțirea unei leme este cea explicită a lui Cezar, dacă există (`rules::SYLLABIFICATIONS`: *neant* `ne-ant`, *coastă* `coas-tă`, *mielea* `mi-e-lea`, *înfieri* `în-fi-e-ri`, *răspieri* `răs-pie-ri`, ...; o intrare poate avea mai multe citiri, iar prima e cea implicită: *ie* `i-e` / `ie`, *miază* `mia-ză` / `mi-a-ză`, *vier* `vier` / `vi-er`). Altfel este despărțirea din dexonline, completată de regulile de rezervă. O formă trecută acolo își ia toate grafiile de acolo, oricare i-ar fi lema: *piei* e doar *pẹi* (nu și *piei* ← *pia* `pi-a`).
+Despărțirea unei leme este cea explicită a lui Cezar, dacă există (`rules::SYLLABIFICATIONS`: *neant* `ne-ant`, *coastă* `coas-tă`, *mielea* `mi-e-lea`, *înfieri* `în-fi-e-ri`, *răspieri* `răs-pie-ri`, ...; o intrare poate avea mai multe citiri, iar prima e cea implicită: *miază* `mia-ză` / `mi-a-ză`, *vier* `vier` / `vi-er`). Altfel este despărțirea din dexonline, completată de regulile de rezervă. Cuvântul *ie* are doar citirea `i-e` și rămâne *ie*, fără alternativă. O formă trecută acolo își ia toate grafiile de acolo, oricare i-ar fi lema: *piei* e doar *pẹi* (nu și *piei* ← *pia* `pi-a`).
 
 - **Despărțirea din dexonline.** Se folosește doar prima variantă. Poate fi completă (`fa-mi-li-e`), un final de cuvânt (`-li-e`), un început de cuvânt (`a-ce-tal-`) sau un interior de cuvânt (`-pioa-`). În porțiunea pe care o acoperă, tăieturile ei au întotdeauna prioritate față de reguli. O despărțire care nu se potrivește cu cuvântul e ignorată.
 - **Regulile de rezervă.** În rest, regulile pun doar tăieturi între două vocale, pentru că grafia concisă nu folosește altele. Regulile sunt incomplete și vor fi îmbunătățite:
@@ -121,7 +121,6 @@ Se aplică fiecărui cuvânt după restul conversiei, fie că e în baza de date
 
 O formă ale cărei înregistrări dau grafii diferite este un omograf. Exemple:
 - *ia*: *ė* (verbul *lua*, interjecția) sau *ia* (*ie* articulat, *i-a*);
-- *ie*: *ie* (bluza, *i-e*) sau *ẹ* (adverbul);
 - *miază*: *mėză* (amiază, *mia-ză*) sau *miază* (boala, *mi-a-ză*);
 - *curie*: *curẹ* sau *curie*;
 - *liază*: *liază* (substantivul) sau *liėză* (verbul *lia*);
