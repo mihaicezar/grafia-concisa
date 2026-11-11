@@ -400,7 +400,7 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
 const HOMOGRAPH_RECORDS: &[&[&str]] = &[
     &["ia", "ia", "", "S"],      // interjection
     &["ia", "lua", "lu-a", "S"], // verb: el ia
-    &["ia", "ie", "", "S"],      // articulated ie (SYLLABIFICATIONS: i-e, ie)
+    &["ia", "ie", "", "S"],      // articulated ie (SYLLABIFICATIONS: i-e)
     &["ie", "ie", "", "S"],
     &["miază", "miază", "", "S"],              // SYLLABIFICATIONS: mia-ză, mi-a-ză
     &["trepied", "trepied", "", "S"],          // rules alone: trepẹd...
@@ -419,7 +419,9 @@ const HOMOGRAPH_RECORDS: &[&[&str]] = &[
 // ...and (word, all spellings, default first). No alternatives: [].
 const HOMOGRAPHS: &[(&str, &[&str])] = &[
     ("ia", &["ė", "ia"]),
-    ("ie", &["ie", "ẹ"]),
+    ("ie", &[]), // only hiatus, no alternative
+    ("Ie", &[]),
+    ("IE", &[]),
     ("Ia", &["Ė", "Ia"]),
     ("miază", &["mėză", "miază"]),  // noon (default), myiasis
     ("trepied", &[]),               // a rules-only spelling is no alternative...
@@ -936,6 +938,8 @@ const EE_RULE: &[EeRule] = &[
 
 // (input text, ee switch, expected output text, expected unknown words, ai switch)
 const TEXTS: &[(&str, bool, &str, &[&str], bool)] = &[
+    ("ie Ie IE", false, "ie Ie IE", &[], true),
+    ("ie Ie IE", true, "ie Ie IE", &[], true),
     ("Soare", false, "Sōre", &[], true),
     ("SOARE", false, "SŌRE", &[], true),
     ("Iepure, fier și ceai.", false, "Ẹpure, fẹr și cēi.", &[], true),

@@ -37,6 +37,13 @@ fn convert() {
         json(engine.convert("Soare, ia zzoa", false, true)),
         r#"{"text":"Sōre, ė zzō","segments":[{"t":"Sōre, "},{"t":"ė","alts":["ė","ia"]},{"t":" "},{"t":"zzō","unknown":"zzoa"}],"unknown":["zzoa"]}"#
     );
+    // ie has only the hiatus reading, including with the optional rule enabled.
+    for ee in [false, true] {
+        assert_eq!(
+            json(engine.convert("ie Ie IE", ee, true)),
+            r#"{"text":"ie Ie IE","segments":[{"t":"ie Ie IE"}],"unknown":[]}"#
+        );
+    }
     // an obsolete form: the current spelling first, the obsolete word and its current form
     assert_eq!(
         json(engine.convert("Alineare", false, true)),

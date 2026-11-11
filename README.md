@@ -171,22 +171,25 @@ Updates are picked up automatically wherever dexonline's syllabifications change
 - **Table names on Windows.** A Windows server stores table names in lowercase (`lexeme`). Queries are case-insensitive there, so nothing needs to change.
 - **`WARNING: option --ssl-verify-server-cert is disabled`.** The `mariadb` client prints it for a local server with no password. It is harmless.
 
-### This machine (as of 2026-10-10)
+### This machine (as of 2026-11-11)
 
-- Rust 1.99 (MSVC) through rustup, in `%USERPROFILE%\.cargo\bin`, with the `wasm32-unknown-unknown` target and `wasm-bindgen-cli`; Node 22.
-- `data/word_db.sqlite` is the last database of the Python version (2026-10-04 dump), kept outside git for reference. Nothing uses it.
-- The builds so far used a portable MariaDB 11.4.13 in a temporary Claude Code scratchpad, which can be cleaned up at any time:
+- macOS (Apple Silicon): Rust 1.99.1 through rustup in `~/.cargo/bin`, with rustfmt, Clippy and the `wasm32-unknown-unknown` target. Run `source ~/.cargo/env` if Cargo is not on the shell's PATH.
+- `wasm-bindgen-cli` 0.2.129 includes `wasm-bindgen-test-runner`; Node is installed through Homebrew.
+- MariaDB 12.2.2 is installed through Homebrew. Its persistent data directory is `/opt/homebrew/var/mysql`; the `dexonline` database holds the dump downloaded on 2026-11-11. The local `grafia` account has access only to this database, without a password.
+- Start the server for rebuilds (it is not configured to start at login):
 
-| | |
-|---|---|
-| scratchpad | `C:\Users\user\AppData\Local\Temp\claude\d--Projects-grafia-concisa\9fe3f075-ee4f-4681-b644-3980cad05de6\scratchpad` |
-| server | `mariadb-11.4.13-winx64\bin\mariadbd.exe`, `--defaults-file=mdata\my.ini` |
-| data | `mdata\`, database `dexonline` (2026-10-04 dump) |
-| connection | `127.0.0.1:3307`, user `root`, no password |
+```bash
+/opt/homebrew/opt/mariadb/bin/mariadbd --no-defaults --datadir=/opt/homebrew/var/mysql --bind-address=127.0.0.1 --port=3307 --socket=/tmp/grafia-mariadb.sock --pid-file=/tmp/grafia-mariadb.pid --max-allowed-packet=1G
+```
 
-This server crashes on `DESCRIBE` and `SHOW COLUMNS` (an access violation in MariaDB 11.4.13; the data survives), so look at the schema some other way, or restart it afterwards with the command of step 1.
+In another terminal, from the repository root:
 
-If it is gone, redo steps 1 and 2. For a lasting setup, keep the server and data outside the scratchpad.
+```bash
+source ~/.cargo/env
+cargo run --release -p grafia-pipeline -- build --mysql --port 3307 --user grafia --out web/grafia.dat
+```
+
+For a future dexonline update, run `load --download --port 3307 --user grafia` before the build. Stop the server with `mariadb-admin --no-defaults --socket=/tmp/grafia-mariadb.sock --user=cezar shutdown`.
 
 ## License
 
