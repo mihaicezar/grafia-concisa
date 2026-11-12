@@ -100,7 +100,6 @@ pub const SYLLABIFICATIONS: &[(&str, &[&str])] = &[
     ("coacere", &["coa-ce-re"]),
     ("coacăț", &["coa-căț"]),
     ("coacăță", &["coa-că-ță"]),
-    ("coajă", &["co-a-jă"]), // the test pull request of stage 1 of rule-files-plan.md (reverted)
 ];
 
 /// The readings of `word` in SYLLABIFICATIONS, if listed.
