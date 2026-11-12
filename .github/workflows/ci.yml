@@ -19,6 +19,9 @@ jobs:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all --check
+      # web/grafia.dat, from the export of dexonline that dexonline.lock pins: the WASM
+      # tests and the web app read it, and it is the one deployed
+      - run: cargo xtask data
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo clippy -p grafia-wasm --target wasm32-unknown-unknown --all-targets -- -D warnings
       - run: cargo test --workspace --locked
@@ -34,6 +37,39 @@ jobs:
         uses: actions/upload-pages-artifact@v5
         with:
           path: web/dist
+
+  # On a pull request: the words whose spelling it changes, against its base, in Romanian,
+  # in the job's summary and in one comment on the pull request, replaced on each push
+  diff:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the base commit, for its snapshot
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo xtask diff ${{ github.event.pull_request.base.sha }} --max 50
+      - run: cat data/snapshot/diff.md >> "$GITHUB_STEP_SUMMARY"
+      # a pull request from a fork gets the summary only: its token can't write
+      - if: github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- cargo xtask diff -->';
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            let body = fs.readFileSync('data/snapshot/diff.md', 'utf8');
+            if (body.length > 60000) body = body.slice(0, 60000) + '\n\n… (trunchiat)\n';
+            body = `${marker}\n${body}\n[Rularea](${run})\n`;
+            const params = { ...context.repo, issue_number: context.issue.number };
+            const comments = await github.paginate(github.rest.issues.listComments, params);
+            const old = comments.find(c => c.user.type === 'Bot' && c.body.startsWith(marker));
+            if (old) await github.rest.issues.updateComment({ ...context.repo, comment_id: old.id, body });
+            else await github.rest.issues.createComment({ ...params, body });
 
   # Publishes web/dist on GitHub Pages, after every test passed on main
   deploy:

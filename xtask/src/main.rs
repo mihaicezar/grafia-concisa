@@ -1,6 +1,15 @@
 //! Project tasks, run from anywhere in the repository as `cargo xtask <task>`
 //! (the alias is in `.cargo/config.toml`):
-//!   - `web`: builds the web app into `web/dist/` (see README.md, *How the web app works*).
+//!   - `web`: builds the web app into `web/dist/` (see README.md, *How the web app works*);
+//!   - `data`: builds `web/grafia.dat` from the export of dexonline that `dexonline.lock` pins;
+//!   - `pin [DIR]`: packs the export in DIR (`data` by default) and pins it in `dexonline.lock`;
+//!   - `diff BASE [--max N]`: what the working tree changes in the output on every form,
+//!     against the commit BASE, in `data/snapshot/diff.md` (at most N rows per section).
+//!
+//! See README.md, *The data file* and *Updating dexonline*.
+mod diff;
+mod export;
+
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -12,10 +21,22 @@ use flate2::write::GzEncoder;
 use grafia_concisa::{DataFile, RULES_HASH};
 use wasm_bindgen_cli_support::Bindgen;
 
+const USAGE: &str = "usage: cargo xtask web | data | pin [DIR] | diff BASE [--max N]";
+
 fn main() -> Result<()> {
-    match env::args().nth(1).as_deref() {
-        Some("web") => web(),
-        _ => bail!("usage: cargo xtask web"),
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .parent()
+        .context("no workspace root")?;
+    let args: Vec<String> = env::args().skip(1).collect();
+    let args: Vec<&str> = args.iter().map(String::as_str).collect();
+    match args[..] {
+        ["web"] => web(root),
+        ["data"] => export::data(root),
+        ["pin"] => export::pin(root, &root.join("data")),
+        ["pin", dir] => export::pin(root, Path::new(dir)),
+        ["diff", base] => diff::diff(root, base, usize::MAX),
+        ["diff", base, "--max", max] => diff::diff(root, base, max.parse().context(USAGE)?),
+        _ => bail!(USAGE),
     }
 }
 
@@ -26,16 +47,13 @@ const FILES: &str = "const FILES = [];";
 /// Builds `web/dist/`: the core in WASM with its JavaScript, the files of `web/`,
 /// the data file gzipped, and the service worker, which caches all of them under
 /// a name that changes with any of them.
-fn web() -> Result<()> {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .context("no workspace root")?;
+fn web(root: &Path) -> Result<()> {
     let web = root.join("web");
     let dist = web.join("dist");
 
-    // The data file first: CI can't rebuild it, so one that doesn't open (an old
-    // format) or that was built with other rules stops the build.
-    const REBUILD: &str = "rebuild it with the pipeline (README.md, *Updating the data*)";
+    // The data file first: one that doesn't open (an old format) or that was built
+    // with other rules, such as a local build left over, stops the build.
+    const REBUILD: &str = "rebuild it with `cargo xtask data` (README.md, *Rule changes*)";
     let data = read(&web.join("grafia.dat"))?;
     let file = DataFile::new(&data[..]).with_context(|| format!("web/grafia.dat: {REBUILD}"))?;
     ensure!(

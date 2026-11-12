@@ -11,6 +11,7 @@ The tests are the review: a change to `crates/core` is accepted when every gate 
 
 ```
 cargo fmt --all --check
+cargo xtask data   # web/grafia.dat, which the WASM tests read: README.md, *The data file*
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace --locked
 cargo clippy -p grafia-wasm --target wasm32-unknown-unknown --all-targets -- -D warnings

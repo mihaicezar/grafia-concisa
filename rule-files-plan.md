@@ -1,6 +1,6 @@
 # grafia concisă — rule files plan
 
-**Status:** proposed on 2026-11-11, not started. Each stage ends with a gate, and the next one starts only once it passes. The plan is deleted when its last stage is done, like `rust-port-plan.md`. `DECISIONS.md` prevails over it.
+**Status:** proposed on 2026-11-11. Stage 0 done on 2026-11-12; the `reguli/` entries of `CLAUDE.md` wait for stage 2, which creates the directory. Stage 1 implemented on 2026-11-12, and the release `dexonline-2026-11-11` published: its gate waits for CI's first build from it (`web/grafia.dat: sha256 13a6afe8550fbb50e7995fd08060a28370ad09610bd681ca13c40784d2f5019e`, the MariaDB build of the dump of 2026-11-12) and the test pull request. Each stage ends with a gate, and the next one starts only once it passes. The plan is deleted when its last stage is done, like `rust-port-plan.md`. `DECISIONS.md` prevails over it.
 
 ## Goal
 
@@ -102,7 +102,8 @@ crates/core/tests/reguli.rs  the rules checks: every exemple and contraexemple
 crates/pipeline              export (also date.txt; from stage 5 dex98.tsv); build and check,
                              with the data checks; report; explain
 xtask                        cargo xtask data: fetches the pinned export into data/, builds
-                             web/grafia.dat; cargo xtask diff BASE: the snapshot diff, in
+                             web/grafia.dat; cargo xtask pin DIR: packs an export and writes
+                             dexonline.lock; cargo xtask diff BASE: the snapshot diff, in
                              Romanian; cargo xtask reguli: the loading checks, then the rules checks
 dexonline.lock               the pinned export: its release asset and SHA-256
 ```
@@ -442,14 +443,14 @@ With `GITHUB_ACTIONS` set, each message is also printed as `::error file=…,lin
   - this plan among the docs;
   - the convention that rules go in `reguli/`;
   - from stage 3, the convention that an example of a table entry or a step is one of its `exemple` or `contraexemple` words, not a line of `SYLLABIFY`.
-- Choose the YAML parser. It must follow the YAML 1.2 core schema, give the line and column of every value, reject duplicate keys, be maintained and be pure Rust. It is a dependency of `grafia-reguli` only; `serde_yaml` is archived.
+- Choose the YAML parser. It must follow the YAML 1.2 core schema, give the line and column of every value, reject duplicate keys, be maintained and be pure Rust. It is a dependency of `grafia-reguli` only; `serde_yaml` is archived. Chosen: `marked-yaml` 0.8, with `LoaderOptions` `error_on_duplicate_keys(true)`, `prevent_coercion(true)` and `toplevel_sequence()` for the tables (see `DECISIONS.md`).
 
 **Gate:** Cezar approves this spec.
 
 ### Stage 1: the published export, and `grafia.dat` built by CI
 
 - `grafia-pipeline export` also writes `date.txt`, the date of the dexonline data, and `build --text` reads it, so a file built from the export is the one built from MariaDB, byte for byte.
-- The export (`records.tsv`, `known.txt`, `date.txt`) is published as one archive on a GitHub release, `dexonline-YYYY-MM-DD`, with dexonline's attribution (GPL) in its notes. `dexonline.lock` names the archive and its SHA-256.
+- The export (`records.tsv`, `known.txt`, `date.txt`) is published as one archive on a GitHub release, `dexonline-YYYY-MM-DD`, with dexonline's attribution (GPL) in its notes. `dexonline.lock` names the archive and its SHA-256. `cargo xtask pin DIR` packs the archive, the same bytes for the same export, and writes the lock.
 - `cargo xtask data` fetches the pinned export into `data/`, unless it is already there with that checksum, and builds `web/grafia.dat` from it. `web/grafia.dat` leaves git (`.gitignore`), after the gate's comparison.
 - `cargo xtask diff BASE` does what the `snapshot-diff` skill does by hand:
   - it builds the snapshots of BASE, in a worktree, and of the working tree, on the pinned export, or on both exports when `dexonline.lock` changed;

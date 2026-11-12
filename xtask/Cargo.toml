@@ -1,6 +1,6 @@
 [package]
 name = "xtask"
-description = "grafia concisă — project tasks: cargo xtask web"
+description = "grafia concisă — project tasks: cargo xtask web, data, pin, diff"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -12,4 +12,7 @@ crc32fast = "1.5.2"
 flate2 = "1.1.10"
 grafia-concisa = { path = "../crates/core" }
 serde_json = "1.0.151"
+sha2 = "0.10.9"
+tar = { version = "0.4.46", default-features = false }
+ureq = { version = "3.4.2", default-features = false, features = ["native-tls"] }
 wasm-bindgen-cli-support.workspace = true

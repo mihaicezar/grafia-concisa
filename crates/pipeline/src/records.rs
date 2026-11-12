@@ -116,10 +116,16 @@ fn records(conn: &mut Conn) -> Result<impl Iterator<Item = Result<Record>> + '_>
     }))
 }
 
+/// The date of the data (DATE_QUERY), empty if the tables are empty.
+fn date(conn: &mut Conn) -> Result<String> {
+    let date: Option<Option<String>> = conn.query_first(DATE_QUERY)?;
+    Ok(date.flatten().unwrap_or_default())
+}
+
 /// Builds the tables from dexonline on the server; also returns the date of its data.
 pub fn build_from_mysql(server: &Server) -> Result<(Tables, Stats, String)> {
     let mut conn = connect(server)?;
-    let date: Option<Option<String>> = conn.query_first(DATE_QUERY)?;
+    let date = date(&mut conn)?;
     let known = known_words(&mut conn)?;
     // the records are streamed into the build; the first error stops them
     let mut failed = None;
@@ -127,15 +133,16 @@ pub fn build_from_mysql(server: &Server) -> Result<(Tables, Stats, String)> {
     let (tables, stats) = build(records, &known);
     match failed {
         Some(e) => Err(e.context("reading the records")),
-        None => Ok((tables, stats, date.flatten().unwrap_or_default())),
+        None => Ok((tables, stats, date)),
     }
 }
 
-/// Writes dexonline's records and known words from the server into `dir`:
-/// `records.tsv` and `known.txt`, in the formats of `build --text` and `--known`.
-/// Returns the number of records.
-pub fn export_from_mysql(server: &Server, dir: &Path) -> Result<usize> {
+/// Writes dexonline's records, known words and the date of its data from the server
+/// into `dir`: `records.tsv`, `known.txt` and `date.txt`, in the formats of `build --text`,
+/// `--known` and `--date`. Returns the number of records and the date.
+pub fn export_from_mysql(server: &Server, dir: &Path) -> Result<(usize, String)> {
     let mut conn = connect(server)?;
+    let date = date(&mut conn)?;
     let mut known: Vec<String> = known_words(&mut conn)?.into_iter().collect();
     known.sort();
     fs::create_dir_all(dir).with_context(|| format!("creating {}", dir.display()))?;
@@ -149,7 +156,25 @@ pub fn export_from_mysql(server: &Server, dir: &Path) -> Result<usize> {
     out.flush()?;
     let known: String = known.iter().map(|word| format!("{word}\n")).collect();
     fs::write(dir.join("known.txt"), known).with_context(|| format!("writing {}", dir.display()))?;
-    Ok(n)
+    fs::write(dir.join("date.txt"), format!("{date}\n")).with_context(|| format!("writing {}", dir.display()))?;
+    Ok((n, date))
+}
+
+/// The date of a text file that `export` wrote: YYYY-MM-DD, or empty.
+pub fn date_from_text(text: &str) -> Result<String> {
+    let date = text.trim();
+    let valid = date.len() == 10
+        && (date.bytes().enumerate()).all(|(i, b)| {
+            if i == 4 || i == 7 {
+                b == b'-'
+            } else {
+                b.is_ascii_digit()
+            }
+        });
+    if !date.is_empty() && !valid {
+        bail!("not a date (YYYY-MM-DD): {date:?}");
+    }
+    Ok(date.to_string())
 }
 
 /// A record as a line of a text file (see `from_text`).
@@ -191,6 +216,11 @@ mod tests {
         );
         let known = known_from_text(" Abilitat \n\n# a comment\n");
         assert_eq!(known, HashSet::from(["abilitat".to_string()]));
+        assert_eq!(date_from_text("2026-11-11\n").unwrap(), "2026-11-11");
+        assert_eq!(date_from_text("\n").unwrap(), "");
+        for bad in ["2026-11-1", "2026/11/11", "2026-11-1x", "2026-11-ăă"] {
+            assert!(date_from_text(bad).is_err(), "{bad}");
+        }
     }
 
     #[test]

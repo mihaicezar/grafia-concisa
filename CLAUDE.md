@@ -7,19 +7,23 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
 
 ## Layout
 - `crates/core/`: the Rust core: rules (`rules/`, one file per concern: see its `mod.rs`), the DB builder (`build.rs`), the data file `grafia.dat` (`datafile.rs`), lookups and conversion (`lib.rs`), tests (`tests/tables.rs`). Put rule logic here only.
-- `crates/pipeline/`: the binary `grafia-pipeline`: `load` (dexonline dump → local MariaDB), `build` (MariaDB → `grafia.dat`), `export` (MariaDB → text records, for `build --text` and `crates/core/examples/snapshot.rs`), `seed` (dev data file, no MariaDB)
+- `crates/pipeline/`: the binary `grafia-pipeline`: `load` (dexonline dump → local MariaDB), `build` (MariaDB or an export → `grafia.dat`), `export` (MariaDB → the export: text records, known words and the date, for `build --text` and `crates/core/examples/snapshot.rs`), `seed` (dev data file, no MariaDB)
 - `crates/wasm/`: the core in WASM for the web app (`Engine`), tests under Node (`tests/node.rs`)
-- `web/`: the web app (a PWA): the page (`index.html`), the service worker (`sw.js`), the manifest, icons and fonts, and the data file it ships, `grafia.dat` (committed: CI can't build it)
-- `xtask/`: `cargo xtask web`, which builds the web app into `web/dist/`
+- `web/`: the web app (a PWA): the page (`index.html`), the service worker (`sw.js`), the manifest, icons and fonts, and the data file it ships, `grafia.dat` (not committed: `cargo xtask data` builds it, in CI too)
+- `xtask/`: `cargo xtask web` (the web app → `web/dist/`), `data` (the pinned export → `web/grafia.dat`), `pin` (an export → its archive and `dexonline.lock`), `diff` (the words whose output changes, in Romanian)
+- `dexonline.lock`: the pinned export of dexonline: the URL of its archive, a release asset, and its SHA-256
 
 ## Commands
 - `cargo test --workspace`: run the tests (must pass before any commit).
-- `cargo test -p grafia-wasm --target wasm32-unknown-unknown`: the WASM tests, under Node, on `web/grafia.dat` (must pass before a commit that changes `crates/` or `web/grafia.dat`). Needs `wasm-bindgen-test-runner`: see README.md.
+- `cargo xtask data`: fetch the export of dexonline that `dexonline.lock` pins into `data/`, and build `web/grafia.dat` from it (no MariaDB). The WASM tests and `cargo xtask web` read that file; rerun it after any change to the code of a file of `rules/` or of `build.rs` (not only their comments): the file records `RULES_HASH`, and `cargo xtask web` refuses it otherwise.
+- `cargo test -p grafia-wasm --target wasm32-unknown-unknown`: the WASM tests, under Node, on `web/grafia.dat` (must pass before a commit that changes `crates/` or `dexonline.lock`). Needs `wasm-bindgen-test-runner`: see README.md.
+- `cargo xtask diff BASE`: the words whose output changes against the commit BASE, on every form of the database, in Romanian, in `data/snapshot/diff.md` (the `snapshot-diff` skill). CI comments it on every pull request.
 - `cargo xtask web`: build the web app into `web/dist/`; `npx serve web/dist` serves it on <http://localhost:3000>.
 - `cargo run --release -p grafia-pipeline -- seed`: build a small dev data file, `data/grafia.dat`.
-- Full data file: see README.md. A MariaDB server is required: on this machine, a portable one on port 3307; see "This machine" there. Then run:
-  - `cargo run --release -p grafia-pipeline -- load --download --client <mariadb> --port 3307`: load or update dexonline;
-  - `cargo run --release -p grafia-pipeline -- build --mysql --port 3307 --out web/grafia.dat`: build the web app's data file. Rebuild and commit it after a dexonline update and after any change to the code of a file of `rules/` or of `build.rs` (not only their comments): the file records `RULES_HASH`, and `cargo xtask web` (so CI) refuses it otherwise.
+- A dexonline update (README.md, *Updating dexonline*) is the only step that needs a MariaDB server, on port 3307 (on Windows a portable one, see README.md; on the Mac, "This machine" there):
+  - `cargo run --release -p grafia-pipeline -- load --download --client <mariadb> --port 3307`: load the latest dump;
+  - `cargo run --release -p grafia-pipeline -- export --port 3307 --out data/export`, then `cargo xtask pin data/export`: the export, its archive `data/dexonline-<date>.tar.gz` and a new `dexonline.lock`;
+  - Cezar publishes the archive as the release `dexonline-<date>`, then `dexonline.lock` goes in a pull request of its own, whose CI comment lists what the update changes.
 
 ## Conventions
 - Simple over clever, with best practices, and no speculative features.
@@ -29,6 +33,7 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
   - `concise-writing-spec.md` holds the complete current rules, with no history. A rule change updates it in the same commit; a disagreement with `DECISIONS.md` is fixed there.
   - `README.ro.md` is the Romanian rendering of the spec, updated with it. It never contains anything that is not in the spec.
   - `rust-port-plan.md` holds the steps of the Rust port, and is deleted when the port ends. `DECISIONS.md` prevails over it.
+  - `rule-files-plan.md` holds the stages that move the rules to YAML files a linguist edits (`reguli/`); its *Status* says which stage is next. It is deleted when its last stage is done. `DECISIONS.md` prevails over it.
 - Linguistic edge cases: ask Cezar and don't guess. They are discussed in Romanian.
 - Keep the dexonline attribution (GPL) in the UI.
 - Commit messages: a one-line subject `type(domain) : summary`, with type one of `feat`, `fix`, `doc`, `chore`, `refactor`, `ci`; then a blank line and a `- ` list of the changes. For a change to the rules, the conversion or the spec, add a blank line, `Rezumat:` and a short `- ` list in Romanian. No line wrapping.
@@ -41,3 +46,4 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
    - the web as a WASM PWA on GitHub Pages (done 2026-10-10: `crates/wasm`, `web/`, `cargo xtask web`, and the rest of Python is removed);
    - iOS: one keyboard with two modes and a mode key, with the data file inside the keyboard extension (it can't read the App Group container without Full Access), and predictions from `UITextChecker`. iOS builds need macOS (a cloud CI build is fine); during development they are sideloaded with a free Apple ID;
    - Android: an `ACTION_PROCESS_TEXT` activity, with bindings generated by UniFFI.
+3. Move the rules to files a linguist edits, following `rule-files-plan.md` (2026-11-12, see *Platforms and stack* in `DECISIONS.md`).

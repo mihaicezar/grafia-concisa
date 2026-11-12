@@ -3,7 +3,7 @@
 //! Run from the repository root (the defaults are under `data/`):
 //!   cargo run --release -p grafia-pipeline -- load --download --client mariadb --port 3307
 //!   cargo run --release -p grafia-pipeline -- build --mysql --port 3307
-//!   cargo run --release -p grafia-pipeline -- build --text records.tsv [--known known.txt]
+//!   cargo run --release -p grafia-pipeline -- build --text records.tsv [--known known.txt] [--date date.txt]
 //!   cargo run --release -p grafia-pipeline -- export --port 3307
 //!   cargo run --release -p grafia-pipeline -- seed
 mod load;
@@ -30,7 +30,7 @@ enum Command {
     Export {
         #[command(flatten)]
         server: Server,
-        /// The directory for records.tsv and known.txt
+        /// The directory for records.tsv, known.txt and date.txt
         #[arg(long, default_value = "data")]
         out: PathBuf,
     },
@@ -73,6 +73,9 @@ struct BuildArgs {
     /// With --text: the words the prefix rule may find, one per line
     #[arg(long, value_name = "FILE", requires = "text")]
     known: Option<PathBuf>,
+    /// With --text: the date of the data (YYYY-MM-DD), which export writes to date.txt
+    #[arg(long, value_name = "FILE", requires = "text")]
+    date: Option<PathBuf>,
     #[command(flatten)]
     server: Server,
     #[arg(long, default_value = "data/grafia.dat")]
@@ -90,16 +93,25 @@ fn main() -> Result<()> {
                         Some(path) => records::known_from_text(&read(path)?),
                         None => HashSet::new(),
                     };
+                    let date = match &args.date {
+                        Some(path) => {
+                            records::date_from_text(&read(path)?).with_context(|| path.display().to_string())?
+                        }
+                        None => String::new(),
+                    };
                     let (tables, stats) = build(records::from_text(&text)?, &known);
-                    (tables, stats, String::new())
+                    (tables, stats, date)
                 }
                 None => records::build_from_mysql(&args.server)?,
             };
             write(&args.out, &tables, &stats, &date)
         }
         Command::Export { server, out } => {
-            let n = records::export_from_mysql(&server, &out)?;
-            println!("{}: records.tsv ({n} records), known.txt", out.display());
+            let (n, date) = records::export_from_mysql(&server, &out)?;
+            println!(
+                "{}: records.tsv ({n} records), known.txt, date.txt ({date})",
+                out.display()
+            );
             Ok(())
         }
         Command::Seed { out } => {
