@@ -1,6 +1,6 @@
 # grafia concisă — rule files plan
 
-**Status:** proposed on 2026-11-11. Stage 0 done on 2026-11-12; the `reguli/` entries of `CLAUDE.md` wait for stage 2, which creates the directory. Stage 1 implemented on 2026-11-12, and the release `dexonline-2026-11-11` published: its gate waits for CI's first build from it (`web/grafia.dat: sha256 13a6afe8550fbb50e7995fd08060a28370ad09610bd681ca13c40784d2f5019e`, the MariaDB build of the dump of 2026-11-12) and the test pull request. Each stage ends with a gate, and the next one starts only once it passes. The plan is deleted when its last stage is done, like `rust-port-plan.md`. `DECISIONS.md` prevails over it.
+**Status:** proposed on 2026-11-11. Stage 0 done on 2026-11-12; the `reguli/` entries of `CLAUDE.md` wait for stage 2, which creates the directory. Stage 1 implemented on 2026-11-12, and the release `dexonline-2026-11-11` published. CI's first build from it gave the MariaDB build of the dump of 2026-11-12, byte for byte (`web/grafia.dat: sha256 13a6afe8550fbb50e7995fd08060a28370ad09610bd681ca13c40784d2f5019e`); the gate waits for the test pull request. Each stage ends with a gate, and the next one starts only once it passes. The plan is deleted when its last stage is done, like `rust-port-plan.md`. `DECISIONS.md` prevails over it.
 
 ## Goal
 

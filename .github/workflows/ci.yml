@@ -22,8 +22,9 @@ jobs:
       # web/grafia.dat, from the export of dexonline that dexonline.lock pins: the WASM
       # tests and the web app read it, and it is the one deployed
       - run: cargo xtask data
+      # it covers grafia-wasm's code too; the WASM clippy, which adds only tests/node.rs, runs locally
+      # (the test-gauntlet skill), and the WASM tests below compile that file
       - run: cargo clippy --workspace --all-targets -- -D warnings
-      - run: cargo clippy -p grafia-wasm --target wasm32-unknown-unknown --all-targets -- -D warnings
       - run: cargo test --workspace --locked
       # wasm-bindgen-test-runner, of the version of wasm-bindgen in Cargo.lock
       - id: wasm-bindgen
