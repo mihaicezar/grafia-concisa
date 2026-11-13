@@ -268,14 +268,14 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
     ("coactiv", "", "co-activ", "rules", ""), // co- prefix
     ("neant", "", "ne-ant", "manual", ""),    // SYLLABIFICATIONS beat all
     ("mielea", "", "mi-e-lea", "manual", ""),
-    ("răspieri", "", "răs-pie-ri", "manual", ""),
+    ("răspieri", "", "răs-pieri", "manual", ""),
     ("coastă", "", "coas-tă", "manual", ""),
     ("coastă", "co-as-tă", "coas-tă", "manual", ""),
     ("coardă", "", "coar-dă", "manual", ""),
     ("coacere", "", "coa-ce-re", "manual", ""),
     ("coacăț", "", "coa-căț", "manual", ""),
     ("coacăță", "", "coa-că-ță", "manual", ""),
-    ("înfieri", "", "în-fi-e-ri", "manual", ""),
+    ("înfieri", "", "în-fi-eri", "manual", ""),
     ("vieri", "", "vieri", "manual", ""),
     ("viere", "", "vi-e-re", "manual", ""),
     // IA_DIPHTHONG: each stem...

@@ -1,0 +1,24 @@
+# Despărțirile în silabe hotărâte de Cezar: cuvânt: silabisire, sau [silabisiri].
+# Bat și dexonline, și regulile, iar o formă trecută aici își ia toate grafiile de aici,
+# oricare i-ar fi lema: înregistrările altor leme nu adaugă niciuna.
+# Mai multe silabisiri fac un omograf: prima e cea implicită, celelalte sunt oferite
+# ca alternative.
+
+neant: ne-ant
+înfieri: în-fi-eri
+mielea: mi-e-lea             # al mielea, ca al miilea
+piei: piei                   # nu pi-ei (← pia)
+răspieri: răs-pieri          # răspĭér (un verb, nu un infinitiv lung)
+vier: [vier, vi-er]          # vierul; păzitor de vie (rar)
+vieri: [vieri, vi-eri]
+viere: vi-e-re               # vocativul lui vi-er (păzitor de vie), nu al lui vier (porcul)
+ia: [ia, i-a]                # verbul lua, interjecția; ie articulat
+miază: [mia-ză, mi-a-ză]     # amiază; miaza (boala)
+ie: i-e                      # doar hiat (articulat: i-a)
+
+# co- urmat de un cuvânt cunoscut, dar care nu e prefix aici
+coardă: coar-dă
+coastă: coas-tă
+coacere: coa-ce-re
+coacăț: coa-căț
+coacăță: coa-că-ță

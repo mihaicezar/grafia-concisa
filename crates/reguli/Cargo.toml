@@ -1,0 +1,11 @@
+[package]
+name = "grafia-reguli"
+description = "grafia concisă — the rule files of reguli/: loading, checks, and the Rust code they compile to"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+marked-yaml = "0.8.0"
+unicode-normalization = "0.1.25"

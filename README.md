@@ -21,6 +21,7 @@ The project is one Rust core that every platform calls. It was first written in 
 | Part | Where | What | Status |
 |---|---|---|---|
 | Core | `crates/core` (crate `grafia-concisa`) | the rules, conversion and reverse conversion, the database builder, the data file | done |
+| Rule files | `reguli/`, `crates/reguli` (crate `grafia-reguli`) | the hand lists of the rules, in YAML files a linguist edits, which the core's build compiles in ([`rule-files-plan.md`](rule-files-plan.md)) | stage 2 |
 | Data file | `web/grafia.dat` (built, not committed) | the word database: [`fst`](https://crates.io/crates/fst) maps read in place, 0.8 MB (0.56 MB gzipped) | done |
 | Pipeline | `crates/pipeline` (binary `grafia-pipeline`) | loads dexonline into MariaDB, exports its records, and builds `grafia.dat` | done |
 | Web app | `crates/wasm`, `web/`, `xtask/` | the core in WASM, in a static page that works offline, on GitHub Pages | done |
@@ -28,11 +29,12 @@ The project is one Rust core that every platform calls. It was first written in 
 | Android | `crates/ffi`, `android/` | *grafia concisă* in the text selection menu | phase 5 |
 
 - **The core** uses `fancy-regex` (the rules' patterns need lookbehind), `unicode-normalization` (NFC), `indexmap` (ordered maps, for the order of the alternatives), `fst` and `crc32fast` (the data file's checksum), and `serde` (the answers' JSON). It has no I/O: the platforms pass it the data file's bytes.
+- **The rule files** are read by `grafia-reguli`, with `marked-yaml` (YAML 1.2 with the line and column of every value) and `unicode-normalization`. It is only a build dependency of the core: its build script (`crates/core/codegen.rs`) turns the files into Rust constants, so no YAML parser ships. Their format and checks are in the spec's *Rule files*.
 - **The data file** is built by the pipeline from an export of [dexonline](https://dexonline.ro)'s records, pinned in [`dexonline.lock`](dexonline.lock) (see *The data file*). The web page loads it into memory; the mobile apps will memory-map it, so it costs the iOS keyboard little memory. Its layout is in [`crates/core/src/datafile.rs`](crates/core/src/datafile.rs).
 - **The pipeline** uses `mysql` (a pure Rust client), `flate2` (to filter the gzipped dump), `ureq` with the system's TLS (to download it) and `clap`.
 - **`cargo xtask data`** downloads the pinned export with `ureq` and checks it with `sha2`; `tar` and `flate2` pack and unpack it.
 - **The web app** is one page with plain JavaScript, no framework and no bundler. `crates/wasm` wraps the core with `wasm-bindgen` and `serde-wasm-bindgen`. `cargo xtask web` builds the site with `wasm-bindgen-cli-support`, which must be the same version as `wasm-bindgen`: both are pinned side by side in the workspace's [`Cargo.toml`](Cargo.toml), the one place for that version. The page's font, [Literata](https://github.com/googlefonts/literata), is served from the site itself.
-- **CI** (GitHub Actions, [`.github/workflows/ci.yml`](.github/workflows/ci.yml)) builds the data file from the pinned export, runs `cargo fmt --check`, `cargo clippy -D warnings`, the tests and the WASM tests, and builds the web app. On a pull request, it also lists the words whose spelling the pull request changes, in Romanian, in a comment. On `main`, it then publishes the web app on GitHub Pages.
+- **CI** (GitHub Actions, [`.github/workflows/ci.yml`](.github/workflows/ci.yml)) checks the rule files, showing each message on its line of the pull request, builds the data file from the pinned export, runs `cargo fmt --check`, `cargo clippy -D warnings`, the tests and the WASM tests, and builds the web app. On a pull request, it also lists the words whose spelling the pull request changes, in Romanian, in a comment. On `main`, it then publishes the web app on GitHub Pages.
 
 ## Development
 
@@ -44,6 +46,7 @@ Tools:
 - A MariaDB or MySQL server, only to bring in a dexonline update (see *Updating dexonline*).
 
 ```
+cargo run -p grafia-reguli                                  # check the rule files of reguli/
 cargo xtask data                                            # build web/grafia.dat from the pinned export of dexonline
 cargo test --workspace                                      # tests
 cargo test -p grafia-wasm --target wasm32-unknown-unknown   # WASM tests, under Node, on web/grafia.dat
@@ -59,6 +62,7 @@ cargo run --release -p grafia-pipeline -- seed              # small dev data fil
 
 The tests must pass before every commit, and the WASM tests too when a commit changes `crates/` or `dexonline.lock`. CI runs both on every push.
 - **The rules** are tested by tables in [`crates/core/tests/tables.rs`](crates/core/tests/tables.rs): a new case is one line. The tables that need a database run twice, on the built tables in memory and through the data file.
+- **The loading checks of the rule files** are tested by a table of broken files, each with the messages it gives, in [`crates/reguli/tests/broken.rs`](crates/reguli/tests/broken.rs).
 - **The WASM tests** ([`crates/wasm/tests/node.rs`](crates/wasm/tests/node.rs)) run the engine under Node on `web/grafia.dat`, the data file the site ships, which `cargo xtask data` builds: the answers as the page receives them, the switches, the date of the data, and a bad file. `cargo test --target wasm32-unknown-unknown` runs them with `wasm-bindgen-test-runner` (set in [`.cargo/config.toml`](.cargo/config.toml)); `cargo test --workspace` skips them.
 - **The page** has no automated test. After a change to `web/`, check it in a browser, as in step 4 of *Deploying*.
 
@@ -118,7 +122,7 @@ cargo xtask data
 - The archive is downloaded into `data/`, unless it is there already with that checksum. A wrong checksum stops the build. Its files, `records.tsv`, `known.txt` and `date.txt`, are unpacked into `data/dexonline-<date>/`.
 - `grafia-pipeline build --text` builds `web/grafia.dat` from them, in about 15 seconds once the pipeline is compiled. It prints the file's size, the date of the data, the rules (`RULES_HASH`, see *Rule changes*), the build's stats and the file's SHA-256. The same export and rules give the same file, byte for byte, on any machine, so a local build can be compared with CI's log.
 
-For the 2026-11-11 data (rules `fc36dec3b0978fa1`): 819,889 bytes; 292,963 forms stored, of which 50 homographs and 3,007 with an -ee spelling, plus 2,845 reverse -ee spellings (`ee_revert`, 61 of them ties), 1,066 lemmas in -eu (`eu_lemmas`), 3,436 in -ea (`ea_lemmas`) and 65 in -iesc (`iesc_lemmas`). Lemma syllabifications came from dexonline (4,165 complete, 6,601 partial), Cezar's explicit list (23) and the rules alone (81,112).
+For the 2026-11-11 data (rules `24ffedf6588957a6`): 819,889 bytes; 292,963 forms stored, of which 50 homographs and 3,007 with an -ee spelling, plus 2,845 reverse -ee spellings (`ee_revert`, 61 of them ties), 1,066 lemmas in -eu (`eu_lemmas`), 3,436 in -ea (`ea_lemmas`) and 65 in -iesc (`iesc_lemmas`). Lemma syllabifications came from dexonline (4,165 complete, 6,601 partial), Cezar's explicit list (23) and the rules alone (81,112).
 
 What the export holds, from dexonline's tables:
 - the inflected forms, with their lemma and number (`InflectedForm`, `Inflection`);
@@ -133,7 +137,7 @@ How these are turned into spellings is in the spec. The records are read in a fi
 
 ### Rule changes
 
-`web/grafia.dat` holds the rules' output for every word. It records the rules it was built with, `RULES_HASH`: a hash of the code of the files of `crates/core/src/rules/` and of `build.rs`, without comments or whitespace. `cargo xtask web` refuses a data file built with other rules, so after any change to the code of these files, even one that changes no spelling, run `cargo xtask data` again; a change to their comments alone doesn't need it. No data file is committed: CI builds it on every push, from the pinned export and with the rules of the commit.
+`web/grafia.dat` holds the rules' output for every word. It records the rules it was built with, `RULES_HASH`: a hash of the code of the files of `crates/core/src/rules/` and of `build.rs`, and of the values of the rule files of `reguli/`, without comments or whitespace. `cargo xtask web` refuses a data file built with other rules, so after any change to the code of these files or to a value of a rule file, even one that changes no spelling, run `cargo xtask data` again; a change to their comments alone doesn't need it. No data file is committed: CI builds it on every push, from the pinned export and with the rules of the commit.
 
 `cargo xtask diff BASE` lists, in Romanian, the words whose output the working tree changes against the commit BASE (`main`, for a branch):
 - it writes the snapshots of BASE, in a worktree (`target/diff-base`), and of the working tree into `data/snapshot/before` and `data/snapshot/after`, on the pinned export, or each on its own export when `dexonline.lock` changed;
@@ -202,7 +206,7 @@ The asset is the archive, `data/dexonline-<date>.tar.gz`, not the folder `data/d
 
 Commit `dexonline.lock` alone, in a pull request of its own. CI builds the data file from the new export, and its comment lists the words the update changes, against the previous export. Compare the build's stats in CI's log with the previous ones (forms stored, homographs, lemma sources): a large jump points to a change in dexonline's data or schema worth looking at before merging. Merging deploys it.
 
-Updates are picked up automatically wherever dexonline's syllabifications changed or new words appeared. Cezar's explicit syllabifications (`rules::SYLLABIFICATIONS`) still prevail.
+Updates are picked up automatically wherever dexonline's syllabifications changed or new words appeared. Cezar's explicit syllabifications (`reguli/silabisiri.yaml`) still prevail.
 
 ### Pitfalls
 

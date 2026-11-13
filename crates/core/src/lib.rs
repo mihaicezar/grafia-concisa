@@ -16,9 +16,10 @@ use serde::Serialize;
 pub use datafile::DataFile;
 pub use rules::{Row, Segment};
 
-/// The rules a data file is built with: a hash of the code of the files of `rules/`
-/// and of `build.rs`, without comments or whitespace. The data file records it, and the
-/// web app's build refuses a data file built with other rules. A new file of `rules/`
+/// The rules a data file is built with: a hash of the code of the files of `rules/`, of
+/// `build.rs` and of the code the rule files of `reguli/` compile to (`$OUT_DIR/reguli.rs`,
+/// without the files' comments), without comments or whitespace. The data file records it, and
+/// the web app's build refuses a data file built with other rules. A new file of `rules/`
 /// must be added to `RULES_SOURCES`.
 pub const RULES_HASH: u64 = {
     let (mut hash, mut i) = (FNV_OFFSET, 0);
@@ -29,7 +30,8 @@ pub const RULES_HASH: u64 = {
     hash
 };
 
-const RULES_SOURCES: [&str; 10] = [
+const RULES_SOURCES: [&str; 11] = [
+    include_str!(concat!(env!("OUT_DIR"), "/reguli.rs")),
     include_str!("rules/mod.rs"),
     include_str!("rules/convert.rs"),
     include_str!("rules/ee.rs"),

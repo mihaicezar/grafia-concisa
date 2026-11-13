@@ -19,6 +19,9 @@ jobs:
           targets: wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all --check
+      # the loading checks of the rule files of reguli/: in Romanian, each also as an annotation on
+      # its line of the pull request (the core's build would stop on them, without the annotations)
+      - run: cargo run -p grafia-reguli --locked
       # web/grafia.dat, from the export of dexonline that dexonline.lock pins: the WASM
       # tests and the web app read it, and it is the one deployed
       - run: cargo xtask data

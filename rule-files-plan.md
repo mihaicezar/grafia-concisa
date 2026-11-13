@@ -1,6 +1,6 @@
 # grafia concisă — rule files plan
 
-**Status:** proposed on 2026-11-11. Stage 0 done on 2026-11-12; the `reguli/` entries of `CLAUDE.md` wait for stage 2, which creates the directory. Stage 1 implemented on 2026-11-12, and the release `dexonline-2026-11-11` published. CI's first build from it gave the MariaDB build of the dump of 2026-11-12, byte for byte (`web/grafia.dat: sha256 13a6afe8550fbb50e7995fd08060a28370ad09610bd681ca13c40784d2f5019e`); the gate waits for the test pull request. Each stage ends with a gate, and the next one starts only once it passes. The plan is deleted when its last stage is done, like `rust-port-plan.md`. `DECISIONS.md` prevails over it.
+**Status:** proposed on 2026-11-11. Stage 0 done on 2026-11-12, its `reguli/` entries of `CLAUDE.md` with stage 2. Stage 1 implemented on 2026-11-12, and the release `dexonline-2026-11-11` published. CI's first build from it gave the MariaDB build of the dump of 2026-11-12, byte for byte (`web/grafia.dat: sha256 13a6afe8550fbb50e7995fd08060a28370ad09610bd681ca13c40784d2f5019e`). Stage 1's gate passed on 2026-11-12: the test pull request #2 (*coajă* `co-a-jă`) listed *coajă* and *coaja* in its comment, and its revert no change. Stage 2 implemented on 2026-11-12: a temporary test found the generated constants equal to the old ones before these went, and on 2026-11-13 each list of words was declared once (`grafia_reguli::LISTS`), the regex `A_KEPT` became the list `A_ROOTS`, and the names in -oe left `ae_oe`, which holds them from `nume` (the first point of stage 7); the local `grafia.dat` differs from the one of the old constants only in the rules hash and the checksum; the gate waits for CI's diff on its pull request, which also carries Cezar's corrections of *înfieri* (`în-fi-eri`), *răspieri* (`răs-pieri`) and *vieri* (`vi-eri`), which change no spelling. Each stage ends with a gate, and the next one starts only once it passes. The plan is deleted when its last stage is done, like `rust-port-plan.md`. `DECISIONS.md` prevails over it.
 
 ## Goal
 
@@ -60,7 +60,7 @@ What a rule can cite, and what the pipeline can read, was checked on the dump an
 | `OBSOLETE`, `IARE_KEPT` | `invechite.yaml` | `lemme`, `iare_pastrate` | 2 |
 | `NAMES`, `AE_OE`, `EEA_UNCHANGED`, `EE_NOT_MASCULINE` | `ee.yaml` | `nume`, `ae_oe`, `eea_neschimbate`, `fara_masculin` | 2 |
 | `NO_CONVERT` | `neconvertite.yaml` | `nume_latine` | 2 |
-| `A_KEPT` (the regex `r[ou]mân`) | `a-i.yaml` | `radacini_cu_a` | 2 |
+| `A_ROOTS` (before stage 2, the regex `A_KEPT`: `r[ou]mân`) | `a-i.yaml` | `radacini_cu_a` | 2 |
 | `IESC_ENDINGS` | `necunoscute.yaml` | `iesc` | 2 |
 | `IA_DIPHTHONG` | `diftong-ia.yaml` | (a list of entries) | 3 |
 | `EA_HIATUS` | `hiat-ea.yaml` | (a list of entries) | 3 |
@@ -145,7 +145,7 @@ iare_pastrate: [fiare, mobiliare]              # lemme în -iare care nu sunt in
 
 # ee.yaml
 nume: [andreea, medeea, leea, zoe, cloe]       # nume feminine de persoane
-ae_oe: [nae, nicolae, zoe, cloe, noe, aloe]
+ae_oe: [nae, nicolae, noe, aloe]               # și numele în -oe din nume (zoe, cloe)
 eea_neschimbate: [aceea, oareceea]
 fara_masculin: [coree]
 ```
@@ -402,7 +402,7 @@ The loading checks:
   - `tulpina` starts `lema`;
   - the endings of the words: `nume` in -eea/-ee/-oe, `ae_oe` in -ae/-oe, `eea_neschimbate` in -eea, `fara_masculin` in -ee, `nume_latine` in a vowel + -ian, `iare_pastrate` in -iare;
   - `radacini_cu_a` hold â;
-  - each name in -oe of `nume` is also in `ae_oe`;
+  - no name in -oe of `nume` is written again in `ae_oe`, which holds them (from stage 7, done with stage 2);
 - each pattern holds a pair of vowels;
 - each table is named by exactly one step, and the step's patterns hold the pairs of the table's patterns;
 - the last step has no condition, so every pair is decided.
@@ -476,7 +476,7 @@ With `GITHUB_ACTIONS` set, each message is also printed as `::error file=…,lin
 ### Stage 2: the loader, and the lists
 
 - `grafia-reguli`: reading with positions, the loading checks, the messages and the code generation. The binary prints the messages, and the annotations in CI.
-- `codegen.rs` writes the constants with the same names, types and order as today. `lists.rs` and `words.rs` (`A_KEPT`) include them.
+- `codegen.rs` writes the constants with the same names as today, which `lists.rs` includes: `SYLLABIFICATIONS`, `OBSOLETE`, and one `&[&str]` per list of words. Each list is declared once, in `grafia_reguli::LISTS`: its file, key, constant and the shape of its words. The regex `A_KEPT` becomes the list `A_ROOTS`, which `a_to_i` reads.
 - `RULES_HASH` also hashes `$OUT_DIR/reguli.rs`, beside what stays of `lists.rs` and `words.rs`.
 - The files: `silabisiri`, `invechite`, `ee`, `neconvertite`, `a-i`, `necunoscute`.
 - A table of broken files with the message expected for each (`crates/reguli/tests/`), one line per case, like the other test tables.
@@ -548,7 +548,7 @@ With `GITHUB_ACTIONS` set, each message is also printed as `::error file=…,lin
 
 ### Stage 7: each fact written once
 
-- The names in -oe are written only in `nume`, and `AE_OE` is generated with them.
+- The names in -oe are written only in `nume`, and `AE_OE` is generated with them: done with stage 2, on 2026-11-13 (`plus` in `grafia_reguli::LISTS`).
 - `fara_forme` is computed from the records, if they tell it reliably; otherwise it stays.
 
 **Gate:** CI's diff shows no change.

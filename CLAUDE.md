@@ -6,7 +6,9 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
 @concise-writing-spec.md
 
 ## Layout
-- `crates/core/`: the Rust core: rules (`rules/`, one file per concern: see its `mod.rs`), the DB builder (`build.rs`), the data file `grafia.dat` (`datafile.rs`), lookups and conversion (`lib.rs`), tests (`tests/tables.rs`). Put rule logic here only.
+- `reguli/`: the rule files, which a linguist edits: the hand lists of the rules, in YAML, with Romanian comments (the spec's *Rule files*)
+- `crates/reguli/`: the package `grafia-reguli`: reads `reguli/` with the line and column of every value, runs the loading checks (messages in Romanian) and writes the Rust code of the lists; each list of words is declared once, in `LISTS` (`src/lib.rs`: its file, key, constant and the shape of its words); `cargo run -p grafia-reguli` prints the messages, and in CI also as annotations on the lines of the pull request; tests of broken files (`tests/broken.rs`)
+- `crates/core/`: the Rust core: rules (`rules/`, one file per concern: see its `mod.rs`), the DB builder (`build.rs`), the data file `grafia.dat` (`datafile.rs`), lookups and conversion (`lib.rs`), tests (`tests/tables.rs`), and the build script `codegen.rs`, which compiles `reguli/` into `$OUT_DIR/reguli.rs` (`rules/lists.rs` includes it). Put rule logic here only.
 - `crates/pipeline/`: the binary `grafia-pipeline`: `load` (dexonline dump → local MariaDB), `build` (MariaDB or an export → `grafia.dat`), `export` (MariaDB → the export: text records, known words and the date, for `build --text` and `crates/core/examples/snapshot.rs`), `seed` (dev data file, no MariaDB)
 - `crates/wasm/`: the core in WASM for the web app (`Engine`), tests under Node (`tests/node.rs`)
 - `web/`: the web app (a PWA): the page (`index.html`), the service worker (`sw.js`), the manifest, icons and fonts, and the data file it ships, `grafia.dat` (not committed: `cargo xtask data` builds it, in CI too)
@@ -15,7 +17,8 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
 
 ## Commands
 - `cargo test --workspace`: run the tests (must pass before any commit).
-- `cargo xtask data`: fetch the export of dexonline that `dexonline.lock` pins into `data/`, and build `web/grafia.dat` from it (no MariaDB). The WASM tests and `cargo xtask web` read that file; rerun it after any change to the code of a file of `rules/` or of `build.rs` (not only their comments): the file records `RULES_HASH`, and `cargo xtask web` refuses it otherwise.
+- `cargo run -p grafia-reguli`: the loading checks of the rule files of `reguli/` (the core's build runs them too, and stops on an error).
+- `cargo xtask data`: fetch the export of dexonline that `dexonline.lock` pins into `data/`, and build `web/grafia.dat` from it (no MariaDB). The WASM tests and `cargo xtask web` read that file; rerun it after any change to the code of a file of `rules/` or of `build.rs`, or to a value of a file of `reguli/` (not only their comments): the file records `RULES_HASH`, and `cargo xtask web` refuses it otherwise.
 - `cargo test -p grafia-wasm --target wasm32-unknown-unknown`: the WASM tests, under Node, on `web/grafia.dat` (must pass before a commit that changes `crates/` or `dexonline.lock`). Needs `wasm-bindgen-test-runner`: see README.md.
 - `cargo xtask diff BASE`: the words whose output changes against the commit BASE, on every form of the database, in Romanian, in `data/snapshot/diff.md` (the `snapshot-diff` skill). CI comments it on every pull request.
 - `cargo xtask web`: build the web app into `web/dist/`; `npx serve web/dist` serves it on <http://localhost:3000>.
@@ -27,7 +30,8 @@ Romanian orthography that writes ie/ia/ea/oa diphthongs (no hiatus) as ẹ/ė/ē
 
 ## Conventions
 - Simple over clever, with best practices, and no speculative features.
-- Tests are table-driven: a new case is one line in `WORDS`, `DERIVED`, `SYLLABIFY`, `EE_WORDS`, `TEXTS` or `REVERTS` (in `crates/core/tests/tables.rs`).
+- Rules go in `reguli/`: a word of a hand list, an explicit syllabification or an obsolete lemma is edited in its rule file, never in Rust. `crates/core` keeps the mechanisms, and the lists that have not moved yet (`rule-files-plan.md`, *Inventory*).
+- Tests are table-driven: a new case is one line in `WORDS`, `DERIVED`, `SYLLABIFY`, `EE_WORDS`, `TEXTS` or `REVERTS` (in `crates/core/tests/tables.rs`), or, for a loading check of the rule files, in `BROKEN` (in `crates/reguli/tests/broken.rs`).
 - Docs have separate roles:
   - `DECISIONS.md` logs each settled decision: date, principle, why, an example and the spec section. It holds no mechanics, and it is the authority on intent.
   - `concise-writing-spec.md` holds the complete current rules, with no history. A rule change updates it in the same commit; a disagreement with `DECISIONS.md` is fixed there.

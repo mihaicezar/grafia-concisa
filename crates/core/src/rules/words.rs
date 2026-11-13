@@ -21,8 +21,6 @@ pub(super) fn re(pattern: &str) -> Regex {
 // The suffix -ează/-ească after a hiatus i (studiază, sfiască, fiasca) is written
 // -ėză/-ėscă/-ėsca; its ė reverts to a, not ia.
 pub static HIATUS_SUFFIX: LazyLock<Regex> = LazyLock::new(|| re(r"(?i)(?<=i)ė(?=(ză|scă|sca)$)"));
-// The â -> î switch keeps â only in words with the root român/rumân.
-pub static A_KEPT: LazyLock<Regex> = LazyLock::new(|| re(r"(?i)r[ou]mân"));
 
 pub static DIGRAPH: LazyLock<Regex> = LazyLock::new(|| re("ie|ia|ea|oa"));
 pub static CANDIDATE: LazyLock<Regex> = LazyLock::new(|| re("ie|ia|ea|oa|iăr")); // iăr: apreciări -> aprecieri
@@ -87,11 +85,16 @@ pub(super) fn drop_last(chars: &[char], n: usize) -> String {
     text(&chars[..chars.len().saturating_sub(n)])
 }
 
-/// â -> î in every word of `text` (NFC), except those with the root român/rumân.
+/// â -> î in every word of `text` (NFC), except those that contain a root of A_ROOTS
+/// (`reguli/a-i.yaml`: român, rumân), in any case.
 pub fn a_to_i(text: &str) -> String {
     WORD.replace_all(text, |caps: &Captures<str>| {
         let word = &caps[0];
-        if found(&A_KEPT, word) {
+        if !word.contains(['â', 'Â']) {
+            return word.to_string(); // most words: nothing to write, nor to lowercase
+        }
+        let lower = word.to_lowercase();
+        if A_ROOTS.iter().any(|root| lower.contains(root)) {
             word.to_string()
         } else {
             word.replace('â', "î").replace('Â', "Î")

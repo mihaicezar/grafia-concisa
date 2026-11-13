@@ -1,11 +1,11 @@
 ---
 name: rule-change
-description: Use when Cezar settles or reopens a linguistic decision (a spelling, a syllabification, an exception list, a switch rule). Carries it through DECISIONS.md, the test tables, the Rust core, the spec, README.ro.md and one commit.
+description: Use when Cezar settles or reopens a linguistic decision (a spelling, a syllabification, an exception list, a switch rule). Carries it through DECISIONS.md, the test tables, the rule files of reguli/ or the Rust core, the spec, README.ro.md and one commit.
 ---
 
 # Rule change
 
-A rule change is one commit that touches, in this order: the decision, the tests, the code, the spec and its Romanian rendering. The tests come before the code, so the new lines fail first.
+A rule change is one commit that touches, in this order: the decision, the tests, the rule files or the code, the spec and its Romanian rendering. The tests come before the code, so the new lines fail first.
 
 ## 0. Is the decision settled?
 
@@ -37,10 +37,11 @@ Each new regex alternative or list entry gets its own positive line, and a negat
 
 Run `cargo test --workspace`. At least one new line must fail. If all pass, the lines don't test the change: find a word whose output the decision changes, or ask Cezar for one.
 
-## 3. Code (green)
+## 3. Rule files or code (green)
 
-- Change `crates/core` only.
-- Keep the constants' names: the spec cites them as `rules::X`.
+- A word of a hand list changes in its rule file of `reguli/`, never in Rust: the explicit syllabifications (`silabisiri.yaml`), the obsolete lemmas and the -iare lemmas kept (`invechite.yaml`), the lists of the -eẹ/aẹ/oẹ rule (`ee.yaml`), the Latin names (`neconvertite.yaml`), the roots that keep â (`a-i.yaml`) and the -iesc endings (`necunoscute.yaml`). The format is in the spec's *Rule files*; comments are in Romanian. Run `cargo run -p grafia-reguli`: it reports what is wrong, by line.
+- Anything else changes `crates/core` only. A new list of words is one line of `LISTS` in `crates/reguli/src/lib.rs` (its file, key, constant and the shape of its words), plus the core code that reads its constant; a new check of the rule files also changes `crates/reguli`, with a line of `BROKEN` in its `tests/broken.rs` per new message.
+- Keep the constants' names: the spec cites them as `rules::X`, and the lists of `reguli/` by file and key (`ee.yaml: nume`).
 - If the rule needs a new record flag, add it to the query in `crates/pipeline/src/records.rs`, and document it in `crates/core/src/build.rs` (module documentation), in `build --help` (`crates/pipeline/src/main.rs`) and in the spec's *Data* section.
 - Run `cargo test --workspace`. It passes.
 
@@ -58,7 +59,7 @@ Run `cargo test --workspace`. At least one new line must fail. If all pass, the 
 
 ## 6. Commit
 
-One commit with DECISIONS.md, the tests, the code, the spec and README.ro.md:
+One commit with DECISIONS.md, the tests, the rule files or the code, the spec and README.ro.md:
 
 ```
 feat(rules) : <summary>

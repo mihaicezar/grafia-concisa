@@ -1,0 +1,32 @@
+# Formele învechite și infinitivele lungi în -iare.
+#
+# lemme: lemele învechite, fiecare cu lema ei actuală. O formă a uneia se scrie ca forma
+# lemei actuale cu aceeași flexiune (alineează → aliniėză) și oferă pe comutator grafia ei
+# proprie, din silabisirea dată aici (alineēză). Cuvintele care încep cu tulpina sunt
+# căutate și fără grup candidat (alineez). O formă a mai multor leme învechite, cu leme
+# actuale diferite, nu se rescrie: comutatorul îi oferă grafiile proprii, în ordinea
+# acestei liste (alineam, de la alinea și alini: alineam sau alinēm).
+#   lema:       lema învechită, despărțită în silabe
+#   actuala:    lema actuală
+#   tulpina:    tulpina cu care încep formele ei
+#   fara_forme: true dacă dexonline o dă fără forme (implicit false). Un cuvânt care
+#               lipsește din bază și începe cu tulpina ia atunci tulpina lemei actuale
+#               (rachiareasa → rachiereasa, sau rachiarēsa); la celelalte leme ar prinde
+#               doar alte cuvinte (Alinei).
+lemme:
+  - lema: a-li-ne-a
+    actuala: alinia
+    tulpina: aline
+  - lema: a-li-ne-a-re
+    actuala: aliniere
+    tulpina: aline
+  - lema: a-li-ni
+    actuala: alina
+    tulpina: alin              # imperfectul lui e al lui alinea: alineam (alinea întâi)
+  - lema: ra-chi-a-rea-să
+    actuala: rachiereasă
+    tulpina: rachiare
+    fara_forme: true
+
+# Lemele în -iare care nu sunt infinitive lungi (fiare: s.f. pl.; mobiliare: s.n.)
+iare_pastrate: [fiare, mobiliare]

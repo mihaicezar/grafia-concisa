@@ -4,3 +4,4 @@ target/
 web/dist/
 web/grafia.dat
 mutants.out*
+.DS_Store
