@@ -21,7 +21,7 @@ A word form may have more than one correct concise spelling. It always has one d
 
 A headword uses its own syllabification. Any other inflected form takes its cuts from its lemma's syllabification (see the derivation table below).
 
-A lemma's syllabification is Cezar's explicit one when listed (`silabisiri.yaml`: *neant* `ne-ant`, *coastă* `coas-tă`, *mielea* `mi-e-lea`, *înfieri* `în-fi-eri`, *răspieri* `răs-pieri`, ...; an entry may list several readings, the first being the default: *miază* `mia-ză` / `mi-a-ză`, *vier* `vier` / `vi-er`), otherwise dexonline's hyphenation completed by fallback rules. The word *ie* has only the reading `i-e` and stays *ie*, with no alternative. A form listed there takes all its spellings from there, whatever its lemma: *piei* is only *pẹi* (not also *piei* ← *pia* `pi-a`).
+A lemma's syllabification is Cezar's explicit one when listed (`silabisiri.yaml`: *neant* `ne-ant`, *coastă* `coas-tă`, *mielea* `mi-e-lea`, *înfieri* `în-fi-eri`, *răspieri* `răs-pieri`, ...; an entry may list several readings, the first being the default: *miază* `mia-ză` / `mi-a-ză`, *vier* `vier` / `vi-er`), otherwise dexonline's hyphenation completed by fallback rules. The word *ie* has only the reading `i-e` and stays *ie*, with no alternative. A form listed there takes all its spellings from there, whatever its lemma, the default first: *piei* `piei` / `pi-ei` is *pẹi* (← *piele*, *pieri*), then *piei* (← *pia*), although by its records *piei* ← *pia* `pi-a`, which dexonline backs, would be its only spelling.
 
 - **dexonline hyphenation.** Only the first variant is used. It may be complete (`fa-mi-li-e`), a word end (`-li-e`), a word start (`a-ce-tal-`) or a word interior (`-pioa-`). Inside the span it covers, its cuts always prevail over the rules. A hyphenation that does not fit the word is ignored.
 - **Fallback rules.** Everywhere else, the rules place only cuts between two vowels, since grafia concisă uses no other cuts. The rules are known to be incomplete and will be refined:
@@ -119,10 +119,11 @@ It applies to every word after the rest of the conversion, whether the word is i
 
 A form whose records give different spellings is a homograph. Examples:
 - *ia*: *ė* (the verb *lua*, the interjection) or *ia* (the articulated *ie*, *i-a*);
+- *iei*: *ẹi* (the verb *lua*) or *iei* (the genitive of *ie*, *i-ei*);
 - *miază*: *mėză* (noon, *mia-ză*) or *miază* (myiasis, *mi-a-ză*);
 - *curie*: *curẹ* or *curie*;
 - *liază*: *liază* (the noun) or *liėză* (the verb *lia*);
-- *vier*: *vẹr* (the boar, *vier*) or *vier* (păzitor de vie, *vi-er*).
+- *vier*: *vẹr* (the boar, *vier*) or *vier* (păzitor de vie, *vi-er*), and so its forms (*vẹrul* or *vierul*), the vocative *viere* included: *vẹre* (*vie-re*) or *viere* (*vi-e-re*).
 
 The default is the spelling chosen by the priority above. The others are stored in `forms.alternatives` and returned with it: in `segments[].alts` from the core's `convert` and in `alternatives` from its `lookup`, the default first in both. A spelling counts only when an explicit, dexonline or partial syllabification backs it, except that when one record gives the suffix -ėză/-ėscă/-ėsca (see *Syllabification source*), all the form's spellings count. `silabisiri.yaml` may give several readings for one word; the first is the default.
 
@@ -134,13 +135,13 @@ The -eẹ/aẹ/oẹ rule does not produce homographs: its singular/plural choice
 
 An obsolete form is written as its current form, and its own spelling is offered on the homograph switch, after the current one, with a footnote: „Forma *alineare* e învechită; forma actuală e *aliniere*.” In the core's `convert`, the segment's `obsolete` holds the word, then its current forms, in the word's case (*Alineare*, *Aliniere*); `lookup` returns the current forms in `obsolete`. The obsolete forms are:
 - the long infinitives in -iare (see *Syllabification source*): *apreciarea* → *aprecierē* or *apreciarē*;
-- the forms of the lemmas in `invechite.yaml: lemme`, each listed with its current lemma: *alinea* → *alinia*, *alineare* → *aliniere*, *alini* → *alina*, *rachiareasă* → *rachiereasă*. A form takes the spelling of the current lemma's form with the same dexonline inflection and variant (*alineează* → *aliniėză* ← *aliniază*, *alineez* → *aliniez*), and its own spelling from its own syllabification, listed with it in `invechite.yaml: lemme` (*a-li-ne-a*: *alineēză*, *alineare*; *ra-chi-a-rea-să*: *rachiarēsă*). Words that start with the stem of one (*aline-*, *rachiare-*) are looked up even with no candidate digraph (*alineez*).
+- the forms of the lemmas in `invechite.yaml: leme`, each listed with its current lemma: *alinea* → *alinia*, *alineare* → *aliniere*, *alini* → *alina*, *rachiareasă* → *rachiereasă*. A form takes the spelling of the current lemma's form with the same dexonline inflection and variant (*alineează* → *aliniėză* ← *aliniază*, *alineez* → *aliniez*), and its own spelling from its own syllabification, listed with it in `invechite.yaml: leme` (*a-li-ne-a*: *alineēză*, *alineare*; *ra-chi-a-rea-să*: *rachiarēsă*). Words that start with the stem of one (*aline-*, *rachiare-*) are looked up even with no candidate digraph (*alineez*).
 
 A form that another lemma also gives keeps that lemma's spelling, with no switch: *alineat* (the noun), *conciliare* (the adjective *conciliar*).
 
-A form of several obsolete lemmas with different current forms is not rewritten: the switch offers its own spellings, one per lemma, in the order of `invechite.yaml: lemme`, and the footnote names every current form. *alineam*, the imperfect of both *alinea* and *alini*, is *alineam* (*a-li-ne-am*) or *alinēm* (*a-li-neam*): „Forma *alineam* e învechită; forma actuală e *aliniam* sau *alinam*.”
+A form of several obsolete lemmas with different current forms is not rewritten: the switch offers its own spellings, one per lemma, in the order of `invechite.yaml: leme`, and the footnote names every current form. *alineam*, the imperfect of both *alinea* and *alini*, is *alineam* (*a-li-ne-am*) or *alinēm* (*a-li-neam*): „Forma *alineam* e învechită; forma actuală e *aliniam* sau *alinam*.”
 
-A word missing from the database that starts with the stem of an obsolete lemma that dexonline lists without its forms (`fara_forme: true` in `invechite.yaml: lemme`: *rachiareasă*) takes the current lemma's stem and is converted by the rules alone (*rachiareasa* → *rachierēsa*); its own spelling comes from the obsolete lemma's syllabification (*rachiarēsa*). For the other obsolete lemmas, whose forms are all in the database, the stem would only catch other words, which are left as they are (*Alinei*, of *Alina*).
+A word missing from the database that starts with the stem of an obsolete lemma that dexonline lists without its forms (`fara_forme: true` in `invechite.yaml: leme`: *rachiareasă*) takes the current lemma's stem and is converted by the rules alone (*rachiareasa* → *rachierēsa*); its own spelling comes from the obsolete lemma's syllabification (*rachiarēsa*). For the other obsolete lemmas, whose forms are all in the database, the stem would only catch other words, which are left as they are (*Alinei*, of *Alina*).
 
 ## Case
 
@@ -158,7 +159,7 @@ Names of Latin origin are not converted. A word is a Latin name when it is in `n
 
 ## Unknown words
 
-A word that contains a candidate digraph but is missing from the database is converted by the fallback rules alone and flagged. With the -eẹ/aẹ/oẹ switch it is read as a singular, except as follows.
+A word that contains a candidate digraph but is missing from the database is converted by the fallback rules alone and flagged, unless it is listed in `silabisiri.yaml`: it then takes its first syllabification from there, with no switch, and is still flagged (in a database without *neant*, *neant* stays *neant*, not *nēnt*). With the -eẹ/aẹ/oẹ switch it is read as a singular, except as follows.
 
 A word with an ending of an -iesc adjective after i (`necunoscute.yaml: iesc`: -iești, -iescu, -iescul, -iescului, -ieștii, -ieștile, -ieștilor, -iască, -iasca) is first tied to its lemma: the ending is replaced by -esc, and if that gives a lemma in -iesc (`iesc_lemmas`), the word is derived from the lemma's syllabification, suffix rule included. dexonline lists some of these adjectives with no forms: *harabagiasca* → *harabagiėsca*, *harabagiască* → *harabagiėscă*, *harabagiești* unchanged (← *harabagi-esc*).
 
@@ -199,7 +200,7 @@ The hand lists of the rules are YAML files in `reguli/`, which a linguist edits.
 | File | Key | Holds | Each word |
 |---|---|---|---|
 | `silabisiri.yaml` | (a word) | Cezar's syllabifications, `word: syllabification` or `word: [syllabification, ...]`, the default first (see *Syllabification source*) | has the word's letters, and no empty syllable |
-| `invechite.yaml` | `lemme` | the obsolete lemmas, in order, each with `lema` (syllabified), `actuala`, `tulpina` and `fara_forme` (`true` or `false`; by default `false`), see *Obsolete forms* | `tulpina` starts `lema`; with `fara_forme: true`, `actuala` has at least as many letters as `tulpina` |
+| `invechite.yaml` | `leme` | the obsolete lemmas, in order, each with `lema` (syllabified), `actuala`, `tulpina` and `fara_forme` (`true` or `false`; by default `false`), see *Obsolete forms* | `tulpina` starts `lema`; with `fara_forme: true`, `actuala` has at least as many letters as `tulpina` |
 | | `iare_pastrate` | the lemmas in -iare that are no long infinitives (see *Syllabification source*) | ends in -iare |
 | `ee.yaml` | `nume` | the feminine names of persons (see *Optional rule: -eẹ/aẹ/oẹ*) | ends in -eea, -ee or -oe |
 | | `ae_oe` | the words in -ae/-oe of the -eẹ/aẹ/oẹ rule; the names in -oe of `nume` count as its words, and are not written in it | ends in -ae or -oe; is no name in -oe of `nume` |
@@ -212,14 +213,14 @@ The hand lists of the rules are YAML files in `reguli/`, which a linguist edits.
 The format:
 - YAML 1.2, in UTF-8, with or without a byte order mark. A file maps its keys to their values (`silabisiri.yaml` maps words), and every key is required. A list is written `[a, b]`, or one `- a` per line. Every value is text: `n`, `no`, `on` and `true` are words, not booleans.
 - Keys are lowercase ASCII with `_`. Words are written in lower case, in the standard orthography: NFC, ș/ț with a comma below, â inside words.
-- Order is kept where it matters: the syllabifications of a word and the lemmas of `lemme`, the first being the default.
+- Order is kept where it matters: the syllabifications of a word and the lemmas of `leme`, the first being the default.
 - `#` starts a comment. Comments explain; they never change a spelling, and the data file's rules don't include them (see *Data*).
 - Anchors (`&`), tags (`!`) and a second document (`---`, `...`) are not used.
 
 The loading checks run when the core is built, which an error stops, and with `cargo run -p grafia-reguli`, which in CI also shows each message on its line of the pull request. A message gives the file, the line and the column, in Romanian: `reguli/ee.yaml:3:30: eroare: „zoş” are ş cu sedilă; scrie ș, cu virgulă.` They check:
 - the YAML syntax; the keys, none unknown, repeated or missing; the type of each value (a list, a word, `true` or `false`), and that none is empty, an empty value being reported at its key; that `silabisiri.yaml` is not empty; and that each YAML file of `reguli/` is a rule file (the other files, hidden or not in .yaml/.yml, such as .DS_Store or an editor's backup, are left alone);
 - the characters: an error for ş/ţ with a cedilla, ã, a decomposed letter, a capital, a space, a hyphen outside a syllabification and any other character outside the Romanian alphabet; a warning for î inside a word (*neînțeles* is right);
-- no word twice in a list, no syllabification twice for a word, no lemma twice in `lemme`;
+- no word twice in a list, no syllabification twice for a word, no lemma twice in `leme`;
 - each word as the table above says.
 
 ## Data

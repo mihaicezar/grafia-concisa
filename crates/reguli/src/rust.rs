@@ -16,7 +16,7 @@ pub fn rust(rules: &Rules) -> String {
     }
     out += "];\n";
     out += "pub const OBSOLETE: &[(&str, &str, &str, bool)] = &[\n";
-    for o in &rules.lemme {
+    for o in &rules.leme {
         let (lema, actuala, tulpina) = (&o.lema.text, &o.actuala.text, &o.tulpina.text);
         let _ = writeln!(out, "    ({lema:?}, {actuala:?}, {tulpina:?}, {}),", o.fara_forme);
     }

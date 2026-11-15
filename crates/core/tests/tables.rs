@@ -276,8 +276,7 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
     ("coacăț", "", "coa-căț", "manual", ""),
     ("coacăță", "", "coa-că-ță", "manual", ""),
     ("înfieri", "", "în-fi-eri", "manual", ""),
-    ("vieri", "", "vieri", "manual", ""),
-    ("viere", "", "vi-e-re", "manual", ""),
+    ("viere", "", "vi-ere", "rules", ""), // the noun (a via); the boar's vocative derives from vier
     // IA_DIPHTHONG: each stem...
     ("chiabur", "", "chiabur", "rules", ""),
     ("chiag", "", "chiag", "rules", ""),
@@ -402,15 +401,22 @@ const HOMOGRAPH_RECORDS: &[&[&str]] = &[
     &["ia", "lua", "lu-a", "S"], // verb: el ia
     &["ia", "ie", "", "S"],      // articulated ie (SYLLABIFICATIONS: i-e)
     &["ie", "ie", "", "S"],
+    &["iei", "ie", "", "S"],                   // genitive of ie (i-e), which alone would beat...
+    &["iei", "lua", "lu-a", "S", "V"],         // ...the verb (tu iei); SYLLABIFICATIONS decide
     &["miază", "miază", "", "S"],              // SYLLABIFICATIONS: mia-ză, mi-a-ză
     &["trepied", "trepied", "", "S"],          // rules alone: trepẹd...
     &["trepied", "trepied", "tre-pi-ed", "S"], // ...dexonline: hiatus
     &["liază", "liază", "li-a-ză", "S"],       // noun...
     &["liază", "lia", "", "S", "V"],           // ...or verb: -ėză, both spellings count
-    &["piei", "piei", "", "S"],                // SYLLABIFICATIONS: piei...
-    &["piei", "pia", "pi-a", "S"],             // ...so no other lemma adds a spelling
+    &["piei", "piele", "", "P"],               // rules alone: pẹi...
+    &["piei", "pia", "pi-a", "S"],             // ...dexonline: piei, which alone would win; SYLLABIFICATIONS decide
     &["vier", "vier", "", "S"],                // SYLLABIFICATIONS: vier, vi-er
     &["vierul", "vier", "", "S"],
+    &["vieri", "vieri", "", "S"],               // a headword by rules alone (vi-eri)...
+    &["vieri", "vier", "", "P"],                // ...loses to vier's plural, which gives both readings
+    &["viere", "viere", "", "S"],               // the noun (a via), a headword by rules alone...
+    &["viere", "vier", "", "S"],                // ...loses to the vocative, backed by vier
+    &["vierea", "viere", "", "S"],              // the noun only: no boar reading
     &["agreare", "agreare", "", "S"],           // a headword by rules alone...
     &["agreare", "agrea", "a-gre-a", "S", "V"], // ...loses to a backed derived form
     &["menție", "menție", "", "S"],             // a headword (men-ți-e)...
@@ -423,14 +429,18 @@ const HOMOGRAPHS: &[(&str, &[&str])] = &[
     ("Ie", &[]),
     ("IE", &[]),
     ("Ia", &["Ė", "Ia"]),
-    ("miază", &["mėză", "miază"]),  // noon (default), myiasis
-    ("trepied", &[]),               // a rules-only spelling is no alternative...
+    ("iei", &["ẹi", "iei"]),       // SYLLABIFICATIONS: the verb lua (default), the genitive of ie
+    ("miază", &["mėză", "miază"]), // noon (default), myiasis
+    ("trepied", &[]),              // a rules-only spelling is no alternative...
     ("liază", &["liază", "liėză"]), // ...except one with -ėză/-ėscă
-    ("piei", &[]),                  // SYLLABIFICATIONS: the form's only spelling
-    ("vier", &["vẹr", "vier"]),     // the boar (default), păzitor de vie
+    ("piei", &["pẹi", "piei"]),    // SYLLABIFICATIONS: piei, pi-ei, whatever the lemmas
+    ("vier", &["vẹr", "vier"]),    // the boar (default), păzitor de vie
     ("vierul", &["vẹrul", "vierul"]),
-    ("agreare", &[]),                         // the rules-only agrēre is no alternative
-    ("zzoa", &[]),                            // an unknown word with one spelling has no switch
+    ("vieri", &["vẹri", "vieri"]), // no entry of its own: both readings from vier
+    ("viere", &["vẹre", "viere"]), // the boar's vocative (default), păzitor de vie's
+    ("vierea", &[]),               // the noun (a via): vi-e-rea only
+    ("agreare", &[]),              // the rules-only agrēre is no alternative
+    ("zzoa", &[]),                 // an unknown word with one spelling has no switch
     ("alineează", &["aliniėză", "alineēză"]), // obsolete: the current form, then its own (a-li-ne-a)
     ("alineez", &["aliniez", "alineez"]),
     ("alineară", &["aliniară", "alineară"]),
@@ -946,6 +956,7 @@ const TEXTS: &[(&str, bool, &str, &[&str], bool)] = &[
     ("Real teatru", false, "Real teatru", &[], true),
     ("Știam", false, "Știam", &[], true),   // the verb flag reaches the derivation
     ("menție", false, "menție", &[], true), // a headword beats a derived form
+    ("vierea", false, "vierē", &[], true),  // the noun viere (a via) keeps its hiatus
     // unknown forms of a known -iesc lemma
     (
         "harabagiasca harabagiască harabagiești",
@@ -955,6 +966,7 @@ const TEXTS: &[(&str, bool, &str, &[&str], bool)] = &[
         true,
     ),
     ("zzgiasca", false, "zzgiasca", &["zzgiasca"], true), // no known lemma: rules alone
+    ("neant", false, "neant", &["neant"], true),          // unknown, but SYLLABIFICATIONS: ne-ant, not the rules
     ("şoarece", false, "șōrece", &[], true),              // cedilla input
     ("casa mare", false, "casa mare", &[], true),         // no candidate: never looked up
     ("zzoa soare", false, "zzō sōre", &["zzoa"], true),   // unknown: rules alone

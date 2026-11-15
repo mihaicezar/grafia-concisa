@@ -2,7 +2,7 @@
 
 // The lists of the rule files of reguli/, compiled by the build script (codegen.rs); the files'
 // comments say what each holds: SYLLABIFICATIONS (silabisiri.yaml), each word with its
-// readings, the default first; OBSOLETE (invechite.yaml: lemme), each (lema, actuala, tulpina,
+// readings, the default first; OBSOLETE (invechite.yaml: leme), each (lema, actuala, tulpina,
 // fara_forme); and one constant per list of words, which grafia_reguli::LISTS names with its
 // file and key (IARE_KEPT, NAMES, AE_OE, ...).
 include!(concat!(env!("OUT_DIR"), "/reguli.rs"));

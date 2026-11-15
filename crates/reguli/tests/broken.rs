@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use grafia_reguli::{
-    LEMME, LISTS, Level, Message, SILABISIRI, default_dir, files, list, load, load_texts, read_texts, rust, shown,
+    LEME, LISTS, Level, Message, SILABISIRI, default_dir, files, list, load, load_texts, read_texts, rust, shown,
 };
 
 // (file, its text, the messages it gives, by line). The other files are those of reguli/.
@@ -20,7 +20,7 @@ const BROKEN: &[(&str, &str, &[&str])] = &[
     ("a-i.yaml", "radacini_cu_a: român: rumân", &["reguli/a-i.yaml:1:21: eroare: YAML greșit: „:” nu poate sta aici; verifică indentarea, sau pune cuvântul între ghilimele."]),
     ("a-i.yaml", "radacini_cu_a:\n\t- român", &["reguli/a-i.yaml:2:2: eroare: YAML greșit: un tab; indentează numai cu spații."]),
     ("a-i.yaml", "radacini_cu_a: ['român]", &["reguli/a-i.yaml:1:17: eroare: YAML greșit: ghilimelele nu sunt închise."]),
-    ("invechite.yaml", "lemme:\n  - lema: a-li-ne-a\n   actuala: alinia\niare_pastrate: []", &["reguli/invechite.yaml:3:11: eroare: YAML greșit: indentarea nu se potrivește cu a rândurilor de deasupra."]),
+    ("invechite.yaml", "leme:\n  - lema: a-li-ne-a\n   actuala: alinia\niare_pastrate: []", &["reguli/invechite.yaml:3:11: eroare: YAML greșit: indentarea nu se potrivește cu a rândurilor de deasupra."]),
     ("a-i.yaml", "radacini_cu_a: [român] rumân", &["reguli/a-i.yaml:1:24: eroare: YAML greșit: după valoare urmează altceva decât o cheie nouă; verifică parantezele și indentarea."]),
     ("a-i.yaml", "radacini_cu_a: @român", &["reguli/a-i.yaml:1:16: eroare: YAML greșit: acest caracter nu poate începe o valoare; pune cuvântul între ghilimele."]),
     ("a-i.yaml", "radacini_cu_a: 'român'x", &["reguli/a-i.yaml:1:23: eroare: YAML greșit: text în plus după ghilimele."]),
@@ -65,7 +65,7 @@ const BROKEN: &[(&str, &str, &[&str])] = &[
     ("necunoscute.yaml", "iesc: [eîti]", &["reguli/necunoscute.yaml:1:8: avertisment: „eîti” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles."]),
     ("necunoscute.yaml", "iesc: [îști, escî, î, îî]", &[]),
     ("silabisiri.yaml", "neînțeles: ne-în-țe-les", &["reguli/silabisiri.yaml:1:1: avertisment: „neînțeles” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles."]),
-    ("invechite.yaml", "lemme:\n  - {lema: ne-în-țe-les, actuala: neînțelegere, tulpina: neînț}\niare_pastrate: []", &["reguli/invechite.yaml:2:12: avertisment: „ne-în-țe-les” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles.", "reguli/invechite.yaml:2:35: avertisment: „neînțelegere” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles."]),
+    ("invechite.yaml", "leme:\n  - {lema: ne-în-țe-les, actuala: neînțelegere, tulpina: neînț}\niare_pastrate: []", &["reguli/invechite.yaml:2:12: avertisment: „ne-în-țe-les” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles.", "reguli/invechite.yaml:2:35: avertisment: „neînțelegere” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles."]),
     // silabisiri.yaml
     ("silabisiri.yaml", "# nimic", &["reguli/silabisiri.yaml: eroare: fișierul nu are nicio silabisire."]),
     ("silabisiri.yaml", "", &["reguli/silabisiri.yaml: eroare: fișierul nu are nicio silabisire."]),
@@ -81,19 +81,19 @@ const BROKEN: &[(&str, &str, &[&str])] = &[
     ("silabisiri.yaml", "vier: [vier, vier]", &["reguli/silabisiri.yaml:1:14: eroare: silabisirea „vier” apare de două ori la „vier”."]),
     ("silabisiri.yaml", "vier: [vier, vi-er, vie-r]", &[]),
     // invechite.yaml
-    ("invechite.yaml", "lemme: a-li-ne-a\niare_pastrate: []", &["reguli/invechite.yaml:1:1: eroare: „lemme” e o listă de leme învechite, fiecare cu lema, actuala și tulpina ei."]),
-    ("invechite.yaml", "lemme: [a-li-ne-a]\niare_pastrate: []", &["reguli/invechite.yaml:1:9: eroare: o lemă din „lemme” are cheile lema, actuala, tulpina și, dacă e cazul, fara_forme."]),
-    ("invechite.yaml", "lemme: [{}]\niare_pastrate: []", &["reguli/invechite.yaml:1:9: eroare: lipsește cheia „lema”.", "reguli/invechite.yaml:1:9: eroare: lipsește cheia „actuala”.", "reguli/invechite.yaml:1:9: eroare: lipsește cheia „tulpina”."]),
-    ("invechite.yaml", "lemme:\n  - {lema: a-li-ne-a, actual: alinia, tulpina: aline}\niare_pastrate: []", &["reguli/invechite.yaml:2:6: eroare: lipsește cheia „actuala”.", "reguli/invechite.yaml:2:23: eroare: „actual” nu e o cheie cunoscută aici; cheile sunt lema, actuala, tulpina și fara_forme."]),
-    ("invechite.yaml", "lemme:\n  - {lema: a-li-ne-a, actuala: [alinia], tulpina: aline}\niare_pastrate: []", &["reguli/invechite.yaml:2:23: eroare: „actuala” are un singur cuvânt, nu o listă."]),
-    ("invechite.yaml", "lemme:\n  - {lema: a-li-ne-a, actuala: alinia, tulpina: aline, fara_forme: da}\niare_pastrate: []", &["reguli/invechite.yaml:2:68: eroare: „fara_forme” e true sau false, nu „da”."]),
-    ("invechite.yaml", "lemme:\n  - {lema: a-li-ne-a, actuala: alinia, tulpina: aline, fara_forme: false}\n  - {lema: a-li-ni, actuala: alina, tulpina: alin, fara_forme: true}\niare_pastrate: []", &[]),
-    ("invechite.yaml", "lemme:\n  - {lema: a-li-ne-a, actuala: alinia, tulpina: alni}\niare_pastrate: []", &["reguli/invechite.yaml:2:49: eroare: tulpina „alni” nu e începutul lemei „alinea”."]),
-    ("invechite.yaml", "lemme:\n  - {lema: a-li-ne-a, actuala: a-li-nia, tulpina: aline}\niare_pastrate: []", &["reguli/invechite.yaml:2:32: eroare: „a-li-nia” are o cratimă; cratimele despart doar silabele unei silabisiri."]),
-    ("invechite.yaml", "lemme:\n  - {lema: a-li-ne-ş, actuala: alinia, tulpina: aline}\niare_pastrate: []", &["reguli/invechite.yaml:2:12: eroare: „a-li-ne-ş” are ş cu sedilă; scrie ș, cu virgulă."]),
-    ("invechite.yaml", "lemme:\n  - {lema: a-li-ne-a-, actuala: alinia, tulpina: aline}\niare_pastrate: []", &["reguli/invechite.yaml:2:12: eroare: „a-li-ne-a-” are o silabă goală: o cratimă la început, la sfârșit sau două la rând."]),
-    ("invechite.yaml", "lemme:\n  - {lema: a-li-ne-a, actuala: alinia, tulpina: aline}\n  - {lema: a-lin-e-a, actuala: alina, tulpina: alin}\niare_pastrate: []", &["reguli/invechite.yaml:3:12: eroare: lema „alinea” apare de două ori în „lemme” (întâi la rândul 2); păstreaz-o o singură dată."]),
-    ("invechite.yaml", "lemme: []\niare_pastrate: [fiare, fiere]", &["reguli/invechite.yaml:2:24: eroare: „fiere” nu se termină în -iare, ca toate cuvintele din „iare_pastrate”."]),
+    ("invechite.yaml", "leme: a-li-ne-a\niare_pastrate: []", &["reguli/invechite.yaml:1:1: eroare: „leme” e o listă de leme învechite, fiecare cu lema, actuala și tulpina ei."]),
+    ("invechite.yaml", "leme: [a-li-ne-a]\niare_pastrate: []", &["reguli/invechite.yaml:1:8: eroare: o lemă din „leme” are cheile lema, actuala, tulpina și, dacă e cazul, fara_forme."]),
+    ("invechite.yaml", "leme: [{}]\niare_pastrate: []", &["reguli/invechite.yaml:1:8: eroare: lipsește cheia „lema”.", "reguli/invechite.yaml:1:8: eroare: lipsește cheia „actuala”.", "reguli/invechite.yaml:1:8: eroare: lipsește cheia „tulpina”."]),
+    ("invechite.yaml", "leme:\n  - {lema: a-li-ne-a, actual: alinia, tulpina: aline}\niare_pastrate: []", &["reguli/invechite.yaml:2:6: eroare: lipsește cheia „actuala”.", "reguli/invechite.yaml:2:23: eroare: „actual” nu e o cheie cunoscută aici; cheile sunt lema, actuala, tulpina și fara_forme."]),
+    ("invechite.yaml", "leme:\n  - {lema: a-li-ne-a, actuala: [alinia], tulpina: aline}\niare_pastrate: []", &["reguli/invechite.yaml:2:23: eroare: „actuala” are un singur cuvânt, nu o listă."]),
+    ("invechite.yaml", "leme:\n  - {lema: a-li-ne-a, actuala: alinia, tulpina: aline, fara_forme: da}\niare_pastrate: []", &["reguli/invechite.yaml:2:68: eroare: „fara_forme” e true sau false, nu „da”."]),
+    ("invechite.yaml", "leme:\n  - {lema: a-li-ne-a, actuala: alinia, tulpina: aline, fara_forme: false}\n  - {lema: a-li-ni, actuala: alina, tulpina: alin, fara_forme: true}\niare_pastrate: []", &[]),
+    ("invechite.yaml", "leme:\n  - {lema: a-li-ne-a, actuala: alinia, tulpina: alni}\niare_pastrate: []", &["reguli/invechite.yaml:2:49: eroare: tulpina „alni” nu e începutul lemei „alinea”."]),
+    ("invechite.yaml", "leme:\n  - {lema: a-li-ne-a, actuala: a-li-nia, tulpina: aline}\niare_pastrate: []", &["reguli/invechite.yaml:2:32: eroare: „a-li-nia” are o cratimă; cratimele despart doar silabele unei silabisiri."]),
+    ("invechite.yaml", "leme:\n  - {lema: a-li-ne-ş, actuala: alinia, tulpina: aline}\niare_pastrate: []", &["reguli/invechite.yaml:2:12: eroare: „a-li-ne-ş” are ş cu sedilă; scrie ș, cu virgulă."]),
+    ("invechite.yaml", "leme:\n  - {lema: a-li-ne-a-, actuala: alinia, tulpina: aline}\niare_pastrate: []", &["reguli/invechite.yaml:2:12: eroare: „a-li-ne-a-” are o silabă goală: o cratimă la început, la sfârșit sau două la rând."]),
+    ("invechite.yaml", "leme:\n  - {lema: a-li-ne-a, actuala: alinia, tulpina: aline}\n  - {lema: a-lin-e-a, actuala: alina, tulpina: alin}\niare_pastrate: []", &["reguli/invechite.yaml:3:12: eroare: lema „alinea” apare de două ori în „leme” (întâi la rândul 2); păstreaz-o o singură dată."]),
+    ("invechite.yaml", "leme: []\niare_pastrate: [fiare, fiere]", &["reguli/invechite.yaml:2:24: eroare: „fiere” nu se termină în -iare, ca toate cuvintele din „iare_pastrate”."]),
     // ee.yaml
     ("ee.yaml", "nume: [andreea, darclee, maria]\nae_oe: []\neea_neschimbate: []\nfara_masculin: []", &["reguli/ee.yaml:1:26: eroare: „maria” nu se termină în -eea, -ee sau -oe, ca toate cuvintele din „nume”."]),
     ("ee.yaml", "nume: []\nae_oe: [nae, noe, vita]\neea_neschimbate: []\nfara_masculin: []", &["reguli/ee.yaml:2:19: eroare: „vita” nu se termină în -ae sau -oe, ca toate cuvintele din „ae_oe”."]),
@@ -113,15 +113,15 @@ const BROKEN: &[(&str, &str, &[&str])] = &[
     ("a-i.yaml", "radacini_cu_a:\n  - român\n  -\n  - rumân", &["reguli/a-i.yaml:1:1: eroare: „radacini_cu_a” are un element gol."]),
     ("silabisiri.yaml", "neant:\npiei: piei", &["reguli/silabisiri.yaml:1:1: eroare: „neant” nu are nicio silabisire."]),
     ("silabisiri.yaml", "vier: [vier, '']", &["reguli/silabisiri.yaml:1:1: eroare: „vier” are o silabisire goală."]),
-    ("invechite.yaml", "lemme:\n  - lema:\n    actuala: alinia\n    tulpina: aline\niare_pastrate: []", &["reguli/invechite.yaml:2:5: eroare: „lema” nu are nicio valoare."]),
-    ("invechite.yaml", "lemme:\n  - lema: a-li-ne-a\n    actuala: alinia\n    tulpina: aline\n    fara_forme:\niare_pastrate: []", &["reguli/invechite.yaml:5:5: eroare: „fara_forme” nu are nicio valoare."]),
+    ("invechite.yaml", "leme:\n  - lema:\n    actuala: alinia\n    tulpina: aline\niare_pastrate: []", &["reguli/invechite.yaml:2:5: eroare: „lema” nu are nicio valoare."]),
+    ("invechite.yaml", "leme:\n  - lema: a-li-ne-a\n    actuala: alinia\n    tulpina: aline\n    fara_forme:\niare_pastrate: []", &["reguli/invechite.yaml:5:5: eroare: „fara_forme” nu are nicio valoare."]),
     // a byte order mark (UTF-8 with BOM) is no character of the file
     ("a-i.yaml", "\u{feff}# rădăcinile\nradacini_cu_a: [român, rumân]", &[]),
     ("silabisiri.yaml", "\u{feff}neant: ne-ant", &[]),
     ("necunoscute.yaml", "\u{feff}iesc: [eşti]", &["reguli/necunoscute.yaml:1:8: eroare: „eşti” are ş cu sedilă; scrie ș, cu virgulă."]),
     // without forms, the current lemma has at least the stem's letters: its stem is as long
-    ("invechite.yaml", "lemme:\n  - {lema: ra-chi-a-rea-să, actuala: rachier, tulpina: rachiare, fara_forme: true}\niare_pastrate: []", &["reguli/invechite.yaml:2:38: eroare: „rachier” are mai puțin de 8 litere, câte are tulpina „rachiare”: tulpina actuală e începutul lui, de aceeași lungime."]),
-    ("invechite.yaml", "lemme:\n  - {lema: ra-chi-a-rea-să, actuala: rachiere, tulpina: rachiare, fara_forme: true}\n  - {lema: ra-chi-a-rea-să-ă, actuala: rachier, tulpina: rachiare}\niare_pastrate: []", &[]),
+    ("invechite.yaml", "leme:\n  - {lema: ra-chi-a-rea-să, actuala: rachier, tulpina: rachiare, fara_forme: true}\niare_pastrate: []", &["reguli/invechite.yaml:2:38: eroare: „rachier” are mai puțin de 8 litere, câte are tulpina „rachiare”: tulpina actuală e începutul lui, de aceeași lungime."]),
+    ("invechite.yaml", "leme:\n  - {lema: ra-chi-a-rea-să, actuala: rachiere, tulpina: rachiare, fara_forme: true}\n  - {lema: ra-chi-a-rea-să-ă, actuala: rachier, tulpina: rachiare}\niare_pastrate: []", &[]),
     // files that are no YAML, or hidden, are left alone; a YAML file must be a rule file
     ("notes.txt", "x", &[]),
     (".ee.yaml", "x", &[]),
@@ -173,7 +173,7 @@ fn lists() {
                 .all(|o| o.constant != l.constant && (o.file, o.key) != (l.file, l.key)),
             "{l:?}"
         );
-        assert!(l.file != SILABISIRI && (l.file, l.key) != LEMME, "{l:?}");
+        assert!(l.file != SILABISIRI && (l.file, l.key) != LEME, "{l:?}");
         assert!(l.plus.is_none_or(|(key, _)| list(l.file, key).is_some()), "{l:?}");
     }
     assert!(list("ee.yaml", "ae_oe").is_some_and(|l| l.plus == Some(("nume", "oe"))));
@@ -362,7 +362,7 @@ fn rust_code() {
         ("silabisiri.yaml", "neant: ne-ant\nvier: [vier, vi-er]"),
         (
             "invechite.yaml",
-            "lemme:\n  - {lema: a-li-ne-a, actuala: alinia, tulpina: aline}\n  - {lema: ra-chi-a-rea-să, actuala: rachiereasă, tulpina: rachiare, fara_forme: true}\niare_pastrate: [fiare]",
+            "leme:\n  - {lema: a-li-ne-a, actuala: alinia, tulpina: aline}\n  - {lema: ra-chi-a-rea-să, actuala: rachiereasă, tulpina: rachiare, fara_forme: true}\niare_pastrate: [fiare]",
         ),
         (
             "ee.yaml",

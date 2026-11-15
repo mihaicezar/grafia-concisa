@@ -21,7 +21,7 @@ pub use rust::rust;
 /// The file of Cezar's syllabifications, which maps words to their syllabifications.
 pub const SILABISIRI: &str = "silabisiri.yaml";
 /// The obsolete lemmas: their file and key.
-pub const LEMME: (&str, &str) = ("invechite.yaml", "lemme");
+pub const LEME: (&str, &str) = ("invechite.yaml", "leme");
 
 /// A list of words of a rule file: its file and key, the constant of the core's `rules` it
 /// compiles to (`&[&str]`), what each of its words must be, and the words of another list that
@@ -64,10 +64,10 @@ pub const LISTS: [List; 8] = [
     List { file: "necunoscute.yaml", key: "iesc", constant: "IESC_ENDINGS", shape: Shape::Any, plus: None },
 ];
 
-/// The rule files, in the order of their messages: `SILABISIRI`, `LEMME`'s file, then the files
+/// The rule files, in the order of their messages: `SILABISIRI`, `LEME`'s file, then the files
 /// of `LISTS`.
 pub fn files() -> Vec<&'static str> {
-    let mut files = vec![SILABISIRI, LEMME.0];
+    let mut files = vec![SILABISIRI, LEME.0];
     for list in &LISTS {
         if !files.contains(&list.file) {
             files.push(list.file);
@@ -103,7 +103,7 @@ pub struct Value {
     pub col: usize,
 }
 
-/// An obsolete lemma, from `lemme` in `invechite.yaml`.
+/// An obsolete lemma, from `leme` in `invechite.yaml`.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Obsolete {
     /// The lemma, syllabified: a-li-ne-a.
@@ -121,8 +121,8 @@ pub struct Obsolete {
 pub struct Rules {
     /// `silabisiri.yaml`: each word, with its syllabifications, the default first.
     pub silabisiri: Vec<(Value, Vec<Value>)>,
-    /// `lemme` in `invechite.yaml`.
-    pub lemme: Vec<Obsolete>,
+    /// `leme` in `invechite.yaml`.
+    pub leme: Vec<Obsolete>,
     /// The words written in each list of `LISTS`, by its constant.
     pub lists: BTreeMap<&'static str, Vec<Value>>,
 }

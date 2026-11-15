@@ -4,7 +4,7 @@ use marked_yaml::types::MarkedMappingNode;
 
 use crate::yaml::{At, File, VOWELS, duplicates, join, node_at, value};
 use crate::{
-    LEMME, LISTS, Level, List, Message, Obsolete, Rules, SILABISIRI, Shape, Texts, Value, files, is_yaml, list,
+    LEME, LISTS, Level, List, Message, Obsolete, Rules, SILABISIRI, Shape, Texts, Value, files, is_yaml, list,
 };
 
 /// The rules of the files in `texts`, by name (None: a file that couldn't be read, already in
@@ -44,13 +44,13 @@ pub(crate) fn read(texts: &Texts, mut messages: Vec<Message>, dir: &str) -> (Opt
         }
         let lists: Vec<&List> = LISTS.iter().filter(|l| l.file == name).collect();
         let mut keys: Vec<&str> = Vec::new();
-        if name == LEMME.0 {
-            keys.push(LEMME.1);
+        if name == LEME.0 {
+            keys.push(LEME.1);
         }
         keys.extend(lists.iter().map(|l| l.key));
         let fields = f.fields(&map, &keys, &[], (0, 0));
-        if let Some((key, node)) = fields.get(LEMME.1) {
-            rules.lemme = lemme(&mut f, key, node);
+        if let Some((key, node)) = fields.get(LEME.1) {
+            rules.leme = leme(&mut f, key, node);
         }
         for list in &lists {
             if let Some((key, node)) = fields.get(list.key) {
@@ -219,21 +219,21 @@ fn silabisiri(f: &mut File, map: &MarkedMappingNode, rules: &mut Rules) {
     }
 }
 
-/// `lemme` in `invechite.yaml`: each obsolete lemma, with its current lemma and its stem.
-fn lemme(f: &mut File, key: &Value, node: &Node) -> Vec<Obsolete> {
+/// `leme` in `invechite.yaml`: each obsolete lemma, with its current lemma and its stem.
+fn leme(f: &mut File, key: &Value, node: &Node) -> Vec<Obsolete> {
     let Some(seq) = node.as_sequence() else {
         f.error(
             key.at(),
-            "„lemme” e o listă de leme învechite, fiecare cu lema, actuala și tulpina ei.".into(),
+            "„leme” e o listă de leme învechite, fiecare cu lema, actuala și tulpina ei.".into(),
         );
         return Vec::new();
     };
-    let mut lemme = Vec::new();
+    let mut leme = Vec::new();
     for item in seq.iter() {
         let Some(map) = item.as_mapping() else {
             f.error(
                 node_at(item),
-                "o lemă din „lemme” are cheile lema, actuala, tulpina și, dacă e cazul, fara_forme.".into(),
+                "o lemă din „leme” are cheile lema, actuala, tulpina și, dacă e cazul, fara_forme.".into(),
             );
             continue;
         };
@@ -290,23 +290,23 @@ fn lemme(f: &mut File, key: &Value, node: &Node) -> Vec<Obsolete> {
                 ),
             );
         }
-        lemme.push(Obsolete {
+        leme.push(Obsolete {
             lema,
             actuala,
             tulpina,
             fara_forme,
         });
     }
-    let lemmas: Vec<Value> = lemme.iter().map(|o| o.lema.clone()).collect();
+    let lemmas: Vec<Value> = leme.iter().map(|o| o.lema.clone()).collect();
     for (first, again) in duplicates(&lemmas, |l| l.text.replace('-', "")) {
         f.error(
             again.at(),
             format!(
-                "lema „{}” apare de două ori în „lemme” (întâi la rândul {}); păstreaz-o o singură dată.",
+                "lema „{}” apare de două ori în „leme” (întâi la rândul {}); păstreaz-o o singură dată.",
                 again.text.replace('-', ""),
                 first.line
             ),
         );
     }
-    lemme
+    leme
 }

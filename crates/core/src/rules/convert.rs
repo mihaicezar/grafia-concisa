@@ -54,8 +54,9 @@ pub struct Resolution {
 
 /// Normalized candidate words -> their resolution.
 ///
-/// Words missing from the database are converted by rules alone (concise_by_rules),
-/// and are unknown unless they have no digraph or -ee ending (zziăr: nothing to change).
+/// Words missing from the database are converted by rules alone (concise_by_rules;
+/// a word of SYLLABIFICATIONS by its first reading, neant), and are unknown unless
+/// they have no digraph or -ee ending (zziăr: nothing to change).
 /// Their lemma candidates are looked up with known_lemmas. One with an obsolete stem
 /// (OBSOLETE) is converted with the current stem, and its own spelling, from the
 /// obsolete lemma's syllabification, is the alternative (rachiareasa: rachierēsa or

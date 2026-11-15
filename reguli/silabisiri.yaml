@@ -3,18 +3,30 @@
 # oricare i-ar fi lema: înregistrările altor leme nu adaugă niciuna.
 # Mai multe silabisiri fac un omograf: prima e cea implicită, celelalte sunt oferite
 # ca alternative.
+#
+# Formele flexionare nu trebuie trecute aici: fiecare își ia despărțirea de la lema ei.
+# - Lemele de aici o dau formelor lor: vierului ← vier (vẹrului sau vierului), coastele ←
+#   coastă (cōstele), neantului ← neant.
+# - Celelalte leme o au din dexonline sau din reguli: înfierii ← înfiere (dexonline:
+#   în-fi-e-re), nu ← înfieri; pieilor ← piele (după reguli), nu ← piei.
+# - Un cuvânt care lipsește din dexonline e semnalat ca necunoscut și e despărțit de reguli:
+#   răspierim → răspẹrim (dexonline dă doar răspieri, fără forme). Trecut aici, ar lua doar
+#   prima lui silabisire, și tot ar fi semnalat.
+# O formă se trece aici doar când lemele ei i-ar da grafii greșite: fără intrarea ei, piei
+# ar fi doar pi-ei, genitivul lui pia (pi-a, regionalism pentru piuă), căci silabisirea
+# lui pia din dexonline bate regulile lui piele și pieri.
 
 neant: ne-ant
 înfieri: în-fi-eri
 mielea: mi-e-lea             # al mielea, ca al miilea
-piei: piei                   # nu pi-ei (← pia)
+piei: [piei, pi-ei]          # ← piele, pieri; pi-ei ← pia (piuă)
 răspieri: răs-pieri          # răspĭér (un verb, nu un infinitiv lung)
+# vier dă și vocativul viere (vẹre sau viere); substantivul viere (← a via) are hiat (vierea).
 vier: [vier, vi-er]          # vierul; păzitor de vie (rar)
-vieri: [vieri, vi-eri]
-viere: vi-e-re               # vocativul lui vi-er (păzitor de vie), nu al lui vier (porcul)
-ia: [ia, i-a]                # verbul lua, interjecția; ie articulat
-miază: [mia-ză, mi-a-ză]     # amiază; miaza (boala)
+ia: [ia, i-a]                # verbul a lua, interjecția; ie articulat
+iei: [iei, i-ei]             # verbul a lua; ie la genitiv; nenecesar, dar fixează ordinea.
 ie: i-e                      # doar hiat (articulat: i-a)
+miază: [mia-ză, mi-a-ză]     # amiază; miaza (boala)
 
 # co- urmat de un cuvânt cunoscut, dar care nu e prefix aici
 coardă: coar-dă

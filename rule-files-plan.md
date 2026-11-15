@@ -1,6 +1,6 @@
 # grafia concisă — rule files plan
 
-**Status:** proposed on 2026-11-11. Stage 0 done on 2026-11-12, its `reguli/` entries of `CLAUDE.md` with stage 2. Stage 1 implemented on 2026-11-12, and the release `dexonline-2026-11-11` published. CI's first build from it gave the MariaDB build of the dump of 2026-11-12, byte for byte (`web/grafia.dat: sha256 13a6afe8550fbb50e7995fd08060a28370ad09610bd681ca13c40784d2f5019e`). Stage 1's gate passed on 2026-11-12: the test pull request #2 (*coajă* `co-a-jă`) listed *coajă* and *coaja* in its comment, and its revert no change. Stage 2 implemented on 2026-11-12: a temporary test found the generated constants equal to the old ones before these went, and on 2026-11-13 each list of words was declared once (`grafia_reguli::LISTS`), the regex `A_KEPT` became the list `A_ROOTS`, and the names in -oe left `ae_oe`, which holds them from `nume` (the first point of stage 7); the local `grafia.dat` differs from the one of the old constants only in the rules hash and the checksum; the gate waits for CI's diff on its pull request, which also carries Cezar's corrections of *înfieri* (`în-fi-eri`), *răspieri* (`răs-pieri`) and *vieri* (`vi-eri`), which change no spelling. Each stage ends with a gate, and the next one starts only once it passes. The plan is deleted when its last stage is done, like `rust-port-plan.md`. `DECISIONS.md` prevails over it.
+**Status:** proposed on 2026-11-11. Stage 0 done on 2026-11-12, its `reguli/` entries of `CLAUDE.md` with stage 2. Stage 1 implemented on 2026-11-12, and the release `dexonline-2026-11-11` published. CI's first build from it gave the MariaDB build of the dump of 2026-11-12, byte for byte (`web/grafia.dat: sha256 13a6afe8550fbb50e7995fd08060a28370ad09610bd681ca13c40784d2f5019e`). Stage 1's gate passed on 2026-11-12: the test pull request #2 (*coajă* `co-a-jă`) listed *coajă* and *coaja* in its comment, and its revert no change. Stage 2 implemented on 2026-11-12: a temporary test found the generated constants equal to the old ones before these went, and on 2026-11-13 each list of words was declared once (`grafia_reguli::LISTS`), the regex `A_KEPT` became the list `A_ROOTS`, and the names in -oe left `ae_oe`, which holds them from `nume` (the first point of stage 7); the local `grafia.dat` differs from the one of the old constants only in the rules hash and the checksum; the gate waits for CI's diff on its pull request, which also carries Cezar's corrections of *înfieri* (`în-fi-eri`), *răspieri* (`răs-pieri`) and *vieri* (`vi-eri`), which change no spelling, and his decisions of 2026-11-14 on *iei*, *piei* and *viere* (`DECISIONS.md`), which change only these three forms: their diff lists them alone. Each stage ends with a gate, and the next one starts only once it passes. The plan is deleted when its last stage is done, like `rust-port-plan.md`. `DECISIONS.md` prevails over it.
 
 ## Goal
 
@@ -57,7 +57,7 @@ What a rule can cite, and what the pipeline can read, was checked on the dump an
 | Today (`crates/core/src/rules/`) | File (`reguli/`) | Key | Stage |
 |---|---|---|---|
 | `SYLLABIFICATIONS` | `silabisiri.yaml` | (a map: word → syllabifications) | 2 |
-| `OBSOLETE`, `IARE_KEPT` | `invechite.yaml` | `lemme`, `iare_pastrate` | 2 |
+| `OBSOLETE`, `IARE_KEPT` | `invechite.yaml` | `leme`, `iare_pastrate` | 2 |
 | `NAMES`, `AE_OE`, `EEA_UNCHANGED`, `EE_NOT_MASCULINE` | `ee.yaml` | `nume`, `ae_oe`, `eea_neschimbate`, `fara_masculin` | 2 |
 | `NO_CONVERT` | `neconvertite.yaml` | `nume_latine` | 2 |
 | `A_ROOTS` (before stage 2, the regex `A_KEPT`: `r[ou]mân`) | `a-i.yaml` | `radacini_cu_a` | 2 |
@@ -133,7 +133,7 @@ vier: [vier, vi-er]        # vierul; păzitor de vie (rar)
 coastă: coas-tă            # co- nu e prefix aici
 
 # invechite.yaml
-lemme:
+leme:
   - lema: a-li-ne-a        # silabisită: dă grafia ei proprie (alineēză)
     actuala: alinia
     tulpina: aline
@@ -141,7 +141,7 @@ lemme:
     actuala: rachiereasă
     tulpina: rachiare
     fara_forme: true       # dexonline o dă fără forme (implicit: false)
-iare_pastrate: [fiare, mobiliare]              # lemme în -iare care nu sunt infinitive lungi
+iare_pastrate: [fiare, mobiliare]              # leme în -iare care nu sunt infinitive lungi
 
 # ee.yaml
 nume: [andreea, medeea, leea, zoe, cloe]       # nume feminine de persoane

@@ -23,7 +23,7 @@ O formă poate avea mai multe grafii concise corecte. Are întotdeauna una impli
 
 Un cuvânt-titlu își folosește propria despărțire. Orice altă formă flexionară își ia tăieturile din despărțirea lemei (vezi tabelul de deducție de mai jos).
 
-Despărțirea unei leme este cea explicită a lui Cezar, dacă există (`silabisiri.yaml`: *neant* `ne-ant`, *coastă* `coas-tă`, *mielea* `mi-e-lea`, *înfieri* `în-fi-eri`, *răspieri* `răs-pieri`, ...; o intrare poate avea mai multe citiri, iar prima e cea implicită: *miază* `mia-ză` / `mi-a-ză`, *vier* `vier` / `vi-er`). Altfel este despărțirea din dexonline, completată de regulile de rezervă. Cuvântul *ie* are doar citirea `i-e` și rămâne *ie*, fără alternativă. O formă trecută acolo își ia toate grafiile de acolo, oricare i-ar fi lema: *piei* e doar *pẹi* (nu și *piei* ← *pia* `pi-a`).
+Despărțirea unei leme este cea explicită a lui Cezar, dacă există (`silabisiri.yaml`: *neant* `ne-ant`, *coastă* `coas-tă`, *mielea* `mi-e-lea`, *înfieri* `în-fi-eri`, *răspieri* `răs-pieri`, ...; o intrare poate avea mai multe citiri, iar prima e cea implicită: *miază* `mia-ză` / `mi-a-ză`, *vier* `vier` / `vi-er`). Altfel este despărțirea din dexonline, completată de regulile de rezervă. Cuvântul *ie* are doar citirea `i-e` și rămâne *ie*, fără alternativă. O formă trecută acolo își ia toate grafiile de acolo, oricare i-ar fi lema, cu cea implicită prima: *piei* `piei` / `pi-ei` e *pẹi* (← *piele*, *pieri*), apoi *piei* (← *pia*), deși după înregistrările ei *piei* ← *pia* `pi-a`, susținut de dexonline, i-ar fi singura grafie.
 
 - **Despărțirea din dexonline.** Se folosește doar prima variantă. Poate fi completă (`fa-mi-li-e`), un final de cuvânt (`-li-e`), un început de cuvânt (`a-ce-tal-`) sau un interior de cuvânt (`-pioa-`). În porțiunea pe care o acoperă, tăieturile ei au întotdeauna prioritate față de reguli. O despărțire care nu se potrivește cu cuvântul e ignorată.
 - **Regulile de rezervă.** În rest, regulile pun doar tăieturi între două vocale, pentru că grafia concisă nu folosește altele. Regulile sunt incomplete și vor fi îmbunătățite:
@@ -121,10 +121,11 @@ Se aplică fiecărui cuvânt după restul conversiei, fie că e în baza de date
 
 O formă ale cărei înregistrări dau grafii diferite este un omograf. Exemple:
 - *ia*: *ė* (verbul *lua*, interjecția) sau *ia* (*ie* articulat, *i-a*);
+- *iei*: *ẹi* (verbul *lua*) sau *iei* (genitivul lui *ie*, *i-ei*);
 - *miază*: *mėză* (amiază, *mia-ză*) sau *miază* (boala, *mi-a-ză*);
 - *curie*: *curẹ* sau *curie*;
 - *liază*: *liază* (substantivul) sau *liėză* (verbul *lia*);
-- *vier*: *vẹr* (porcul, *vier*) sau *vier* (păzitorul de vie, *vi-er*).
+- *vier*: *vẹr* (porcul, *vier*) sau *vier* (păzitorul de vie, *vi-er*), și la fel formele lui (*vẹrul* sau *vierul*), inclusiv vocativul *viere*: *vẹre* (*vie-re*) sau *viere* (*vi-e-re*).
 
 Grafia implicită e cea aleasă după prioritatea de mai sus. Celelalte sunt păstrate în `forms.alternatives` și returnate împreună cu ea: în `segments[].alts` de la `convert` din nucleu și în `alternatives` de la `lookup`, cu cea implicită prima în ambele. Contează doar o grafie susținută de o despărțire explicită, din dexonline sau parțială, cu o excepție: când o înregistrare dă sufixul -ėză/-ėscă/-ėsca (vezi *Sursa despărțirii în silabe*), contează toate grafiile formei. `silabisiri.yaml` poate da mai multe citiri pentru un cuvânt; prima e cea implicită.
 
@@ -136,13 +137,13 @@ Regula -eẹ/aẹ/oẹ nu produce omografe: alegerea ei între singular și plur
 
 O formă învechită se scrie în forma ei actuală, iar grafia ei proprie e oferită pe comutatorul de omografe, după cea actuală, cu o notă de subsol: „Forma *alineare* e învechită; forma actuală e *aliniere*.” În `convert` din nucleu, `obsolete` din segment conține cuvîntul, apoi formele lui actuale, cu majusculele cuvîntului (*Alineare*, *Aliniere*); `lookup` întoarce formele actuale în `obsolete`. Formele învechite sînt:
 - infinitivele lungi în -iare (vezi *Sursa despărțirii în silabe*): *apreciarea* → *aprecierē* sau *apreciarē*;
-- formele lemelor din `invechite.yaml: lemme`, fiecare cu lema ei actuală: *alinea* → *alinia*, *alineare* → *aliniere*, *alini* → *alina*, *rachiareasă* → *rachiereasă*. O formă ia grafia formei lemei actuale cu aceeași flexiune și variantă din dexonline (*alineează* → *aliniėză* ← *aliniază*, *alineez* → *aliniez*), iar grafia ei proprie vine din propria despărțire, trecută cu ea în `invechite.yaml: lemme` (*a-li-ne-a*: *alineēză*, *alineare*; *ra-chi-a-rea-să*: *rachiarēsă*). Cuvintele care încep cu rădăcina uneia (*aline-*, *rachiare-*) sînt căutate și fără grup candidat (*alineez*).
+- formele lemelor din `invechite.yaml: leme`, fiecare cu lema ei actuală: *alinea* → *alinia*, *alineare* → *aliniere*, *alini* → *alina*, *rachiareasă* → *rachiereasă*. O formă ia grafia formei lemei actuale cu aceeași flexiune și variantă din dexonline (*alineează* → *aliniėză* ← *aliniază*, *alineez* → *aliniez*), iar grafia ei proprie vine din propria despărțire, trecută cu ea în `invechite.yaml: leme` (*a-li-ne-a*: *alineēză*, *alineare*; *ra-chi-a-rea-să*: *rachiarēsă*). Cuvintele care încep cu rădăcina uneia (*aline-*, *rachiare-*) sînt căutate și fără grup candidat (*alineez*).
 
 O formă pe care o dă și altă lemă păstrează grafia acelei leme, fără comutator: *alineat* (substantivul), *conciliare* (adjectivul *conciliar*).
 
-O formă a mai multor leme învechite, cu forme actuale diferite, nu se rescrie: comutatorul oferă grafiile ei proprii, cîte una pentru fiecare lemă, în ordinea din `invechite.yaml: lemme`, iar nota numește toate formele actuale. *alineam*, imperfectul și lui *alinea*, și lui *alini*, e *alineam* (*a-li-ne-am*) sau *alinēm* (*a-li-neam*): „Forma *alineam* e învechită; forma actuală e *aliniam* sau *alinam*.”
+O formă a mai multor leme învechite, cu forme actuale diferite, nu se rescrie: comutatorul oferă grafiile ei proprii, cîte una pentru fiecare lemă, în ordinea din `invechite.yaml: leme`, iar nota numește toate formele actuale. *alineam*, imperfectul și lui *alinea*, și lui *alini*, e *alineam* (*a-li-ne-am*) sau *alinēm* (*a-li-neam*): „Forma *alineam* e învechită; forma actuală e *aliniam* sau *alinam*.”
 
-Un cuvînt care lipsește din bază și începe cu rădăcina unei leme învechite pe care dexonline o are fără forme (`fara_forme: true` în `invechite.yaml: lemme`: *rachiareasă*) ia rădăcina lemei actuale și e convertit doar prin reguli (*rachiareasa* → *rachierēsa*); grafia lui proprie vine din despărțirea lemei învechite (*rachiarēsa*). La celelalte leme învechite, care au toate formele în bază, rădăcina ar prinde doar alte cuvinte, care rămîn neschimbate (*Alinei*, de la *Alina*).
+Un cuvînt care lipsește din bază și începe cu rădăcina unei leme învechite pe care dexonline o are fără forme (`fara_forme: true` în `invechite.yaml: leme`: *rachiareasă*) ia rădăcina lemei actuale și e convertit doar prin reguli (*rachiareasa* → *rachierēsa*); grafia lui proprie vine din despărțirea lemei învechite (*rachiarēsa*). La celelalte leme învechite, care au toate formele în bază, rădăcina ar prinde doar alte cuvinte, care rămîn neschimbate (*Alinei*, de la *Alina*).
 
 ## Majuscule
 
@@ -160,7 +161,7 @@ Numele de origine latină nu se convertesc. Un cuvânt e nume latin când e în 
 
 ## Cuvinte necunoscute
 
-Un cuvânt care conține un grup candidat, dar lipsește din baza de date, e convertit doar de regulile de rezervă și e marcat. Cu comutatorul -eẹ/aẹ/oẹ e citit ca singular, cu excepțiile de mai jos.
+Un cuvânt care conține un grup candidat, dar lipsește din baza de date, e convertit doar de regulile de rezervă și e marcat, dacă nu e trecut în `silabisiri.yaml`: atunci își ia de acolo prima despărțire, fără comutator, și tot e marcat (într-o bază de date fără *neant*, *neant* rămâne *neant*, nu *nēnt*). Cu comutatorul -eẹ/aẹ/oẹ e citit ca singular, cu excepțiile de mai jos.
 
 Un cuvânt cu o terminație de adjectiv în -iesc după i (`necunoscute.yaml: iesc`: -iești, -iescu, -iescul, -iescului, -ieștii, -ieștile, -ieștilor, -iască, -iasca) e legat întâi de lema lui: terminația e înlocuită cu -esc, iar dacă rezultă o lemă în -iesc (`iesc_lemmas`), cuvântul e derivat din despărțirea lemei, inclusiv regula sufixului. dexonline are unele dintre aceste adjective fără forme: *harabagiasca* → *harabagiėsca*, *harabagiască* → *harabagiėscă*, *harabagiești* neschimbat (← *harabagi-esc*).
 
@@ -201,7 +202,7 @@ Listele făcute de mână ale regulilor sunt fișiere YAML din `reguli/`, pe car
 | Fișier | Cheie | Ce conține | Fiecare cuvânt |
 |---|---|---|---|
 | `silabisiri.yaml` | (un cuvânt) | despărțirile în silabe ale lui Cezar, `cuvânt: silabisire` sau `cuvânt: [silabisire, ...]`, cea implicită prima (vezi *Sursa despărțirii în silabe*) | are literele cuvântului și nicio silabă goală |
-| `invechite.yaml` | `lemme` | lemele învechite, în ordine, fiecare cu `lema` (despărțită în silabe), `actuala`, `tulpina` și `fara_forme` (`true` sau `false`; implicit `false`), vezi *Forme învechite* | `tulpina` e începutul lui `lema`; cu `fara_forme: true`, `actuala` are cel puțin atâtea litere câte are `tulpina` |
+| `invechite.yaml` | `leme` | lemele învechite, în ordine, fiecare cu `lema` (despărțită în silabe), `actuala`, `tulpina` și `fara_forme` (`true` sau `false`; implicit `false`), vezi *Forme învechite* | `tulpina` e începutul lui `lema`; cu `fara_forme: true`, `actuala` are cel puțin atâtea litere câte are `tulpina` |
 | | `iare_pastrate` | lemele în -iare care nu sunt infinitive lungi (vezi *Sursa despărțirii în silabe*) | se termină în -iare |
 | `ee.yaml` | `nume` | numele feminine de persoane (vezi *Regula opțională -eẹ/aẹ/oẹ*) | se termină în -eea, -ee sau -oe |
 | | `ae_oe` | cuvintele în -ae/-oe ale regulii -eẹ/aẹ/oẹ; numele în -oe din `nume` contează ca fiind ale ei și nu sunt scrise în ea | se termină în -ae sau -oe; nu e un nume în -oe din `nume` |
@@ -214,14 +215,14 @@ Listele făcute de mână ale regulilor sunt fișiere YAML din `reguli/`, pe car
 Formatul:
 - YAML 1.2, în UTF-8, cu sau fără marcaj de ordine a octeților (BOM). Un fișier asociază cheilor lui valorile lor (`silabisiri.yaml` asociază cuvinte), iar fiecare cheie e obligatorie. O listă se scrie `[a, b]` sau câte un `- a` pe rând. Orice valoare e text: `n`, `no`, `on` și `true` sunt cuvinte, nu valori booleene.
 - Cheile sunt ASCII cu litere mici și `_`. Cuvintele se scriu cu litere mici, în ortografia standard: NFC, ș/ț cu virgulă, â în interiorul cuvintelor.
-- Ordinea se păstrează acolo unde contează: silabisirile unui cuvânt și lemele din `lemme`, prima fiind cea implicită.
+- Ordinea se păstrează acolo unde contează: silabisirile unui cuvânt și lemele din `leme`, prima fiind cea implicită.
 - `#` începe un comentariu. Comentariile explică; nu schimbă nicio grafie, iar regulile fișierului de date nu le cuprind (vezi *Date*).
 - Ancorele (`&`), etichetele (`!`) și un al doilea document (`---`, `...`) nu se folosesc.
 
 Verificările la încărcare rulează când e construit nucleul, pe care o eroare îl oprește, și cu `cargo run -p grafia-reguli`, care în CI arată și fiecare mesaj pe rândul lui din pull request. Un mesaj dă fișierul, rândul și coloana, în română: `reguli/ee.yaml:3:30: eroare: „zoş” are ş cu sedilă; scrie ș, cu virgulă.` Ele verifică:
 - sintaxa YAML; cheile, niciuna necunoscută, repetată sau lipsă; tipul fiecărei valori (o listă, un cuvânt, `true` sau `false`) și că niciuna nu e goală, o valoare goală fiind raportată la cheia ei; că `silabisiri.yaml` nu e gol; și că fiecare fișier YAML din `reguli/` e un fișier de reguli (celelalte fișiere, ascunse sau care nu sunt .yaml/.yml, ca .DS_Store sau copia de rezervă a unui editor, sunt lăsate în pace);
 - caracterele: o eroare pentru ş/ţ cu sedilă, ã, o literă descompusă, o majusculă, un spațiu, o cratimă în afara unei silabisiri și orice alt caracter din afara alfabetului românesc; un avertisment pentru î în interiorul unui cuvânt (*neînțeles* e corect);
-- niciun cuvânt de două ori într-o listă, nicio silabisire de două ori la un cuvânt, nicio lemă de două ori în `lemme`;
+- niciun cuvânt de două ori într-o listă, nicio silabisire de două ori la un cuvânt, nicio lemă de două ori în `leme`;
 - fiecare cuvânt așa cum spune tabelul de mai sus.
 
 ## Date
