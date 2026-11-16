@@ -1,0 +1,6 @@
+# Clasele de litere ale contextelor din pasi.yaml și din tabelele de excepții (ante, non_ante,
+# post, non_post): o majusculă ține locul uneia dintre literele sau digrafele ei.
+# C (o consoană: orice literă care nu e vocală) și V (o vocală: a, ă, â, e, i, î, o, u) sunt date;
+# celelalte se definesc aici, fiecare cu o singură majusculă.
+L: [p, b, f, v, m]   # labialele
+P: [c, g, ch, gh]    # palatalele (înainte de i)

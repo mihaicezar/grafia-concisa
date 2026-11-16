@@ -22,6 +22,13 @@ pub use rust::{meta, rust};
 pub const SILABISIRI: &str = "silabisiri.yaml";
 /// The obsolete lemmas: their file and key.
 pub const LEME: (&str, &str) = ("invechite.yaml", "leme");
+/// The classes of letters of the contexts, which map a capital to its letters and digraphs.
+pub const CLASE: &str = "clase.yaml";
+/// The steps of the fallback rules, in order.
+pub const PASI: &str = "pasi.yaml";
+/// The classes that are given, not defined in `CLASE`: C, a consonant (any letter that is not a
+/// vowel), and V, a vowel.
+pub const GIVEN_CLASSES: [char; 2] = ['C', 'V'];
 
 /// A list of words of a rule file: its file and key, the constant of the core's `rules` it
 /// compiles to (`&[&str]`), what each of its words must be, and the words of another list that
@@ -66,8 +73,8 @@ pub const LISTS: [List; 8] = [
 
 /// An exception table of the fallback rules, a file of entries: its file, the constant of the
 /// core's `rules` it compiles to (a `Table`), the pair of vowels its step consults it for, and
-/// whether its entries make that pair a hiatus or a diphthong. The step that consults it is in
-/// the core's `rule_cut`.
+/// whether its entries make that pair a hiatus or a diphthong. The step of `PASI` that consults
+/// it names it in its `tabel`.
 #[derive(Clone, Copy, Debug)]
 pub struct Table {
     pub file: &'static str,
@@ -91,11 +98,13 @@ pub const CONTEXTS: [&str; 4] = ["ante", "non_ante", "post", "non_post"];
 pub const EXEMPLE: &str = "exemple";
 pub const CONTRAEXEMPLE: &str = "contraexemple";
 
-/// The rule files, in the order of their messages: `SILABISIRI`, `LEME`'s file, the files of
-/// `LISTS`, then those of `TABLES`.
+/// The rule files, in the order of their messages, which is also the order they are read in:
+/// `SILABISIRI`, `LEME`'s file, the files of `LISTS`, `CLASE` (which the contexts of the steps
+/// and of the tables use), `PASI`, then the files of `TABLES`.
 pub fn files() -> Vec<&'static str> {
     let mut files = vec![SILABISIRI, LEME.0];
-    for file in LISTS.iter().map(|l| l.file).chain(TABLES.iter().map(|t| t.file)) {
+    let lists = LISTS.iter().map(|l| l.file);
+    for file in lists.chain([CLASE, PASI]).chain(TABLES.iter().map(|t| t.file)) {
         if !files.contains(&file) {
             files.push(file);
         }
@@ -166,6 +175,30 @@ pub struct Entry {
     pub contraexemple: Vec<Value>,
 }
 
+/// A step of `pasi.yaml`: where it starts (its first key), its name, its patterns, contexts and
+/// words (as an entry of a table has them), its prefixes, and what decides it. A key it doesn't
+/// have is an empty list, 0 (`rest_cunoscut`), false (`doar: verb`) or None (`tabel`).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Step {
+    /// Its name, for the trace and the messages.
+    pub pas: Value,
+    /// Its patterns, contexts and words, and where it starts.
+    pub entry: Entry,
+    /// The word starts with one of these, and the pair is the prefix's last vowel and the next
+    /// letter.
+    pub prefixe: Vec<Value>,
+    /// With `prefixe`: the rest of the word is a known word of at least this many letters.
+    pub rest_cunoscut: usize,
+    /// Not when the word starts with one of these, followed by a known word.
+    pub non_prefixe: Vec<Value>,
+    /// `doar: verb`: only in a verb infinitive.
+    pub verb: bool,
+    /// An exception table, by its file: the step applies only where one of its entries does.
+    pub tabel: Option<Value>,
+    /// Whether it makes the pair a hiatus (`rezultat: hiat`) or a diphthong.
+    pub hiat: bool,
+}
+
 /// The rules of the files.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Rules {
@@ -177,6 +210,10 @@ pub struct Rules {
     pub lists: BTreeMap<&'static str, Vec<Value>>,
     /// The entries of each table of `TABLES`, in order, by its file.
     pub tables: BTreeMap<&'static str, Vec<Entry>>,
+    /// `clase.yaml`: each class, a capital, with its letters and digraphs.
+    pub clase: Vec<(Value, Vec<Value>)>,
+    /// `pasi.yaml`: the steps, in order.
+    pub pasi: Vec<Step>,
 }
 
 /// An error stops the build; a warning doesn't.

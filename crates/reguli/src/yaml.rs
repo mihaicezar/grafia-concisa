@@ -6,7 +6,7 @@ use marked_yaml::types::{MarkedMappingNode, MarkedScalarNode, MarkedSequenceNode
 use marked_yaml::{LoadError, LoaderOptions, Marker, Node};
 use unicode_normalization::is_nfc;
 
-use crate::{Level, Message, Value};
+use crate::{GIVEN_CLASSES, Level, Message, Value};
 
 /// The letters of the Romanian alphabet.
 const ALPHABET: &str = "aăâbcdefghiîjklmnopqrsștțuvwxyz";
@@ -95,10 +95,12 @@ pub(crate) fn duplicates(values: &[Value], key: impl Fn(&Value) -> String) -> Ve
         .collect()
 }
 
-/// One rule file being read, and the messages of the whole load.
+/// One rule file being read, the messages of the whole load, and the classes that `clase.yaml`
+/// defines (their capitals), which the contexts may use besides C and V.
 pub(crate) struct File<'m> {
     pub name: &'static str,
     pub messages: &'m mut Vec<Message>,
+    pub classes: String,
 }
 
 impl File<'_> {
@@ -295,11 +297,12 @@ impl File<'_> {
         composed
     }
 
-    /// Checks a pattern of `tipar`, or an item of the context `key`: its letters, and its
-    /// anchors: ^, the word's start, only at the start of a pattern or of an item of ante or
-    /// non_ante, and $, the word's end, only at the end of a pattern or of an item of post or
-    /// non_post. The item ^ of ante means that the pattern starts the word, and $ of post that
-    /// it ends it. False after an error.
+    /// Checks a pattern of `tipar`, or an item of the context `key`: its letters, its classes
+    /// (a capital, in a context only: C, V or one that `clase.yaml` defines), and its anchors:
+    /// ^, the word's start, only at the start of a pattern or of an item of ante or non_ante,
+    /// and $, the word's end, only at the end of a pattern or of an item of post or non_post.
+    /// The item ^ of ante means that the pattern starts the word, and $ of post that it ends it.
+    /// False after an error.
     pub fn pattern(&mut self, v: &Value, key: &str) -> bool {
         let w = &v.text;
         let (start, end) = match key {
@@ -320,6 +323,16 @@ impl File<'_> {
         for c in letters.chars() {
             let error = match c {
                 c if ALPHABET.contains(c) => continue,
+                c if c.is_ascii_uppercase() && key != "tipar" => {
+                    if GIVEN_CLASSES.contains(&c) || self.classes.contains(c) {
+                        continue;
+                    }
+                    let defined: Vec<String> = self.classes.chars().map(String::from).collect();
+                    format!(
+                        "„{w}”: clasa „{c}” nu e definită; clasele sunt C, V și cele din clase.yaml ({}).",
+                        defined.join(", ")
+                    )
+                }
                 '^' | '$' if key == "tipar" => format!(
                     "„{w}”: într-un tipar, ^ (începutul cuvântului) stă doar la început, iar $ (sfârșitul cuvântului) doar la sfârșit."
                 ),

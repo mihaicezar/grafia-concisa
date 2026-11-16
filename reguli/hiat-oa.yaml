@@ -1,11 +1,12 @@
 # Neologismele în care oa e hiat (două silabe): coagulat, coaliție, protozoar.
-# Altfel oa e diftong (soare, mozoară). Regulile consultă tabelul acesta pentru orice oa pe care
-# nu l-a decis deja un prefix urmat de un cuvânt cunoscut (co-activ).
+# Altfel oa e diftong (soare, mozoară). Tabelul acesta e consultat de pasul „oa în
+# neologisme” din pasi.yaml, care spune unde se aplică.
 #
 # Fiecare intrare are:
 # - tipar: unul sau mai multe tipare, fiecare cu perechea oa; ^ e începutul cuvântului, $ sfârșitul;
 # - ante, non_ante: ce stă (sau ce nu stă) chiar înaintea tiparului; post, non_post: ce urmează
 #   (sau ce nu urmează) chiar după el; ^ în ante: tiparul începe cuvântul; $ în post: îl termină;
+#   o majusculă e o clasă de litere: C o consoană, V o vocală, și cele din clase.yaml (L, P);
 # - exemple: cuvinte pe care le decide intrarea;
 # - contraexemple: cuvinte cu literele unui tipar, pe care contextele sau ^, $ le exclud
 #   (obligatorii cu non_ante și non_post).
