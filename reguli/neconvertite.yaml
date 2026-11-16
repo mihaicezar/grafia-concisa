@@ -1,0 +1,6 @@
+# Cuvintele care rămân cum sunt.
+
+# Numele de origine latină terminate într-o vocală + -ian (Traian, nu Traėn), deocamdată doar
+# formele exacte: Traiana, Traiană și celelalte nume, Stoian, Boian, Troian, se convertesc, iar
+# o porțiune [ ] le păstrează. Numele în -us nu au nevoie de listă.
+nume_latine: [traian]

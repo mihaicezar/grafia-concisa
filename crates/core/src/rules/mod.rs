@@ -44,8 +44,11 @@
 //! The files use each other's items through `use super::*`.
 //!
 //! - `words`: regexes, normalization, case, â -> î;
-//! - `lists`: the hand lists (`SYLLABIFICATIONS`, `NAMES`, `AE_OE`, `OBSOLETE`, ...);
-//! - `syllables`: the syllabification (dexonline's cuts, the fallback rules);
+//! - `lists`: the hand lists (`SYLLABIFICATIONS`, `NAMES`, `AE_OE`, `OBSOLETE`, ...), most of them
+//!   compiled from the rule files of `reguli/` (see `codegen.rs`);
+//! - `syllables`: the syllabification (dexonline's cuts, the fallback rules), and its trace;
+//! - `tables`: the exception tables of the fallback rules (`IA_DIPHTHONG`, ...), compiled from
+//!   `reguli/`, and how their entries apply;
 //! - `spelling`: the concise spelling of a form from its lemma's cuts;
 //! - `obsolete_forms`: obsolete lemmas and long infinitives in -iare;
 //! - `ee`: the -ee switch and the lemmas of unknown words;
@@ -58,6 +61,7 @@ mod obsolete_forms;
 mod revert;
 mod spelling;
 mod syllables;
+mod tables;
 mod words;
 
 pub use convert::*;
@@ -67,4 +71,5 @@ pub use obsolete_forms::*;
 pub use revert::*;
 pub use spelling::*;
 pub use syllables::*;
+pub use tables::*;
 pub use words::*;

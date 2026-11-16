@@ -1,11 +1,11 @@
 ---
 name: rule-change
-description: Use when Cezar settles or reopens a linguistic decision (a spelling, a syllabification, an exception list, a switch rule). Carries it through DECISIONS.md, the test tables, the Rust core, the spec, README.ro.md and one commit.
+description: Use when Cezar settles or reopens a linguistic decision (a spelling, a syllabification, an exception list, a switch rule). Carries it through DECISIONS.md, the test tables, the rule files of reguli/ or the Rust core, the spec, README.ro.md and one commit.
 ---
 
 # Rule change
 
-A rule change is one commit that touches, in this order: the decision, the tests, the code, the spec and its Romanian rendering. The tests come before the code, so the new lines fail first.
+A rule change is one commit that touches, in this order: the decision, the tests, the rule files or the code, the spec and its Romanian rendering. The tests come before the code, so the new lines fail first.
 
 ## 0. Is the decision settled?
 
@@ -24,7 +24,8 @@ Add one line per example word of the decision, and one per counter-example ("not
 
 | The rule is about | Table |
 |---|---|
-| the fallback syllabifier, an exception list or a regex (`IA_DIPHTHONG`, `EA_HIATUS`, `IE_HIATUS`, `OA_HIATUS`, `PREFIXES`, `IERE_DIPHTHONG`, ...) | `SYLLABIFY` |
+| an entry of an exception table (`reguli/diftong-ia.yaml`, `hiat-ea.yaml`, `hiat-ie.yaml`, `hiat-oa.yaml`) | its `exemple` and `contraexemple`, in the rule file itself |
+| the rest of the fallback syllabifier, a list or a regex of the code (`PREFIXES`, `IERE_DIPHTHONG`, ...) | `SYLLABIFY` |
 | a syllabified word to its concise spelling | `WORDS` |
 | a form's cuts derived from its lemma | `DERIVED` |
 | the -ee rule | `EE_RULE`, `EE_WORDS` |
@@ -33,14 +34,15 @@ Add one line per example word of the decision, and one per counter-example ("not
 | homographs and the default spelling | `HOMOGRAPH_RECORDS` + `HOMOGRAPHS` |
 | unknown words with the -ee switch | `UNKNOWN_EE` |
 
-Each new regex alternative or list entry gets its own positive line, and a negative line when it has an exception (a lookaround, a "not X"). Mutation testing can't see regexes or list entries, so these lines are the only guard.
+Each new regex alternative or list entry gets its own positive line, and a negative line when it has an exception (a lookaround, a "not X"). Mutation testing can't see regexes or list entries, so these lines are the only guard. An entry of a table needs a word of `exemple` per pattern and per item of `ante` and `post`, and one of `contraexemple` per item of `non_ante` and `non_post`: the rules checks (`crates/core/tests/reguli.rs`, or `cargo xtask reguli`) report the missing ones, and the words the entry doesn't decide as written.
 
-Run `cargo test --workspace`. At least one new line must fail. If all pass, the lines don't test the change: find a word whose output the decision changes, or ask Cezar for one.
+Run `cargo test --workspace`. At least one new line, or one new word of a table, must fail. If all pass, they don't test the change: find a word whose output the decision changes, or ask Cezar for one.
 
-## 3. Code (green)
+## 3. Rule files or code (green)
 
-- Change `crates/core` only.
-- Keep the constants' names: the spec cites them as `rules::X`.
+- A word of a hand list changes in its rule file of `reguli/`, never in Rust: the explicit syllabifications (`silabisiri.yaml`), the obsolete lemmas and the -iare lemmas kept (`invechite.yaml`), the lists of the -eẹ/aẹ/oẹ rule (`ee.yaml`), the Latin names (`neconvertite.yaml`), the roots that keep â (`a-i.yaml`), the -iesc endings (`necunoscute.yaml`), and the entries of the exception tables, with their words (`diftong-ia.yaml`, `hiat-ea.yaml`, `hiat-ie.yaml`, `hiat-oa.yaml`). The format is in the spec's *Rule files*; comments are in Romanian. Run `cargo xtask reguli`: it reports what is wrong, by line.
+- Anything else changes `crates/core` only. A new list of words is one line of `LISTS` in `crates/reguli/src/lib.rs` (its file, key, constant and the shape of its words), plus the core code that reads its constant; a new table, one line of `TABLES` there, plus the step of `rule_cut` that consults it; a new check of the rule files also changes `crates/reguli`, with a line of `BROKEN` in its `tests/broken.rs` per new message.
+- Keep the constants' names: the spec cites them as `rules::X`, the lists of `reguli/` by file and key (`ee.yaml: nume`), and the tables by file (`hiat-ea.yaml`).
 - If the rule needs a new record flag, add it to the query in `crates/pipeline/src/records.rs`, and document it in `crates/core/src/build.rs` (module documentation), in `build --help` (`crates/pipeline/src/main.rs`) and in the spec's *Data* section.
 - Run `cargo test --workspace`. It passes.
 
@@ -53,12 +55,12 @@ Run `cargo test --workspace`. At least one new line must fail. If all pass, the 
 ## 5. Gates
 
 - Run the `test-gauntlet` skill on the change.
-- Run the `snapshot-diff` skill and show Cezar the words whose output changed. A change the decision does not predict is a question for Cezar, in Romanian, before the commit. If the dexonline export is not available, say so in the final message.
-- Rebuild the web app's data file from MariaDB, since it holds the rules' output: `cargo run --release -p grafia-pipeline -- build --mysql --port 3307 --out web/grafia.dat` (README.md, *Updating the data*). Then run `cargo test -p grafia-wasm --target wasm32-unknown-unknown`. Without MariaDB, say in the final message that `web/grafia.dat` is stale: it records the rules it was built with (`RULES_HASH`), so `cargo xtask web`, and with it CI, fails until it is rebuilt.
+- Run the `snapshot-diff` skill and show Cezar the words whose output changed. A change the decision does not predict is a question for Cezar, in Romanian, before the commit. If the pinned dexonline export can't be fetched, say so in the final message.
+- Rebuild the web app's data file, since it holds the rules' output: `cargo xtask data` (README.md, *Rule changes*; no MariaDB). Then run `cargo test -p grafia-wasm --target wasm32-unknown-unknown`. The data file is not committed: CI builds it from the same export on every push.
 
 ## 6. Commit
 
-One commit with DECISIONS.md, the tests, the code, the spec, README.ro.md and `web/grafia.dat`:
+One commit with DECISIONS.md, the tests, the rule files or the code, the spec and README.ro.md:
 
 ```
 feat(rules) : <summary>

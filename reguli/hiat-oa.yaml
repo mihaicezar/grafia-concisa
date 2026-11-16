@@ -1,0 +1,16 @@
+# Neologismele în care oa e hiat (două silabe): coagulat, coaliție, protozoar.
+# Altfel oa e diftong (soare, mozoară). Regulile consultă tabelul acesta pentru orice oa pe care
+# nu l-a decis deja un prefix urmat de un cuvânt cunoscut (co-activ).
+#
+# Fiecare intrare are:
+# - tipar: unul sau mai multe tipare, fiecare cu perechea oa; ^ e începutul cuvântului, $ sfârșitul;
+# - ante, non_ante: ce stă (sau ce nu stă) chiar înaintea tiparului; post, non_post: ce urmează
+#   (sau ce nu urmează) chiar după el; ^ în ante: tiparul începe cuvântul; $ în post: îl termină;
+# - exemple: cuvinte pe care le decide intrarea;
+# - contraexemple: cuvinte cu literele unui tipar, pe care contextele sau ^, $ le exclud
+#   (obligatorii cu non_ante și non_post).
+# Prima intrare care se aplică decide. cargo test verifică fiecare exemplu și contraexemplu.
+
+- tipar: [coagul, coabit, coaliț, coaliz, zoar$]
+  exemple: [coagulat, coabita, coaliție, coalizat, protozoar, cazoar]
+  contraexemple: [mozoară]

@@ -1,0 +1,3 @@
+# Regula â → î (comutator): â se scrie î, afară de cuvintele care conțin una dintre aceste
+# rădăcini (român, aromân, românesc, România, rumân, rumânesc își păstrează â).
+radacini_cu_a: [român, rumân]

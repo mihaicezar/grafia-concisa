@@ -1,0 +1,47 @@
+# Listele regulii -eẹ/aẹ/oẹ (comutator).
+
+# Numele feminine de persoane. Cu comutatorul își păstrează e-ul la genitiv și la pluralul
+# articulat, scris ẹ: Andreei → Andreẹi, Andreelor → Andreẹlor, Zoei → Zoẹi (nu Andreii, Zoii,
+# ca femeii). dexonline nu deosebește persoanele de locuri, care urmează femeie
+# (Galileei → Galileii).
+nume: [
+  # în -eea, -ee
+  amalteea, andreea, casiopeea, deleneea, doroteea, dulcineea, euricleea, filoteea, galateea, geea,
+  idoteea, leea, leucoteea, medeea, miraneea, nesteea, panopeea, pasiteea, pentesileea, peribeea,
+  popeea, salomeea, stenebeea, darclee,
+  # în -oe: urmează și regula -ae/-oe, fără să fie scrise și în ae_oe
+  zoe, cloe, arsinoe, autonoe, beroe, ociroe, teonoe,
+]
+
+# Lemele al căror -ae/-oe final comutatorul îl scrie -aẹ/-oẹ (Nae → Naẹ, aloe → aloẹ). Formele
+# celor în -oe urmează femeie (aloea → aloė, aloei → aloii, aloele → aloile) sau, la un nume din
+# „nume”, își păstrează e-ul (Zoei → Zoẹi). Numele în -oe din „nume” sunt luate de acolo și nu se
+# mai scriu aici. Celelalte cuvinte în -ae/-oe din dexonline sunt mai ales străine (vitae,
+# reggae, Poe); cele cu grafie străină (y, th, ph, rh, ch neurmat de e/i) lipsesc de aici.
+# Cuvintele în -oae nu au nevoie de listă: -oae e -ōẹ în orice cuvânt (Băboae).
+ae_oe: [
+  # nume în -ae
+  nae, necolae, neculae, nicolae, niculae, lae, vlae, brătae, drăgae, vlădae, dănae, străhae,
+  zgae, bodogae, băzdigae, călae, codae, cobae, decae, flăndrae, nămae, halbae, bae, dae, mae,
+  rae, brae, vrae, andrae, andornae, aglae, danae, pasifae,
+  # cuvinte comune în -ae (variante ale celor în -aie)
+  babae, bălae, bălbătae, bețae, ciumăfae, cusurae, cârnae, dudae, dugae, dăblae, fae, gae,
+  ghilăvae, lețcae, lăscae, mereae, mesereae, nedeae,
+  # nume în -oe (cele din „nume” se iau de acolo)
+  noe, averoe, cosroe, feroe, neagoe,
+  stroe, sisoe, rădivoe, popoe, stăncoe, brătoe, banboe, bartoe, begoe, beloe, bogoe, bucoe,
+  buhoe, băloe, băndoe, bășcoe, calcoe, cascoe, cragoe, docoe, doljoe, geagoe, gheoroe, goe,
+  grigoe, găfoe, hodoe, hosmăndioe, ileroe, iricioe, lențoe, lifoe, mormoe, mârmoe, măndroe,
+  mănoe, nacoe, papoe, pipoe, pitolcoe, pleșoe, rostoe, sicoe, teahoe, temoe, troe, usoe,
+  verevoe, vlădoe, voe, țipoe,
+  # cuvinte comune în -oe
+  aloe, benzoe, canoe, diploe, meloe, hoboe, eroe, geroe, oboe, evoe,
+]
+
+# Cuvintele-titlu în -eea iau -eė cu comutatorul (Niceė, Andreė), afară de pronumele aceea și de
+# compusul lui, oareceea, care păstrează -eē (aceē).
+eea_neschimbate: [aceea, oareceea]
+
+# Femininele în -ee al căror sosie în -eu e alt cuvânt, nu masculinul lor: coree (boala; coreu e
+# piciorul metric). Urmează femeie: coreei → coreii.
+fara_masculin: [coree]

@@ -1,0 +1,5 @@
+# Cuvintele care lipsesc din baza de date.
+
+# Terminațiile adjectivelor în -iesc. Un cuvânt necunoscut în i + una dintre ele e silabisit
+# după lema lui în -iesc: harabagiasca → harabagiėsca (femininul lui harabagiesc). -escu din Iliescu
+iesc: [ești, escu, escul, escului, eștii, eștile, eștilor, ască, asca]

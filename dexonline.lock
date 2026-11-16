@@ -1,0 +1,4 @@
+# The export of dexonline that grafia.dat is built from (README.md, *The data file*):
+# an asset of a release of this repository, and its SHA-256. `cargo xtask pin` writes this file.
+url = https://github.com/mihaicezar/grafia-concisa/releases/download/dexonline-2026-11-11/dexonline-2026-11-11.tar.gz
+sha256 = 910a9b61eaf1e892db3a93eb246ce0ce0e6c9b723febc2ad69a849603ac574d1

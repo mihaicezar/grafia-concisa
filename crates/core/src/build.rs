@@ -145,7 +145,8 @@ struct Entry {
 /// (from its own syllabification) is its one alternative (alineează: aliniėză, or
 /// alineēză); the row records the current form, for the footnote.
 /// A form in rules::SYLLABIFICATIONS takes all its spellings from there, whatever
-/// its lemma (piei: pẹi only, not also piei <- pia).
+/// its lemma, the default first (piei: pẹi, then piei; by its records, piei <- pia pi-a
+/// would win alone).
 /// All lemmas in -eu and -ea are stored too (tables eu_lemmas, ea_lemmas), for
 /// the -ee rule on unknown words: plurals in -eele/-eelor (bombeele <- bombeu)
 /// and genitives in -eei (Andreei <- Andreea). So are the lemmas in -iesc, with

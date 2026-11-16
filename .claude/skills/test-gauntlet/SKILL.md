@@ -1,16 +1,18 @@
 ---
 name: test-gauntlet
-description: Use before merging a branch, after a change to crates/core, or when asked how strong the tests are. Runs fmt, clippy, the tests and mutation testing on the changed Rust code, then closes each gap with a test line or a question to Cezar.
+description: Use before merging a branch, after a change to crates/core, crates/reguli or reguli/, or when asked how strong the tests are. Runs fmt, clippy, the tests and mutation testing on the changed Rust code, then closes each gap with a test line or a question to Cezar.
 ---
 
 # Test gauntlet
 
-The tests are the review: a change to `crates/core` is accepted when every gate passes and every surviving mutant is either killed or explained.
+The tests are the review: a change to `crates/core`, `crates/reguli` or `reguli/` is accepted when every gate passes and every surviving mutant is either killed or explained.
 
 ## Gates (all must pass)
 
 ```
 cargo fmt --all --check
+cargo xtask reguli   # the loading checks of reguli/, then the rules checks of the tables: no error, and no warning left unexplained
+cargo xtask data   # web/grafia.dat, which the WASM tests read: README.md, *The data file*
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace --locked
 cargo clippy -p grafia-wasm --target wasm32-unknown-unknown --all-targets -- -D warnings
@@ -26,19 +28,22 @@ On a branch, mutate only what changed:
 ```
 git diff main > target/mutants.diff
 cargo mutants -p grafia-concisa --in-diff target/mutants.diff
+cargo mutants -p grafia-reguli --in-diff target/mutants.diff   # when crates/reguli changed
 ```
 
-When asked for a full run, or after a large refactor: `cargo mutants -p grafia-concisa` (slow: run it in the background). Results are in `mutants.out/`: `missed.txt` lists the survivors.
+When asked for a full run, or after a large refactor: `cargo mutants -p grafia-concisa` (slow: run it in the background), or `-p grafia-reguli` (fast). Results are in `mutants.out/`: `missed.txt` lists the survivors.
 
 For each survivor:
 1. Find what behaviour it changes, and a word that shows it. Look first in the examples of `concise-writing-spec.md` and `DECISIONS.md`: Cezar has approved those.
-2. Add that word as one line in the right table of `crates/core/tests/tables.rs` (the `rule-change` skill maps rules to tables). Run that mutant again (`cargo mutants -p grafia-concisa -F '<part of its name>'`) to see it caught.
+2. Add that word as one line in the right table of `crates/core/tests/tables.rs` (the `rule-change` skill maps rules to tables), or, for `grafia-reguli`, a broken file and its messages as one line of `BROKEN` in `crates/reguli/tests/broken.rs`. Run that mutant again (`cargo mutants -p <package> -F '<part of its name>'`) to see it caught.
 3. If no settled example exists, ask Cezar for a word, in Romanian. Never guess the expected output.
 4. If the mutant can't change any output (an equivalent mutant), add it to `exclude_re` in `.cargo/mutants.toml` with a comment saying why. Create the file on the first such case.
 
 ## The blind spot
 
-cargo-mutants does not mutate regex strings or the entries of constant lists (`IA_DIPHTHONG`, `EA_HIATUS`, `IE_HIATUS`, `OA_HIATUS`, `PREFIXES`, `SYLLABIFICATIONS`, `IERE_DIPHTHONG`, `IARE_KEPT`, `EEA_UNCHANGED`, `IESC_ENDINGS`, ...). For each alternative or entry the diff adds or changes, check that a test line depends on it: a word that the entry alone decides, plus a negative word for each exception. A word that another rule already decides doesn't count (*reabilitat* is a hiatus by the -abil rule even without the prefix `re`).
+cargo-mutants does not mutate regex strings, the entries of constant lists (`PREFIXES`, `IERE_DIPHTHONG`, ...), or the rule files of `reguli/`. For each alternative, entry or word the diff adds or changes in them, check that a test line depends on it: a word that the entry alone decides, plus a negative word for each exception. A word that another rule already decides doesn't count (*reabilitat* is a hiatus by the -abil rule even without the prefix `re`).
+
+The exception tables (`diftong-ia.yaml`, `hiat-ea.yaml`, `hiat-ie.yaml`, `hiat-oa.yaml`) need no such check by hand: the rules checks (`cargo xtask reguli`) require, for each entry, a word of `exemple` that it alone decides per pattern and per item of `ante` and `post`, and a word of `contraexemple` per item of `non_ante` and `non_post`, and they decide each word by the rules.
 
 ## Rules
 

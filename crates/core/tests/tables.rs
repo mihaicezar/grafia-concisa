@@ -1,6 +1,8 @@
 //! grafia concisă — table-driven test suite.
 //!
 //! Run: cargo test --workspace
+mod common;
+
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::sync::LazyLock;
@@ -11,6 +13,8 @@ use grafia_concisa::rules::{
     revert_text, syllabify,
 };
 use grafia_concisa::{DataFile, Dictionary, Options, RULES_HASH, convert, datafile, lookup, revert};
+
+use common::KNOWN;
 
 // (syllabified, expected concise). Add a case = add a line.
 const WORDS: &[(&str, &str)] = &[
@@ -176,29 +180,8 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
     ("mlădii", "", "mlădi-i", "rules", "V"),
     ("copii", "", "copii", "rules", ""),    // ...not in other words
     ("bienal", "", "bi-enal", "rules", ""), // prefix bi-
-    ("real", "", "re-al", "rules", ""),     // ea: EA_HIATUS neologisms
-    ("boreal", "", "bore-al", "rules", ""),
-    ("leal", "", "le-al", "rules", ""),
-    ("linear", "", "line-ar", "rules", ""),
-    ("nuclear", "", "nucle-ar", "rules", ""),
-    ("alineat", "", "aline-at", "rules", ""),
-    ("realizat", "", "re-alizat", "rules", ""),
-    ("cereale", "", "cere-ale", "rules", ""),
-    ("denuclearizat", "", "denucle-arizat", "rules", ""),
-    ("pancreatic", "", "pancre-atic", "rules", ""),
-    ("reactor", "", "re-actor", "rules", ""),
-    ("aleator", "", "ale-ator", "rules", ""),
-    ("deal", "", "deal", "rules", ""), // ...not native words
-    ("podbeal", "", "podbeal", "rules", ""),
-    ("beat", "", "beat", "rules", ""),
-    ("asear", "", "asear", "rules", ""),
-    ("dogoreală", "", "dogoreală", "rules", ""),
     ("bianual", "", "bi-anual", "rules", ""),
-    ("coagulat", "", "co-agulat", "rules", ""), // oa: OA_HIATUS neologisms
-    ("protozoar", "", "protozo-ar", "rules", ""),
-    ("mozoară", "", "mozoară", "rules", ""),
     ("biet", "", "biet", "rules", ""),
-    ("biată", "", "biată", "rules", ""),    // IA_DIPHTHONG stem
     ("fiabil", "", "fi-abil", "rules", ""), // -iabil, -eabil: hiatus
     ("agreabil", "", "agre-abil", "rules", ""),
     ("debreiabil", "", "debreiabil", "rules", ""), // -iabil after a vowel: like its verb (de-bre-ia)
@@ -224,16 +207,9 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
     ("rachierese", "", "rachi-erese", "rules", ""),
     ("rachieresei", "", "rachi-eresei", "rules", ""),
     ("rachiereselor", "", "rachi-ereselor", "rules", ""),
-    ("boiereasă", "", "boiereasă", "rules", ""),  // after a vowel: diphthong
-    ("zbier", "", "zbier", "rules", ""),          // (not fier, zbier)
-    ("bărbierit", "", "bărbi-erit", "rules", ""), // ...IE_HIATUS stems...
-    ("zbieret", "", "zbieret", "rules", ""),
-    ("igienă", "", "igi-enă", "rules", ""),
-    ("mielită", "", "mi-elită", "rules", ""),
-    ("miel", "", "miel", "rules", ""),
-    ("așchietor", "", "așchi-etor", "rules", ""),
-    ("sovietism", "", "sovi-etism", "rules", ""),
-    ("zapciesc", "", "zapci-esc", "rules", ""), // ...and adjectives in -iesc
+    ("boiereasă", "", "boiereasă", "rules", ""), // after a vowel: diphthong
+    ("zbier", "", "zbier", "rules", ""),         // (not fier, zbier)
+    ("zapciesc", "", "zapci-esc", "rules", ""),  // ...and adjectives in -iesc
     ("surugiesc", "", "surugi-esc", "rules", ""),
     ("ciocoiesc", "", "ciocoiesc", "rules", ""), // (after a vowel: diphthong)
     ("apropiat", "", "apropi-at", "rules", ""),  // medial ia after a consonant:
@@ -242,19 +218,6 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
     ("fiare", "", "fiare", "rules", ""),      // final -iare after p/b/f/v/m, c/g
     ("variare", "", "vari-are", "rules", ""), // ...but not after other consonants
     ("specializat", "", "speci-alizat", "rules", ""),
-    ("îmbiat", "", "îmbi-at", "rules", ""),
-    ("biatlon", "", "bi-atlon", "rules", ""),
-    ("miazmă", "", "mi-azmă", "rules", ""),
-    ("chiar", "", "chiar", "rules", ""), // ...except IA_DIPHTHONG stems
-    ("piatră", "", "piatră", "rules", ""),
-    ("amiază", "", "amiază", "rules", ""),
-    ("maghiar", "", "maghiar", "rules", ""),
-    ("chiajna", "", "chiajna", "rules", ""),
-    ("obială", "", "obială", "rules", ""),
-    ("microbial", "", "microbi-al", "rules", ""),
-    ("schiagramă", "", "schi-agramă", "rules", ""),
-    ("liturghiar", "", "liturghi-ar", "rules", ""),
-    ("eleghiacesc", "", "eleghi-acesc", "rules", ""),
     ("miază", "mi-a-ză", "mia-ză", "manual", ""),
     ("cartier", "", "carti-er", "rules", ""),       // -tier: after t anyway
     ("reabilitat", "", "re-abilitat", "rules", ""), // prefix + known word
@@ -268,85 +231,19 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
     ("coactiv", "", "co-activ", "rules", ""), // co- prefix
     ("neant", "", "ne-ant", "manual", ""),    // SYLLABIFICATIONS beat all
     ("mielea", "", "mi-e-lea", "manual", ""),
-    ("răspieri", "", "răs-pie-ri", "manual", ""),
+    ("răspieri", "", "răs-pieri", "manual", ""),
     ("coastă", "", "coas-tă", "manual", ""),
     ("coastă", "co-as-tă", "coas-tă", "manual", ""),
     ("coardă", "", "coar-dă", "manual", ""),
     ("coacere", "", "coa-ce-re", "manual", ""),
     ("coacăț", "", "coa-căț", "manual", ""),
     ("coacăță", "", "coa-că-ță", "manual", ""),
-    ("înfieri", "", "în-fi-e-ri", "manual", ""),
-    ("vieri", "", "vieri", "manual", ""),
-    ("viere", "", "vi-e-re", "manual", ""),
-    // IA_DIPHTHONG: each stem...
-    ("chiabur", "", "chiabur", "rules", ""),
-    ("chiag", "", "chiag", "rules", ""),
-    ("chiaun", "", "chiaun", "rules", ""),
-    ("unchiaș", "", "unchiaș", "rules", ""),
-    ("viață", "", "viață", "rules", ""),
-    ("miazănoapte", "", "miazănoapte", "rules", ""),
-    ("nămiază", "", "nămiază", "rules", ""),
-    ("miau", "", "miau", "rules", ""),
-    ("megiaș", "", "megiaș", "rules", ""),
-    ("caragiale", "", "caragiale", "rules", ""),
-    ("caragialian", "", "caragiali-an", "rules", ""), // only the stem's ia
-    ("barcianu", "", "barcianu", "rules", ""),
-    ("vianu", "", "vianu", "rules", ""),
-    ("ghiare", "", "ghiare", "rules", ""), // like ghiară
-    ("ghiarele", "", "ghiarele", "rules", ""),
-    ("chiarele", "", "chiarele", "rules", ""), // chiar before e too
-    // ...and each exception
-    ("unghiar", "", "unghi-ar", "rules", ""),
-    ("gorghias", "", "gorghi-as", "rules", ""),
-    ("privileghiat", "", "privileghi-at", "rules", ""),
-    ("aghian", "", "aghi-an", "rules", ""),
-    ("oghial", "", "oghi-al", "rules", ""),
-    ("hipiatric", "", "hipi-atric", "rules", ""),
-    ("deviație", "", "devi-ați-e", "rules", ""),
-    ("semiautomat", "", "semi-automat", "rules", ""),
-    ("miaulis", "", "mi-aulis", "rules", ""),
-    ("diluvianul", "", "diluvi-anul", "rules", ""),
-    // EA_HIATUS
-    ("interliceal", "", "interlice-al", "rules", ""), // -eal after c: hiatus
-    ("mangeal", "", "mangeal", "rules", ""),          // -eal after g: diphthong
-    ("cohlear", "", "cohle-ar", "rules", ""),
-    ("balnear", "", "balne-ar", "rules", ""),
-    ("agreat", "", "agre-at", "rules", ""),
-    ("laureat", "", "laure-at", "rules", ""),
-    ("bacaloreat", "", "bacalore-at", "rules", ""),
-    ("nucleat", "", "nucle-at", "rules", ""),
-    ("cuneat", "", "cune-at", "rules", ""),
-    ("bracteat", "", "bracte-at", "rules", ""),
-    ("ideat", "", "ide-at", "rules", ""),
-    ("supleat", "", "suple-at", "rules", ""),
-    ("anucleată", "", "anucle-ată", "rules", ""), // the feminine too
-    ("laureată", "", "laure-ată", "rules", ""),
-    ("laureatul", "", "laure-atul", "rules", ""), // whatever follows -eat
-    ("delineator", "", "deline-ator", "rules", ""),
-    ("cleat", "", "cleat", "rules", ""), // native: diphthong
-    ("procleat", "", "procleat", "rules", ""),
-    ("procleată", "", "procleată", "rules", ""),
-    ("pleată", "", "pleată", "rules", ""),
-    ("soreată", "", "soreată", "rules", ""),
-    ("idealist", "", "ide-alist", "rules", ""),
-    ("boreale", "", "bore-ale", "rules", ""),
-    ("hiperboreală", "", "hiperbore-ală", "rules", ""),
-    ("răboreală", "", "răboreală", "rules", ""), // native -eală
-    ("stoboreală", "", "stoboreală", "rules", ""),
-    ("reacție", "", "re-acți-e", "rules", ""),
-    ("steatoză", "", "ste-atoză", "rules", ""),
-    ("meandru", "", "me-andru", "rules", ""),
-    ("beatific", "", "be-atific", "rules", ""),
-    // IE_HIATUS
-    ("pieton", "", "pi-eton", "rules", ""),
-    ("cvietism", "", "cvi-etism", "rules", ""),
-    ("societar", "", "soci-etar", "rules", ""),
-    ("vienez", "", "vi-enez", "rules", ""),
-    ("mielom", "", "mi-elom", "rules", ""),
-    ("demielinizare", "", "demi-elinizare", "rules", ""),
-    ("amielie", "", "ami-eli-e", "rules", ""),
-    ("așchietoare", "", "așchi-etoare", "rules", ""),
-    ("sbiera", "", "sbiera", "rules", ""), // bier after s: diphthong, like zbiera
+    ("înfieri", "", "în-fi-eri", "manual", ""),
+    ("viere", "", "vi-ere", "rules", ""), // the noun (a via); the boar's vocative derives from vier
+    // the exception tables of reguli/: each entry is tested by its exemple and contraexemple
+    // (tests/reguli.rs); these words test something more
+    ("caragialian", "", "caragiali-an", "rules", ""), // diftong-ia.yaml: only the stem's ia
+    ("ghiare", "", "ghiare", "rules", ""),            // like ghiară, by -iare, before the table
     // medial ie after each labial or palatal consonant: diphthong
     ("vierme", "", "vierme", "rules", ""),
     ("măcieș", "", "măcieș", "rules", ""),
@@ -364,10 +261,6 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
     ("eficientă", "", "efici-entă", "rules", ""),
     ("ambiente", "", "ambi-ente", "rules", ""),
     ("eficientiza", "", "efici-entiza", "rules", ""),
-    // OA_HIATUS
-    ("coabita", "", "co-abita", "rules", ""),
-    ("coalizat", "", "co-alizat", "rules", ""),
-    ("coaliție", "", "co-aliți-e", "rules", ""),
     // PREFIXES, each before a known word
     ("reabonat", "", "re-abonat", "rules", ""),
     ("neabonat", "", "ne-abonat", "rules", ""),
@@ -402,15 +295,22 @@ const HOMOGRAPH_RECORDS: &[&[&str]] = &[
     &["ia", "lua", "lu-a", "S"], // verb: el ia
     &["ia", "ie", "", "S"],      // articulated ie (SYLLABIFICATIONS: i-e)
     &["ie", "ie", "", "S"],
+    &["iei", "ie", "", "S"],                   // genitive of ie (i-e), which alone would beat...
+    &["iei", "lua", "lu-a", "S", "V"],         // ...the verb (tu iei); SYLLABIFICATIONS decide
     &["miază", "miază", "", "S"],              // SYLLABIFICATIONS: mia-ză, mi-a-ză
     &["trepied", "trepied", "", "S"],          // rules alone: trepẹd...
     &["trepied", "trepied", "tre-pi-ed", "S"], // ...dexonline: hiatus
     &["liază", "liază", "li-a-ză", "S"],       // noun...
     &["liază", "lia", "", "S", "V"],           // ...or verb: -ėză, both spellings count
-    &["piei", "piei", "", "S"],                // SYLLABIFICATIONS: piei...
-    &["piei", "pia", "pi-a", "S"],             // ...so no other lemma adds a spelling
+    &["piei", "piele", "", "P"],               // rules alone: pẹi...
+    &["piei", "pia", "pi-a", "S"],             // ...dexonline: piei, which alone would win; SYLLABIFICATIONS decide
     &["vier", "vier", "", "S"],                // SYLLABIFICATIONS: vier, vi-er
     &["vierul", "vier", "", "S"],
+    &["vieri", "vieri", "", "S"],               // a headword by rules alone (vi-eri)...
+    &["vieri", "vier", "", "P"],                // ...loses to vier's plural, which gives both readings
+    &["viere", "viere", "", "S"],               // the noun (a via), a headword by rules alone...
+    &["viere", "vier", "", "S"],                // ...loses to the vocative, backed by vier
+    &["vierea", "viere", "", "S"],              // the noun only: no boar reading
     &["agreare", "agreare", "", "S"],           // a headword by rules alone...
     &["agreare", "agrea", "a-gre-a", "S", "V"], // ...loses to a backed derived form
     &["menție", "menție", "", "S"],             // a headword (men-ți-e)...
@@ -423,14 +323,18 @@ const HOMOGRAPHS: &[(&str, &[&str])] = &[
     ("Ie", &[]),
     ("IE", &[]),
     ("Ia", &["Ė", "Ia"]),
-    ("miază", &["mėză", "miază"]),  // noon (default), myiasis
-    ("trepied", &[]),               // a rules-only spelling is no alternative...
+    ("iei", &["ẹi", "iei"]),       // SYLLABIFICATIONS: the verb lua (default), the genitive of ie
+    ("miază", &["mėză", "miază"]), // noon (default), myiasis
+    ("trepied", &[]),              // a rules-only spelling is no alternative...
     ("liază", &["liază", "liėză"]), // ...except one with -ėză/-ėscă
-    ("piei", &[]),                  // SYLLABIFICATIONS: the form's only spelling
-    ("vier", &["vẹr", "vier"]),     // the boar (default), păzitor de vie
+    ("piei", &["pẹi", "piei"]),    // SYLLABIFICATIONS: piei, pi-ei, whatever the lemmas
+    ("vier", &["vẹr", "vier"]),    // the boar (default), păzitor de vie
     ("vierul", &["vẹrul", "vierul"]),
-    ("agreare", &[]),                         // the rules-only agrēre is no alternative
-    ("zzoa", &[]),                            // an unknown word with one spelling has no switch
+    ("vieri", &["vẹri", "vieri"]), // no entry of its own: both readings from vier
+    ("viere", &["vẹre", "viere"]), // the boar's vocative (default), păzitor de vie's
+    ("vierea", &[]),               // the noun (a via): vi-e-rea only
+    ("agreare", &[]),              // the rules-only agrēre is no alternative
+    ("zzoa", &[]),                 // an unknown word with one spelling has no switch
     ("alineează", &["aliniėză", "alineēză"]), // obsolete: the current form, then its own (a-li-ne-a)
     ("alineez", &["aliniez", "alineez"]),
     ("alineară", &["aliniară", "alineară"]),
@@ -827,40 +731,6 @@ const INVALID_RECORDS: &[&[&str]] = &[&["zzoare", "zz1", "", "S"], &["zzoa1re", 
 // Lemmas for the test DB with no forms of their own: -eu (no -eele/-eelor), -iesc.
 const LEMMAS: &[&str] = &["mu-zeu", "ha-ra-ba-gi-esc"];
 
-// Words the prefix rule may find (the pipeline passes every dexonline form).
-const KNOWN: &[&str] = &[
-    "abilitat",
-    "oxidant",
-    "organic",
-    "analiză",
-    "am",
-    "ace",
-    "are",
-    "acurat",
-    "curat",
-    "aviz",
-    "activ",
-    "astă",
-    "abonat",
-    "actualitate",
-    "egiptean",
-    "aerian",
-    "anual",
-    "agent",
-    "agregat",
-    "afix",
-    "acumulat",
-    "aristotelic",
-    "aliniament",
-    "amfibie",
-    "alimentar",
-    "acustic",
-    "istorie",
-    "afectiv",
-    "analitic",
-    "autograf",
-];
-
 // (form, concise, lemma, plural, the -ee lemma has a masculine, expected) for the rule function itself
 type Word = &'static str;
 type EeRule = (Word, Word, Word, bool, bool, Option<Word>);
@@ -946,6 +816,7 @@ const TEXTS: &[(&str, bool, &str, &[&str], bool)] = &[
     ("Real teatru", false, "Real teatru", &[], true),
     ("Știam", false, "Știam", &[], true),   // the verb flag reaches the derivation
     ("menție", false, "menție", &[], true), // a headword beats a derived form
+    ("vierea", false, "vierē", &[], true),  // the noun viere (a via) keeps its hiatus
     // unknown forms of a known -iesc lemma
     (
         "harabagiasca harabagiască harabagiești",
@@ -955,6 +826,7 @@ const TEXTS: &[(&str, bool, &str, &[&str], bool)] = &[
         true,
     ),
     ("zzgiasca", false, "zzgiasca", &["zzgiasca"], true), // no known lemma: rules alone
+    ("neant", false, "neant", &["neant"], true),          // unknown, but SYLLABIFICATIONS: ne-ant, not the rules
     ("şoarece", false, "șōrece", &[], true),              // cedilla input
     ("casa mare", false, "casa mare", &[], true),         // no candidate: never looked up
     ("zzoa soare", false, "zzō sōre", &["zzoa"], true),   // unknown: rules alone

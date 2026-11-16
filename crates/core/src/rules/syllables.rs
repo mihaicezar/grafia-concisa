@@ -15,35 +15,39 @@ pub(super) fn is_vowel(c: char) -> bool {
 
 // Matched at the start of the word's tail from the i (Python: IENT.match(word, b - 1)).
 pub(super) static IENT: LazyLock<Regex> = LazyLock::new(|| re(r"^ien[tț](?:[aăei]|$)"));
-// Medial ia after a consonant is a hiatus (the -ia* endings: apropiat, social,
-// specializat), except in these native stems (chiar, biată, piatră, amiază).
-pub static IA_DIPHTHONG: LazyLock<Regex> = LazyLock::new(|| {
-    re(concat!(
-        r"chiar|chiab|(?<!s)chiag|chiaun|unchiaș",     // not schiagrafie
-        r"|(?<!n)(?<!litur)(?<!^gor)ghia(?![tnl]|ce)", // not unghiar, -ghiat, -ghian, -ghial,
-        // liturghiar, Gorghias, eleghiacesc
-        r"|^biat(?!l)|(?<!hi)piatr|viaț(?!i)",   // not biatlon, hipiatric, deviație
-        r"|(?:^|[aă])miaz(?!m)|(?<!e)miau(?!l)", // not distomiază, miazmă, semiautomat, Miaulis
-        r"|megiaș|caragial|barcian|vianu$|chiajn|^obial",
-    ))
-});
-// ea is a hiatus in these neologism endings and stems (real, nuclear, creat,
-// realizat); native deal, beat, asear, greșeală stay diphthongs.
-pub static EA_HIATUS: LazyLock<Regex> = LazyLock::new(|| {
-    re(concat!(
-        r"(?<![gdb])eal$",               // real, leal, boreal, interliceal; not mangeal, deal, podbeal
-        r"|(?:lin|hl|baln)ear$|nuclear", // linear, cohlear, balnear, nuclearizat
-        r"|(?:gr|aur|lor|lin|ucl|un|ct|id|upl)eat|creat", // laureat(ă), nucleat(ă), delineator; not cleat, pleată
-        r"|(?:real|ideal)i|(?<!ră)(?<!sto)boreal|cereal", // realizat, idealist, cereale; not răboreală
-        r"|reac[tț]|steat|meandr|aleat|beatif", // reactor, reacție, steatoză, aleator
-    ))
-});
-// Medial ie after p/b/f/v/m or c/g/ch/gh is a hiatus in these neologism stems and
-// endings (igienă, pieton, sovietic, mielită, așchietor, bărbierit; not zbiera, miel, mielușor).
-pub static IE_HIATUS: LazyLock<Regex> =
-    LazyLock::new(|| re(r"gien|pieton|cviet|societ|soviet|vien|miel(?:o|in|it|ie)|ietoa?r|(?<=[^zs])bier"));
-// oa is a hiatus in these neologism stems and endings (coagulat, coaliție, protozoar).
-pub static OA_HIATUS: LazyLock<Regex> = LazyLock::new(|| re(r"coagul|coabit|coali[țz]|zoar$"));
+
+// The exception tables, compiled from reguli/ (see tables.rs): IA_DIPHTHONG (diftong-ia.yaml),
+// the native stems where medial ia after a consonant is a diphthong (chiar, biată, piatră);
+// EA_HIATUS (hiat-ea.yaml), OA_HIATUS (hiat-oa.yaml) and IE_HIATUS (hiat-ie.yaml), the
+// neologisms where ea, oa, and ie after p/b/f/v/m or c/g/ch/gh are a hiatus (real, coagulat,
+// igienă).
+
+/// What decided a pair of vowels by the fallback rules: a step of `rule_cut`, by its name, or
+/// an entry of an exception table, by its index there.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Rule {
+    Step(&'static str),
+    Entry(&'static Table, usize),
+}
+
+/// What decided whether a pair of vowels is cut: an explicit syllabification
+/// (`silabisiri.yaml`, at this line), dexonline's complete or partial one, or the fallback rules.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Origin {
+    Explicit(usize),
+    Dexonline,
+    Partial,
+    Rule(Rule),
+}
+
+/// A pair of vowels of a word: the index of its second vowel, whether it is cut (a hiatus), and
+/// what decided it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Pair {
+    pub at: usize,
+    pub cut: bool,
+    pub origin: Origin,
+}
 
 /// Where a syllabification comes from, from the weakest to the strongest.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -112,7 +116,8 @@ pub(super) fn dexonline_cuts(word: &[char], hyphenation: &str) -> Option<(HashSe
     ))
 }
 
-/// Fallback rules: is there a cut between the vowels word[b-1] and word[b]?
+/// Fallback rules: is there a cut between the vowels word[b-1] and word[b]? And what decided
+/// it: a step, by its name, or the entry of a table that the step consults.
 ///
 /// `known`: normalized words that count as found (for the prefix rule).
 /// `verb`: the word is a verb infinitive (for the -ii rule).
@@ -122,20 +127,20 @@ pub(super) fn dexonline_cuts(word: &[char], hyphenation: &str) -> Option<(HashSe
 ///   - -ient, -ienț/-ient + a/ă/e/i: hiatus (client, ambient, experiență);
 ///   - -iabil, -eabil after a consonant: hiatus (fiabil, agreabil; not debreiabil);
 ///   - prefix bi- before en: hiatus (bienal);
-///   - ea in the EA_HIATUS neologism endings and stems: hiatus (real, nuclear,
-///     creat, realizat; not deal, beat, greșeală);
-///   - oa in the OA_HIATUS neologism stems and endings: hiatus (coagulat,
-///     coaliție, protozoar);
+///   - ea in the EA_HIATUS neologism endings and stems (hiat-ea.yaml): hiatus
+///     (real, nuclear, creat, realizat; not deal, beat, greșeală);
+///   - oa in the OA_HIATUS neologism stems and endings (hiat-oa.yaml): hiatus
+///     (coagulat, coaliție, protozoar);
 ///   - ii word-final after a consonant, in a verb infinitive: hiatus (sfi-i,
 ///     so sfiește, sfiască keep i-e, i-a; not the plural copii);
 ///   - ie/ia at word start or after a vowel (ă, î included): diphthong
 ///     (iarbă, femeie, tăia);
 ///   - ie/ia word-final after a consonant: hiatus (familie, vie);
 ///   - ia medial after a consonant: hiatus (apropiat, pian, specializat),
-///     except in the IA_DIPHTHONG stems (chiar, biată, piatră) and, like
-///     -iere, final -iare after p/b/f/v/m or c/g/ch/gh (fiare);
+///     except in the IA_DIPHTHONG stems (diftong-ia.yaml: chiar, biată,
+///     piatră) and, like -iere, final -iare after p/b/f/v/m or c/g/ch/gh (fiare);
 ///   - ie medial after p/b/f/v/m or c/g/ch/gh: diphthong (fier, piept),
-///     except the IE_HIATUS stems (igienă, bărbierit, așchietor), the
+///     except the IE_HIATUS stems (hiat-ie.yaml: igienă, bărbierit, așchietor), the
 ///     adjectives in -iesc (zapciesc, surugiesc), final -ier/-ieră/-iereasă (IER_ENDINGS) after a
 ///     vowel and a consonant (plumier, legumieră; not fier, zbier) and the
 ///     long infinitives in -iere with all their endings (copiere, învierea,
@@ -143,38 +148,45 @@ pub(super) fn dexonline_cuts(word: &[char], hyphenation: &str) -> Option<(HashSe
 ///     pieri);
 ///     after other consonants: hiatus (prieten, cartier);
 ///   - anything else, including ea and oa: no cut (seară, soare).
-pub(super) fn rule_cut(word: &[char], b: usize, known: &HashSet<String>, verb: bool) -> bool {
+pub(super) fn rule_cut(word: &[char], b: usize, known: &HashSet<String>, verb: bool) -> (bool, Rule) {
+    let step = |cut: bool, name: &'static str| (cut, Rule::Step(name));
     let pair = [word[b - 1], word[b]];
     if pair == ['e', 'e'] {
-        return true;
+        return step(true, "e-e");
     }
     let head = text(&word[..b]);
     if word.len() - b >= 4 && PREFIXES.contains(&head.as_str()) && known.contains(&text(&word[b..])) {
-        return !(head == "pre" && known.contains(&text(&word[4..])));
+        let prea = head == "pre" && known.contains(&text(&word[4..]));
+        return step(!prea, "prefix și un cuvânt cunoscut");
     }
     if pair == ['i', 'e'] && found(&IENT, &text(&word[b - 1..])) {
-        return true;
+        return step(true, "-ient");
     }
     if (pair == ['i', 'a'] || pair == ['e', 'a'])
         && starts_with_at(word, &['a', 'b', 'i', 'l'], b)
         && (b == 1 || !is_vowel(word[b - 2]))
     {
-        return true; // fiabil, agreabil; not debreiabil (de-bre-ia)
+        return step(true, "-abil"); // fiabil, agreabil; not debreiabil (de-bre-ia)
     }
     if b == 2 && word.starts_with(&['b', 'i', 'e', 'n']) {
-        return true;
+        return step(true, "bi-en");
     }
-    if pair == ['e', 'a'] && inside(&EA_HIATUS, word, b) || pair == ['o', 'a'] && inside(&OA_HIATUS, word, b) {
-        return true;
+    for table in [&EA_HIATUS, &OA_HIATUS] {
+        if let Some(i) = table.entry(word, b) {
+            return (table.cut, Rule::Entry(table, i));
+        }
     }
     if verb && pair == ['i', 'i'] && b + 1 == word.len() && b >= 2 && !is_vowel(word[b - 2]) {
-        return true;
+        return step(true, "-ii final la verbe");
     }
-    if !(pair == ['i', 'e'] || pair == ['i', 'a']) || b == 1 || is_vowel(word[b - 2]) {
-        return false;
+    if !(pair == ['i', 'e'] || pair == ['i', 'a']) {
+        return step(false, "restul");
+    }
+    if b == 1 || is_vowel(word[b - 2]) {
+        return step(false, "ie, ia la început sau după vocală");
     }
     if b + 1 == word.len() {
-        return true;
+        return step(true, "ie, ia final după consoană");
     }
     let prev = word[b - 2];
     let labial_or_palatal = LABIALS.contains(prev)
@@ -182,33 +194,54 @@ pub(super) fn rule_cut(word: &[char], b: usize, known: &HashSet<String>, verb: b
         || b >= 3 && matches!(word[b - 3..b - 1], ['c', 'h'] | ['g', 'h']);
     if pair == ['i', 'a'] {
         if labial_or_palatal && word.ends_with(&['i', 'a', 'r', 'e']) && b == word.len() - 3 {
-            return false; // like -iere: fiare, fiere
+            return step(false, "-iare care nu e infinitiv lung"); // like -iere: fiare, fiere
         }
-        return !inside(&IA_DIPHTHONG, word, b);
+        if let Some(i) = IA_DIPHTHONG.entry(word, b) {
+            return (IA_DIPHTHONG.cut, Rule::Entry(&IA_DIPHTHONG, i));
+        }
+        return step(true, "ia după consoană");
     }
     if labial_or_palatal {
         if starts_with_at(word, &['i', 'e', 'r'], b - 1) {
             let end = text(&word[b + 2..]);
             if IERE_ENDINGS.contains(&end.as_str()) {
                 // copiere, învierea; not mierea, pieri
-                return !IERE_DIPHTHONG.contains(&(text(&word[..b + 2]) + "e").as_str());
+                if IERE_DIPHTHONG.contains(&(text(&word[..b + 2]) + "e").as_str()) {
+                    return step(false, "-iere nativ");
+                }
+                return step(true, "-iere, infinitive lungi");
             }
             if IER_ENDINGS.contains(&end.as_str()) {
                 // plumier, legumieră, rachiereasă, rachieresele; not fier, zbier
-                return word[..b - 2].iter().any(|&c| is_vowel(c));
+                return step(word[..b - 2].iter().any(|&c| is_vowel(c)), "-ier, -ieră, -iereasă");
             }
         }
-        return text(&word[b - 1..]) == "iesc" || inside(&IE_HIATUS, word, b);
+        if text(&word[b - 1..]) == "iesc" {
+            return step(true, "-iesc");
+        }
+        if let Some(i) = IE_HIATUS.entry(word, b) {
+            return (IE_HIATUS.cut, Rule::Entry(&IE_HIATUS, i));
+        }
+        return step(false, "ie după labială sau palatală");
     }
-    true
+    step(true, "ie după altă consoană")
 }
 
-/// True if a match of `pattern` in `word` spans the boundary b.
-pub(super) fn inside(pattern: &Regex, word: &[char], b: usize) -> bool {
-    let at: usize = word[..b].iter().map(|c| c.len_utf8()).sum();
-    pattern
-        .find_iter(&text(word))
-        .any(|m| m.map(|m| m.start() < at && at < m.end()).expect("regex match"))
+/// The pairs of vowels of `word` (normalized), each decided by the fallback rules alone: with no
+/// explicit or dexonline syllabification. `known` and `verb` are as for `syllabify`.
+pub fn rule_pairs(word: &str, known: &HashSet<String>, verb: bool) -> Vec<Pair> {
+    let w = chars(word);
+    (1..w.len())
+        .filter(|&b| is_vowel(w[b - 1]) && is_vowel(w[b]))
+        .map(|b| {
+            let (cut, rule) = rule_cut(&w, b, known, verb);
+            Pair {
+                at: b,
+                cut,
+                origin: Origin::Rule(rule),
+            }
+        })
+        .collect()
 }
 
 /// Syllabified `word` and its source.
@@ -220,10 +253,33 @@ pub(super) fn inside(pattern: &Regex, word: &[char], b: usize) -> bool {
 /// cuts grafia concisă uses. `known` holds the words the prefix rule may
 /// find; `verb` marks a verb infinitive. Input normalized.
 pub fn syllabify(word: &str, hyphenation: &str, known: &HashSet<String>, verb: bool) -> (String, Source) {
-    if let Some(readings) = syllabifications(word) {
-        return (readings[0].to_string(), Source::Manual);
-    }
+    let (syllabified, source, _) = syllabify_traced(word, hyphenation, known, verb);
+    (syllabified, source)
+}
+
+/// `syllabify`, and what decided each pair of vowels of the word, in order.
+pub fn syllabify_traced(
+    word: &str,
+    hyphenation: &str,
+    known: &HashSet<String>,
+    verb: bool,
+) -> (String, Source, Vec<Pair>) {
     let w = chars(word);
+    let vowels = |b: usize| is_vowel(w[b - 1]) && is_vowel(w[b]);
+    if let Some(i) = SYLLABIFICATIONS.iter().position(|(x, _)| *x == word) {
+        let reading = SYLLABIFICATIONS[i].1[0];
+        // a complete syllabification, with the word's letters (a loading check of silabisiri.yaml)
+        let (cuts, _, _) = dexonline_cuts(&w, reading).unwrap_or_default();
+        let pairs = (1..w.len())
+            .filter(|&b| vowels(b))
+            .map(|b| Pair {
+                at: b,
+                cut: cuts.contains(&b),
+                origin: Origin::Explicit(SYLLABIFICATION_LINES[i]),
+            })
+            .collect();
+        return (reading.to_string(), Source::Manual, pairs);
+    }
     let dex = if hyphenation.is_empty() {
         None
     } else {
@@ -236,18 +292,35 @@ pub fn syllabify(word: &str, hyphenation: &str, known: &HashSet<String>, verb: b
     };
     let (cuts, lo, hi) = dex.unwrap_or((HashSet::new(), 1, 0));
     let mut out: String = w.iter().take(1).collect();
+    let mut pairs = Vec::new();
     for b in 1..w.len() {
         let cut = if lo <= b && b <= hi {
-            cuts.contains(&b)
+            let cut = cuts.contains(&b);
+            if vowels(b) {
+                let origin = match source {
+                    Source::Dexonline => Origin::Dexonline,
+                    _ => Origin::Partial,
+                };
+                pairs.push(Pair { at: b, cut, origin });
+            }
+            cut
+        } else if vowels(b) {
+            let (cut, rule) = rule_cut(&w, b, known, verb);
+            pairs.push(Pair {
+                at: b,
+                cut,
+                origin: Origin::Rule(rule),
+            });
+            cut
         } else {
-            is_vowel(w[b - 1]) && is_vowel(w[b]) && rule_cut(&w, b, known, verb)
+            false
         };
         if cut {
             out.push('-');
         }
         out.push(w[b]);
     }
-    (out, source)
+    (out, source, pairs)
 }
 
 /// Every reading of `word`: all SYLLABIFICATIONS entries, else syllabify's one.
