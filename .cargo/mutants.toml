@@ -6,9 +6,6 @@ exclude_re = [
     'rules\.rs:272:38: replace - with / in dexonline_cuts',
     'rules\.rs:284:40: replace \+ with \* in dexonline_cuts',
     'rules\.rs:285:37: replace - with [+/] in dexonline_cuts',
-    # inside: no regex of the rules starts at the second vowel of its pair, or ends at the first,
-    # in any word (only EA_HIATUS's aleat and IA_DIPHTHONG's [aă]miaz could, after another vowel)
-    'replace < with <= in inside',
     # syllabify: w[b / 1] is w[b]; rule_cut then also sees consonant + vowel, where only the prefix
     # rule can cut, and every prefix ends in a vowel
     'rules\.rs:458:26: replace - with / in syllabify',

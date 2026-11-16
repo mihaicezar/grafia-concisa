@@ -1,6 +1,6 @@
 # grafia concisă — rule files plan
 
-**Status:** proposed on 2026-11-11. Stage 0 done on 2026-11-12, its `reguli/` entries of `CLAUDE.md` with stage 2. Stage 1 implemented on 2026-11-12, and the release `dexonline-2026-11-11` published. CI's first build from it gave the MariaDB build of the dump of 2026-11-12, byte for byte (`web/grafia.dat: sha256 13a6afe8550fbb50e7995fd08060a28370ad09610bd681ca13c40784d2f5019e`). Stage 1's gate passed on 2026-11-12: the test pull request #2 (*coajă* `co-a-jă`) listed *coajă* and *coaja* in its comment, and its revert no change. Stage 2 implemented on 2026-11-12: a temporary test found the generated constants equal to the old ones before these went, and on 2026-11-13 each list of words was declared once (`grafia_reguli::LISTS`), the regex `A_KEPT` became the list `A_ROOTS`, and the names in -oe left `ae_oe`, which holds them from `nume` (the first point of stage 7); the local `grafia.dat` differs from the one of the old constants only in the rules hash and the checksum; the gate waits for CI's diff on its pull request, which also carries Cezar's corrections of *înfieri* (`în-fi-eri`), *răspieri* (`răs-pieri`) and *vieri* (`vi-eri`), which change no spelling, and his decisions of 2026-11-14 on *iei*, *piei* and *viere* (`DECISIONS.md`), which change only these three forms: their diff lists them alone. Each stage ends with a gate, and the next one starts only once it passes. The plan is deleted when its last stage is done, like `rust-port-plan.md`. `DECISIONS.md` prevails over it.
+**Status:** proposed on 2026-11-11. Stage 0 done on 2026-11-12, its `reguli/` entries of `CLAUDE.md` with stage 2. Stage 1 implemented on 2026-11-12, and the release `dexonline-2026-11-11` published. CI's first build from it gave the MariaDB build of the dump of 2026-11-12, byte for byte (`web/grafia.dat: sha256 13a6afe8550fbb50e7995fd08060a28370ad09610bd681ca13c40784d2f5019e`). Stage 1's gate passed on 2026-11-12: the test pull request #2 (*coajă* `co-a-jă`) listed *coajă* and *coaja* in its comment, and its revert no change. Stage 2 implemented on 2026-11-12: a temporary test found the generated constants equal to the old ones before these went, and on 2026-11-13 each list of words was declared once (`grafia_reguli::LISTS`), the regex `A_KEPT` became the list `A_ROOTS`, and the names in -oe left `ae_oe`, which holds them from `nume` (the first point of stage 7); the local `grafia.dat` differs from the one of the old constants only in the rules hash and the checksum; the gate waits for CI's diff on its pull request, which also carries Cezar's corrections of *înfieri* (`în-fi-eri`), *răspieri* (`răs-pieri`) and *vieri* (`vi-eri`), which change no spelling, and his decisions of 2026-11-14 on *iei*, *piei* and *viere* (`DECISIONS.md`), which change only these three forms: their diff lists them alone. Run locally on 2026-11-15, `cargo xtask diff main` lists them alone, with, in `unknown.tsv`, *vieri* read as an unknown word (`vẹri` → `vieri`, its explicit entry being gone; the database's *vieri* keeps both spellings, from *vier*). Stage 3 implemented on 2026-11-15, on the same branch: the four tables are files of entries, matched each on its own, with their `exemple` and `contraexemple`; `rule_cut` gives what decided each pair, and `syllabify_traced` each pair's source; the rules checks are `crates/core/tests/reguli.rs`, run by `cargo test` and by `cargo xtask reguli`, which CI runs in place of `cargo run -p grafia-reguli`. Locally, `cargo xtask diff` against stage 2 (`e191c7f`) finds no change on any form, and every `exemple` and `contraexemple` passes; the gate waits for CI's diff on the branch's pull request. Each stage ends with a gate, and the next one starts only once it passes. The plan is deleted when its last stage is done, like `rust-port-plan.md`. `DECISIONS.md` prevails over it.
 
 ## Goal
 
@@ -75,7 +75,7 @@ The vowels stay in Rust, since the derivation and the spelling use them too. The
 
 1. **The rules live in YAML files in `reguli/`, which a linguist edits:** the hand lists, the exception tables and the order of the fallback rules. Why: a linguist who doesn't program can add and adjust rules, and every rule sits next to its examples and its evidence.
 2. **The keys are ASCII, with no diacritics:**
-   - the patterns and contexts: `tipar`, `post`, `non_post`, `ante`, `non_ante`;
+   - the patterns and contexts: `tipar`, `ante`, `non_ante`, `post`, `non_post`;
    - the evidence: `exemple`, `contraexemple`, `reper_dex`;
    - the steps: `pas`, `rezultat`, `tabel`, `prefixe`, `rest_cunoscut`, `non_prefixe`, `doar`;
    - the obsolete lemmas: `fara_forme`, and the other fields of `invechite.yaml`.
@@ -96,9 +96,10 @@ crates/reguli/               package grafia-reguli: reads reguli/, checks it, wr
 crates/core/codegen.rs       the core's build script (Cargo.toml: build = "codegen.rs", since
                              src/build.rs is the data file builder): writes $OUT_DIR/reguli.rs
                              (the lists, the tables and the steps: hashed) and
-                             $OUT_DIR/reguli_meta.rs (positions, exemple, contraexemple,
-                             reper_dex: not hashed, unused by the web app)
-crates/core/tests/reguli.rs  the rules checks: every exemple and contraexemple
+                             $OUT_DIR/reguli_meta.rs (the lines of the explicit syllabifications
+                             and of the entries, for the trace: not hashed, unused by the web app)
+crates/core/tests/reguli.rs  the rules checks: every exemple and contraexemple, read with their
+                             positions through grafia-reguli (a dev-dependency of the core)
 crates/pipeline              export (also date.txt; from stage 5 dex98.tsv); build and check,
                              with the data checks; report; explain
 xtask                        cargo xtask data: fetches the pinned export into data/, builds
@@ -114,7 +115,7 @@ dexonline.lock               the pinned export: its release asset and SHA-256
 
 - YAML 1.2, UTF-8. Keys are lowercase ASCII with `_`. An unknown key, a duplicate key or a value of the wrong type is an error, so a typo is never silently ignored. Under YAML 1.2, `n`, `y`, `no` and `on` are words, not booleans (the context `n` of `ghia`), and every field is typed as text anyway.
 - Words are written in lower case, in the standard orthography: NFC, ș/ț with a comma below, â inside words.
-- In a pattern or a context, a name in capitals is a class of letters:
+- In a pattern or a context, a name in capitals is a class of letters (from stage 4, with `clase.yaml`; the tables of stage 3 need none, and a capital is an error there):
   - `C` (a consonant) and `V` (a vowel) are given;
   - the others are defined in `clase.yaml`.
 - Order is kept where it matters:
@@ -159,16 +160,16 @@ Exception tables and steps share these keys:
 | Key | Meaning |
 |---|---|
 | `tipar` | one or more patterns: letters, with `^` for the word start and `$` for the word end |
-| `post` | just before the pattern is one of these |
-| `non_post` | just before the pattern is none of these |
-| `ante` | just after the pattern is one of these |
-| `non_ante` | just after the pattern is none of these |
+| `ante` | just before the pattern is one of these |
+| `non_ante` | just before the pattern is none of these |
+| `post` | just after the pattern is one of these |
+| `non_post` | just after the pattern is none of these |
 
 A pattern applies to a pair of vowels when it holds both of them.
 
 What a context item can be:
-- **Letters and classes.** An item of `post` ends right before the pattern, and an item of `ante` starts right after it.
-- **Anchors.** A leading `^` ties a `post` item to the word start, and a trailing `$` ties an `ante` item to the word end:
+- **Letters and classes.** An item of `ante` ends right before the pattern, and an item of `post` starts right after it.
+- **Anchors.** A leading `^` ties an `ante` item to the word start, and a trailing `$` ties a `post` item to the word end:
   - `^` alone: the pattern starts the word;
   - `^gor`: the word starts with *gor* right before the pattern;
   - `^C`: a single consonant comes before the pattern, from the word start;
@@ -183,22 +184,22 @@ A table holds the exceptions of one step of `pasi.yaml`, which names it in its `
 
 | Key | Required | Meaning |
 |---|---|---|
-| `tipar`, `post`, `non_post`, `ante`, `non_ante` | `tipar` | see above |
+| `tipar`, `ante`, `non_ante`, `post`, `non_post` | `tipar` | see above |
 | `exemple` | yes | words the entry decides |
-| `contraexemple` | with `non_post` or `non_ante` | words that hold a pattern, but which the contexts exclude |
-| `reper_dex` | no | dexonline words that back the entry (see *Checks*) |
+| `contraexemple` | with `non_ante` or `non_post` | words that hold the letters of a pattern, but which the contexts, or the pattern's `^` or `$`, exclude |
+| `reper_dex` | no (from stage 6) | dexonline words that back the entry (see *Checks*) |
 
 ```yaml
 # diftong-ia.yaml: tulpini native în care ia e diftong (o silabă)
 - tipar: [ghia]
-  non_post: [n, litur, ^gor]
-  non_ante: [t, n, l, ce]
+  non_ante: [n, litur, ^gor]
+  non_post: [t, n, l, ce]
   exemple: [maghiar, ghiară, ghiarele]
   contraexemple: [unghiar, liturghiar, gorghias, privileghiat, aghian, oghial, eleghiacesc]
 
 # hiat-ea.yaml: neologisme în care ea e hiat (două silabe)
 - tipar: [eat]
-  post: [gr, aur, lor, lin, ucl, un, ct, id, upl]
+  ante: [gr, aur, lor, lin, ucl, un, ct, id, upl]
   exemple: [agreat, laureat, bacaloreat, alineat, nucleat, cuneat, bracteat, ideat, supleat]
   contraexemple: [beat, cleat, pleată, soreată]
   reper_dex: [laureat]     # DOOM 3: la-u-re-at
@@ -208,9 +209,9 @@ A table holds the exceptions of one step of `pasi.yaml`, which names it in its `
 
 # hiat-ie.yaml
 - tipar: [bier]
-  non_post: [^, z, s]
+  non_ante: [^, z, s]
   exemple: [bărbierit, corăbierie]
-  contraexemple: [zbiera]
+  contraexemple: [zbiera, sbiera, biert]
 ```
 
 The examples given today in `crates/core/tests/tables.rs` (the `SYLLABIFY` lines of these four lists) are enough to write `exemple` and `contraexemple` for every entry.
@@ -222,7 +223,7 @@ The examples given today in `crates/core/tests/tables.rs` (the `SYLLABIFY` lines
 | Key | Required | Meaning |
 |---|---|---|
 | `pas` | yes | the step's name, used by the trace and the messages |
-| `tipar`, `post`, `non_post`, `ante`, `non_ante` | no | see above; a step with no `tipar` and no `prefixe` applies to every pair |
+| `tipar`, `ante`, `non_ante`, `post`, `non_post` | no | see above; a step with no `tipar` and no `prefixe` applies to every pair |
 | `prefixe` | no | the word starts with one of these, and the pair is the prefix's last vowel and the next letter |
 | `rest_cunoscut` | with `prefixe` | the rest of the word is a known word (see the spec's fallback table) of at least this many letters |
 | `non_prefixe` | no | not when the word is also one of these followed by a known word |
@@ -230,7 +231,7 @@ The examples given today in `crates/core/tests/tables.rs` (the `SYLLABIFY` lines
 | `tabel` | no | a table: the step applies only where one of its entries also applies; otherwise the next step is tried |
 | `rezultat` | yes | `hiat` (two syllables) or `diftong` (one syllable; for vowels that make no digraph, simply no cut) |
 | `exemple` | unless `tabel` | words the step decides |
-| `contraexemple` | with `non_post`, `non_ante`, `non_prefixe`, `rest_cunoscut` or `doar` | words that hold a pattern or a prefix, but which a condition excludes |
+| `contraexemple` | with `non_ante`, `non_post`, `non_prefixe`, `rest_cunoscut` or `doar` | words that hold a pattern or a prefix, but which a condition excludes |
 | `reper_dex` | no | as in a table |
 
 The file, as today's `rule_cut` reads in it:
@@ -255,13 +256,13 @@ The file, as today's `rule_cut` reads in it:
 
 - pas: -ient
   tipar: [ient, ienț]
-  ante: [a, ă, e, i, $]
+  post: [a, ă, e, i, $]
   rezultat: hiat
   exemple: [client, ambient, experiență, clientelă]
 
 - pas: -abil
   tipar: [iabil, eabil]
-  post: [^, C]
+  ante: [^, C]
   rezultat: hiat
   exemple: [fiabil, agreabil]
   contraexemple: [debreiabil]
@@ -283,7 +284,7 @@ The file, as today's `rule_cut` reads in it:
 
 - pas: -ii final la verbe
   tipar: [ii$]
-  post: [C]
+  ante: [C]
   doar: verb
   rezultat: hiat
   exemple: [sfii, prii]
@@ -291,77 +292,77 @@ The file, as today's `rule_cut` reads in it:
 
 - pas: ie, ia la început sau după vocală
   tipar: [ie, ia]
-  post: [^, V]
+  ante: [^, V]
   rezultat: diftong
   exemple: [iarbă, femeie, tăia, tăiere, înmuiere]
 
 - pas: ie, ia final după consoană
   tipar: [ie$, ia$]
-  post: [C]
+  ante: [C]
   rezultat: hiat
   exemple: [familie, vie, istoria]
 
 - pas: -iare care nu e infinitiv lung
   tipar: [iare$]
-  post: [L, P]
+  ante: [L, P]
   rezultat: diftong
   exemple: [fiare]
 
 - pas: tulpini native cu ia
   tipar: [ia]
-  post: [C]
+  ante: [C]
   tabel: diftong-ia.yaml
   rezultat: diftong
 
 - pas: ia după consoană
   tipar: [ia]
-  post: [C]
+  ante: [C]
   rezultat: hiat
   exemple: [apropiat, pian, social, specializat, glaciar, variare]
 
 - pas: -iere nativ
   tipar: [^mier, ^înmier, ^fier, ^pier]
-  ante: [e$, ea$, i$, ii$, ile$, ilor$]
+  post: [e$, ea$, i$, ii$, ile$, ilor$]
   rezultat: diftong
   exemple: [miere, mierea, înmiere, fiere, pieri]
 
 - pas: -iere, infinitive lungi
   tipar: [ier]
-  post: [L, P]
-  ante: [e$, ea$, i$, ii$, ile$, ilor$]
+  ante: [L, P]
+  post: [e$, ea$, i$, ii$, ile$, ilor$]
   rezultat: hiat
   exemple: [copiere, apreciere, veghiere, învierea, aprecierilor]
 
 - pas: -ier, -ieră, -iereasă
   tipar: [ier]
-  post: [L, P]
-  ante: [$, ă$, easă$, easa$, ese$, esei$, esele$, eselor$]
-  non_post: [^C, ^CC, ^CCC]  # nu în cuvintele de o silabă
+  ante: [L, P]
+  post: [$, ă$, easă$, easa$, ese$, esei$, esele$, eselor$]
+  non_ante: [^C, ^CC, ^CCC]  # nu în cuvintele de o silabă
   rezultat: hiat
   exemple: [plumier, banchier, bărbier, legumieră, rachiereasă, rachieresele]
   contraexemple: [fier, zbier]
 
 - pas: -iesc
   tipar: [iesc$]
-  post: [L, P]
+  ante: [L, P]
   rezultat: hiat
   exemple: [zapciesc, surugiesc]
 
 - pas: ie în neologisme
   tipar: [ie]
-  post: [L, P]
+  ante: [L, P]
   tabel: hiat-ie.yaml
   rezultat: hiat
 
 - pas: ie după labială sau palatală
   tipar: [ie]
-  post: [L, P]
+  ante: [L, P]
   rezultat: diftong
   exemple: [fier, piept, pieptene]
 
 - pas: ie după altă consoană
   tipar: [ie]
-  post: [C]
+  ante: [C]
   rezultat: hiat
   exemple: [prieten, cartier]
 
@@ -396,23 +397,22 @@ The loading checks:
   - errors: ş/ţ with a cedilla, ã, a decomposed letter, a capital outside a class name, a letter outside the Romanian alphabet;
   - a warning: î inside a word, since *neînțeles* is right;
 - the classes: each is defined, `C` and `V` are not redefined, and each class holds single letters or digraphs;
-- duplicates;
+- duplicates, and no word both in `exemple` and in `contraexemple` of an entry;
 - each list's shape:
   - the letters of a syllabification are its word's, and its readings differ;
   - `tulpina` starts `lema`;
   - the endings of the words: `nume` in -eea/-ee/-oe, `ae_oe` in -ae/-oe, `eea_neschimbate` in -eea, `fara_masculin` in -ee, `nume_latine` in a vowel + -ian, `iare_pastrate` in -iare;
   - `radacini_cu_a` hold â;
   - no name in -oe of `nume` is written again in `ae_oe`, which holds them (from stage 7, done with stage 2);
-- each pattern holds a pair of vowels;
+- each pattern holds a pair of vowels: in stage 3, its table's pair;
 - each table is named by exactly one step, and the step's patterns hold the pairs of the table's patterns;
 - the last step has no condition, so every pair is decided.
 
 The rules checks:
 - each `exemple` word: the rules alone decide the pair by this entry or step, its way. The rules run with no dexonline and the tests' known words;
-- each `contraexemple` word: the entry or step doesn't apply, and a later one decides the pair the other way;
-- each pattern, each prefix and each item of `post` and `ante` has an `exemple` word;
-- each item of `non_post` and `non_ante` excludes a `contraexemple` word;
-- no word is in both `exemple` and `contraexemple`.
+- each `contraexemple` word: it has a pair that a pattern or a prefix holds, the entry or step applies to none of these pairs, and later ones decide them all the other way;
+- each pattern, each prefix and each item of `ante` and `post` has an `exemple` word;
+- each item of `non_ante` and `non_post` excludes a `contraexemple` word.
 
 The data checks:
 - **`reper_dex`:** each word is a DEX-MDA-DOOM lemma whose dexonline syllabification covers the pair the entry matches and cuts it as the entry does. From stage 6, the word's DEX '98/'96 note counts where the field doesn't cover the pair. A disagreement is an error;
@@ -424,8 +424,8 @@ The data checks:
 A message names the place and says what to do:
 
 ```
-reguli/diftong-ia.yaml:5:30: eroare: „ghiare” nu e decis de acest rând, ci de pasul „-iare care nu e infinitiv lung” (pasi.yaml:66); alege un cuvânt pe care îl decide doar rândul acesta.
-reguli/hiat-ie.yaml:9:9: eroare: „tăietor”: pasul „ie, ia la început sau după vocală” (pasi.yaml:54) îl decide înaintea acestui tabel, căci ie urmează după o vocală.
+reguli/diftong-ia.yaml:27:13: eroare: „ghiare” nu e decis de intrarea aceasta, ci de pasul „-iare care nu e infinitiv lung” (pasi.yaml:66); alege un cuvânt pe care îl decide ea.
+reguli/hiat-ie.yaml:9:9: eroare: „tăietor” nu e decis de intrarea aceasta, ci de pasul „ie, ia la început sau după vocală” (pasi.yaml:54); alege un cuvânt pe care îl decide ea.
 reguli/ee.yaml:3:30: eroare: „zoş” are ş cu sedilă; scrie ș, cu virgulă.
 reguli/pasi.yaml:26:14: eroare: clasa „LAB” nu e definită; clasele sunt C, V și cele din clase.yaml (L, P).
 reguli/hiat-ie.yaml:31:14: eroare: reper_dex „piemont”: dexonline (DOOM) îl silabisește pie-mont, deci ie e diftong acolo, iar tabelul îl face hiat. DEX '98 dă pi-e-mont, dar DOOM are întâietate.

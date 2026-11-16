@@ -30,7 +30,7 @@ pub const RULES_HASH: u64 = {
     hash
 };
 
-const RULES_SOURCES: [&str; 11] = [
+const RULES_SOURCES: [&str; 12] = [
     include_str!(concat!(env!("OUT_DIR"), "/reguli.rs")),
     include_str!("rules/mod.rs"),
     include_str!("rules/convert.rs"),
@@ -40,6 +40,7 @@ const RULES_SOURCES: [&str; 11] = [
     include_str!("rules/revert.rs"),
     include_str!("rules/spelling.rs"),
     include_str!("rules/syllables.rs"),
+    include_str!("rules/tables.rs"),
     include_str!("rules/words.rs"),
     include_str!("build.rs"),
 ];

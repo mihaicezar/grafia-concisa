@@ -1,0 +1,56 @@
+# Rădăcinile native în care ia e diftong (o silabă): chiar, piatră, viață.
+# După o consoană, în interiorul cuvântului, ia e altfel hiat (apropiat, pian, social). Regulile
+# consultă tabelul acesta pentru ia după o consoană, care nu e la sfârșitul cuvântului și nu e
+# în -iare final după p, b, f, v, m, c, g, ch, gh (fiare, ca fiere), și pe care nu l-au decis
+# deja un prefix urmat de un cuvânt cunoscut (anti-alcoolic) sau -abil (fi-abil).
+#
+# Fiecare intrare are:
+# - tipar: unul sau mai multe tipare, fiecare cu perechea ia; ^ e începutul cuvântului, $ sfârșitul;
+# - ante, non_ante: ce stă (sau ce nu stă) chiar înaintea tiparului; post, non_post: ce urmează
+#   (sau ce nu urmează) chiar după el; ^ în ante: tiparul începe cuvântul; $ în post: îl termină;
+# - exemple: cuvinte pe care le decide intrarea;
+# - contraexemple: cuvinte cu literele unui tipar, pe care contextele sau ^, $ le exclud
+#   (obligatorii cu non_ante și non_post).
+# Prima intrare care se aplică decide. cargo test verifică fiecare exemplu și contraexemplu.
+
+- tipar: [chiar, chiab, chiaun, unchiaș, chiajn, megiaș, caragial, barcian, vianu$, ^obial]
+  exemple: [chiar, chiarele, chiabur, chiaun, unchiaș, chiajna, megiaș, caragiale, barcianu, vianu, obială]
+  contraexemple: [diluvianul, microbial]
+
+- tipar: [chiag]
+  non_ante: [s]
+  exemple: [chiag]
+  contraexemple: [schiagrafie, schiagramă]
+
+- tipar: [ghia]
+  non_ante: [n, litur, ^gor]
+  non_post: [t, n, l, ce]
+  exemple: [maghiar, ghiară, ghiarele, ghiață]
+  contraexemple: [unghiar, liturghiar, gorghias, privileghiat, aghian, oghial, eleghiacesc, stavropighiacesc]
+
+- tipar: [^biat]
+  non_post: [l]
+  exemple: [biată]
+  contraexemple: [biatlon, îmbiat]
+
+- tipar: [piatr]
+  non_ante: [hi]
+  exemple: [piatră]
+  contraexemple: [hipiatric]
+
+- tipar: [viaț]
+  non_post: [i]
+  exemple: [viață]
+  contraexemple: [deviație]
+
+- tipar: [miaz]
+  ante: [^, a, ă]
+  non_post: [m]
+  exemple: [miazănoapte, amiază, nămiază]
+  contraexemple: [miazmă, distomiază]
+
+- tipar: [miau]
+  non_ante: [e]
+  non_post: [l]
+  exemple: [miau]
+  contraexemple: [semiautomat, miaulis]

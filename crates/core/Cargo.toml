@@ -17,3 +17,7 @@ unicode-normalization = "0.1.25"
 
 [build-dependencies]
 grafia-reguli = { path = "../reguli" }
+
+# the rules checks (tests/reguli.rs) read the examples of reguli/, with their positions
+[dev-dependencies]
+grafia-reguli = { path = "../reguli" }

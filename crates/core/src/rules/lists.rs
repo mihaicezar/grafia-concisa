@@ -1,10 +1,12 @@
 //! The hand lists: decisions of Cezar, by word.
+use super::*;
 
 // The lists of the rule files of reguli/, compiled by the build script (codegen.rs); the files'
 // comments say what each holds: SYLLABIFICATIONS (silabisiri.yaml), each word with its
 // readings, the default first; OBSOLETE (invechite.yaml: leme), each (lema, actuala, tulpina,
 // fara_forme); and one constant per list of words, which grafia_reguli::LISTS names with its
-// file and key (IARE_KEPT, NAMES, AE_OE, ...).
+// file and key (IARE_KEPT, NAMES, AE_OE, ...); and one Table per exception table of
+// grafia_reguli::TABLES (IA_DIPHTHONG, EA_HIATUS, IE_HIATUS, OA_HIATUS: see tables.rs).
 include!(concat!(env!("OUT_DIR"), "/reguli.rs"));
 
 // A long infinitive in -iere after p/b/f/v/m or c/g/ch/gh is a hiatus in all its forms

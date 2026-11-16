@@ -2,7 +2,7 @@
 //! letters of a word, with the messages of what is wrong.
 use std::collections::HashMap;
 
-use marked_yaml::types::{MarkedMappingNode, MarkedScalarNode};
+use marked_yaml::types::{MarkedMappingNode, MarkedScalarNode, MarkedSequenceNode};
 use marked_yaml::{LoadError, LoaderOptions, Marker, Node};
 use unicode_normalization::is_nfc;
 
@@ -123,6 +123,40 @@ impl File<'_> {
 
     /// The mapping at the top of `text`, or None after an error.
     pub fn mapping(&mut self, text: &str) -> Option<MarkedMappingNode> {
+        match self.document(text, LoaderOptions::default().toplevel_mapping())? {
+            Node::Mapping(map) => Some(map),
+            // the loader gives TopLevelMustBeMapping instead; never a file dropped in silence
+            node => {
+                self.error(node_at(&node), "fișierul e format din perechi „cheie: valoare”.".into());
+                None
+            }
+        }
+    }
+
+    /// The sequence at the top of `text`, or None after an error. A text with no entry, only
+    /// comments (which YAML reads as no document), is an error too: it would drop a table's
+    /// entries without a word.
+    pub fn sequence(&mut self, text: &str) -> Option<MarkedSequenceNode> {
+        let empty = |line: &str| line.trim().is_empty() || line.trim_start().starts_with('#');
+        if text.trim_start_matches('\u{feff}').lines().all(empty) {
+            self.error((0, 0), "fișierul nu are nicio intrare.".into());
+            return None;
+        }
+        match self.document(text, LoaderOptions::default().toplevel_sequence())? {
+            Node::Sequence(seq) => Some(seq),
+            // the loader gives TopLevelMustBeSequence instead
+            node => {
+                self.error(
+                    node_at(&node),
+                    "fișierul e o listă de intrări, fiecare începând cu „- ”.".into(),
+                );
+                None
+            }
+        }
+    }
+
+    /// The node at the top of `text`, or None after an error.
+    fn document(&mut self, text: &str, options: LoaderOptions) -> Option<Node> {
         // the byte order mark of a file saved "UTF-8 with BOM": invisible, and the parser would
         // read it as part of the first key
         let text = text.strip_prefix('\u{feff}').unwrap_or(text);
@@ -142,16 +176,9 @@ impl File<'_> {
                 return None;
             }
         }
-        let options = LoaderOptions::default()
-            .error_on_duplicate_keys(true)
-            .prevent_coercion(true);
+        let options = options.error_on_duplicate_keys(true).prevent_coercion(true);
         match marked_yaml::parse_yaml_with_options(0, text, options) {
-            Ok(Node::Mapping(map)) => Some(map),
-            // the loader gives TopLevelMustBeMapping instead; never a file dropped in silence
-            Ok(node) => {
-                self.error(node_at(&node), "fișierul e format din perechi „cheie: valoare”.".into());
-                None
-            }
+            Ok(node) => Some(node),
             Err(e) => {
                 let (at, text) = load_error(&e);
                 self.error(at, text);
@@ -244,24 +271,65 @@ impl File<'_> {
             self.error(v.at(), "un cuvânt gol.".into());
             return false;
         }
-        if !is_nfc(w) {
-            self.error(
-                v.at(),
-                format!("„{w}” are o literă descompusă: o literă urmată de un semn diacritic separat; scrie-o ca un singur caracter."),
-            );
+        if !self.composed(v) {
             return false;
         }
         for c in w.chars() {
+            if !(c == '-' && hyphens || ALPHABET.contains(c)) {
+                self.error(v.at(), not_a_letter(w, c));
+                return false;
+            }
+        }
+        true
+    }
+
+    /// An error for a decomposed letter in `v`. False after it.
+    fn composed(&mut self, v: &Value) -> bool {
+        let composed = is_nfc(&v.text);
+        if !composed {
+            self.error(
+                v.at(),
+                format!("„{}” are o literă descompusă: o literă urmată de un semn diacritic separat; scrie-o ca un singur caracter.", v.text),
+            );
+        }
+        composed
+    }
+
+    /// Checks a pattern of `tipar`, or an item of the context `key`: its letters, and its
+    /// anchors: ^, the word's start, only at the start of a pattern or of an item of ante or
+    /// non_ante, and $, the word's end, only at the end of a pattern or of an item of post or
+    /// non_post. The item ^ of ante means that the pattern starts the word, and $ of post that
+    /// it ends it. False after an error.
+    pub fn pattern(&mut self, v: &Value, key: &str) -> bool {
+        let w = &v.text;
+        let (start, end) = match key {
+            "tipar" => (true, true),
+            "ante" | "non_ante" => (true, false),
+            _ => (false, true),
+        };
+        let mut letters = w.as_str();
+        if start {
+            letters = letters.strip_prefix('^').unwrap_or(letters);
+        }
+        if end {
+            letters = letters.strip_suffix('$').unwrap_or(letters);
+        }
+        if !self.composed(v) {
+            return false;
+        }
+        for c in letters.chars() {
             let error = match c {
-                '-' if hyphens => continue,
                 c if ALPHABET.contains(c) => continue,
-                '-' => format!("„{w}” are o cratimă; cratimele despart doar silabele unei silabisiri."),
-                'ş' => format!("„{w}” are ş cu sedilă; scrie ș, cu virgulă."),
-                'ţ' => format!("„{w}” are ţ cu sedilă; scrie ț, cu virgulă."),
-                'ã' => format!("„{w}” are ã; scrie ă."),
-                c if c.is_whitespace() => format!("„{w}” are un spațiu; un cuvânt nu are spații."),
-                c if c.is_uppercase() => format!("„{w}” are majuscula „{c}”; scrie cuvintele cu litere mici."),
-                c => format!("„{w}” are „{c}”, care nu e o literă a alfabetului românesc."),
+                '^' | '$' if key == "tipar" => format!(
+                    "„{w}”: într-un tipar, ^ (începutul cuvântului) stă doar la început, iar $ (sfârșitul cuvântului) doar la sfârșit."
+                ),
+                '^' | '$' if start => format!(
+                    "„{w}”: în {key}, ^ (începutul cuvântului) stă doar la început, iar $ deloc, căci {key} e înaintea tiparului."
+                ),
+                '^' | '$' => format!(
+                    "„{w}”: în {key}, $ (sfârșitul cuvântului) stă doar la sfârșit, iar ^ deloc, căci {key} e după tipar."
+                ),
+                c => not_a_letter(w, c),
             };
             self.error(v.at(), error);
             return false;
@@ -285,6 +353,19 @@ impl File<'_> {
                 ),
             );
         }
+    }
+}
+
+/// The error for `c` in `w`, a character the standard orthography doesn't write.
+fn not_a_letter(w: &str, c: char) -> String {
+    match c {
+        '-' => format!("„{w}” are o cratimă; cratimele despart doar silabele unei silabisiri."),
+        'ş' => format!("„{w}” are ş cu sedilă; scrie ș, cu virgulă."),
+        'ţ' => format!("„{w}” are ţ cu sedilă; scrie ț, cu virgulă."),
+        'ã' => format!("„{w}” are ã; scrie ă."),
+        c if c.is_whitespace() => format!("„{w}” are un spațiu; un cuvânt nu are spații."),
+        c if c.is_uppercase() => format!("„{w}” are majuscula „{c}”; scrie cuvintele cu litere mici."),
+        c => format!("„{w}” are „{c}”, care nu e o literă a alfabetului românesc."),
     }
 }
 

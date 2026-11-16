@@ -5,7 +5,7 @@
 //! prints the messages (`src/main.rs`). The spec's *Rule files* section gives the format.
 //!
 //! - `yaml`: a file's YAML, read with positions: its keys, its lists, the letters of a word;
-//! - `files`: each file, and the checks of its lists;
+//! - `files`: each file, and the checks of its lists and tables;
 //! - `rust`: the Rust code.
 mod files;
 mod rust;
@@ -16,7 +16,7 @@ use std::fmt::{self, Display};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-pub use rust::rust;
+pub use rust::{meta, rust};
 
 /// The file of Cezar's syllabifications, which maps words to their syllabifications.
 pub const SILABISIRI: &str = "silabisiri.yaml";
@@ -64,13 +64,40 @@ pub const LISTS: [List; 8] = [
     List { file: "necunoscute.yaml", key: "iesc", constant: "IESC_ENDINGS", shape: Shape::Any, plus: None },
 ];
 
-/// The rule files, in the order of their messages: `SILABISIRI`, `LEME`'s file, then the files
-/// of `LISTS`.
+/// An exception table of the fallback rules, a file of entries: its file, the constant of the
+/// core's `rules` it compiles to (a `Table`), the pair of vowels its step consults it for, and
+/// whether its entries make that pair a hiatus or a diphthong. The step that consults it is in
+/// the core's `rule_cut`.
+#[derive(Clone, Copy, Debug)]
+pub struct Table {
+    pub file: &'static str,
+    pub constant: &'static str,
+    pub pair: &'static str,
+    pub hiat: bool,
+}
+
+/// The exception tables.
+#[rustfmt::skip]
+pub const TABLES: [Table; 4] = [
+    Table { file: "diftong-ia.yaml", constant: "IA_DIPHTHONG", pair: "ia", hiat: false },
+    Table { file: "hiat-ea.yaml", constant: "EA_HIATUS", pair: "ea", hiat: true },
+    Table { file: "hiat-ie.yaml", constant: "IE_HIATUS", pair: "ie", hiat: true },
+    Table { file: "hiat-oa.yaml", constant: "OA_HIATUS", pair: "oa", hiat: true },
+];
+
+/// The keys of an entry of a table: its patterns, its contexts, and its words.
+pub const TIPAR: &str = "tipar";
+pub const CONTEXTS: [&str; 4] = ["ante", "non_ante", "post", "non_post"];
+pub const EXEMPLE: &str = "exemple";
+pub const CONTRAEXEMPLE: &str = "contraexemple";
+
+/// The rule files, in the order of their messages: `SILABISIRI`, `LEME`'s file, the files of
+/// `LISTS`, then those of `TABLES`.
 pub fn files() -> Vec<&'static str> {
     let mut files = vec![SILABISIRI, LEME.0];
-    for list in &LISTS {
-        if !files.contains(&list.file) {
-            files.push(list.file);
+    for file in LISTS.iter().map(|l| l.file).chain(TABLES.iter().map(|t| t.file)) {
+        if !files.contains(&file) {
+            files.push(file);
         }
     }
     files
@@ -79,6 +106,11 @@ pub fn files() -> Vec<&'static str> {
 /// The list of `LISTS` with this file and key.
 pub fn list(file: &str, key: &str) -> Option<&'static List> {
     LISTS.iter().find(|l| l.file == file && l.key == key)
+}
+
+/// The table of `TABLES` in this file.
+pub fn table(file: &str) -> Option<&'static Table> {
+    TABLES.iter().find(|t| t.file == file)
 }
 
 /// The workspace's `reguli/`.
@@ -116,6 +148,24 @@ pub struct Obsolete {
     pub fara_forme: bool,
 }
 
+/// An entry of an exception table: where it starts (its first key), its patterns, its contexts
+/// and its words. A key it doesn't have is an empty list.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Entry {
+    pub line: usize,
+    pub col: usize,
+    /// One or more patterns, each holding the table's pair: letters, with `^` for the word's
+    /// start and `$` for its end.
+    pub tipar: Vec<Value>,
+    /// What is just before a pattern (`ante`: one of these; `non_ante`: none of them) and just
+    /// after it (`post`, `non_post`), in the order of `CONTEXTS`.
+    pub contexts: [Vec<Value>; 4],
+    /// The words it decides.
+    pub exemple: Vec<Value>,
+    /// Words that hold a pattern, but which its contexts or anchors exclude.
+    pub contraexemple: Vec<Value>,
+}
+
 /// The rules of the files.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Rules {
@@ -125,6 +175,8 @@ pub struct Rules {
     pub leme: Vec<Obsolete>,
     /// The words written in each list of `LISTS`, by its constant.
     pub lists: BTreeMap<&'static str, Vec<Value>>,
+    /// The entries of each table of `TABLES`, in order, by its file.
+    pub tables: BTreeMap<&'static str, Vec<Entry>>,
 }
 
 /// An error stops the build; a warning doesn't.

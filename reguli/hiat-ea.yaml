@@ -1,0 +1,42 @@
+# Neologismele în care ea e hiat (două silabe): real, nuclear, creat.
+# Altfel ea e diftong (deal, beat, seară). Regulile consultă tabelul acesta pentru orice ea pe
+# care nu l-au decis deja un prefix urmat de un cuvânt cunoscut (re-abilitat) sau -abil
+# (agre-abil).
+#
+# Fiecare intrare are:
+# - tipar: unul sau mai multe tipare, fiecare cu perechea ea; ^ e începutul cuvântului, $ sfârșitul;
+# - ante, non_ante: ce stă (sau ce nu stă) chiar înaintea tiparului; post, non_post: ce urmează
+#   (sau ce nu urmează) chiar după el; ^ în ante: tiparul începe cuvântul; $ în post: îl termină;
+# - exemple: cuvinte pe care le decide intrarea;
+# - contraexemple: cuvinte cu literele unui tipar, pe care contextele sau ^, $ le exclud
+#   (obligatorii cu non_ante și non_post).
+# Prima intrare care se aplică decide. cargo test verifică fiecare exemplu și contraexemplu.
+
+# -eal final; nu după g, d, b (cuvinte native)
+- tipar: [eal$]
+  non_ante: [g, d, b]
+  exemple: [real, leal, boreal, interliceal]
+  contraexemple: [mangeal, deal, ardeal, podbeal, dogoreală]
+
+- tipar: [ear$]
+  ante: [lin, hl, baln]
+  exemple: [linear, cohlear, balnear]
+  contraexemple: [asear]
+
+# -eat, orice ar urma (laureată, delineator)
+- tipar: [eat]
+  ante: [gr, aur, lor, lin, ucl, un, ct, id, upl]
+  exemple: [agreat, laureat, laureată, laureatul, bacaloreat, alineat, delineator, nucleat, anucleată, cuneat, bracteat, ideat, supleat]
+  contraexemple: [beat, cleat, procleat, procleată, pleată, soreată]
+
+- tipar: [nuclear, creat, react, reacț, steat, meandr, aleat, beatif, cereal]
+  exemple: [nuclear, denuclearizat, creator, pancreatic, reactor, reacție, steatoză, meandru, aleator, beatific, cereale]
+
+- tipar: [reali, ideali]
+  exemple: [realizat, idealist]
+
+# boreal și compusele lui, nu -eala nativă
+- tipar: [boreal]
+  non_ante: [ră, sto]
+  exemple: [boreale, hiperboreală]
+  contraexemple: [răboreală, stoboreală]

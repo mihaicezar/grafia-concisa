@@ -1,10 +1,11 @@
 //! Each rule file, read into `Rules`, with the checks of its lists.
 use marked_yaml::Node;
-use marked_yaml::types::MarkedMappingNode;
+use marked_yaml::types::{MarkedMappingNode, MarkedSequenceNode};
 
 use crate::yaml::{At, File, VOWELS, duplicates, join, node_at, value};
 use crate::{
-    LEME, LISTS, Level, List, Message, Obsolete, Rules, SILABISIRI, Shape, Texts, Value, files, is_yaml, list,
+    CONTEXTS, CONTRAEXEMPLE, EXEMPLE, Entry, LEME, LISTS, Level, List, Message, Obsolete, Rules, SILABISIRI, Shape,
+    TIPAR, Table, Texts, Value, files, is_yaml, list, table,
 };
 
 /// The rules of the files in `texts`, by name (None: a file that couldn't be read, already in
@@ -35,6 +36,12 @@ pub(crate) fn read(texts: &Texts, mut messages: Vec<Message>, dir: &str) -> (Opt
             f.error((0, 0), "lipsește fișierul.".into());
             continue;
         };
+        if let Some(t) = table(name) {
+            if let Some(seq) = text.as_deref().and_then(|text| f.sequence(text)) {
+                rules.tables.insert(name, entries(&mut f, &seq, t));
+            }
+            continue;
+        }
         let Some(map) = text.as_deref().and_then(|text| f.mapping(text)) else {
             continue;
         };
@@ -126,16 +133,111 @@ fn words(f: &mut File, key: &Value, node: &Node, list: &List) -> Vec<Value> {
             }
         }
     }
-    for (first, again) in duplicates(&words, |w| w.text.clone()) {
+    twice(f, &key.text, &words);
+    words
+}
+
+/// An error for each value written twice in the list of `key`.
+fn twice(f: &mut File, key: &str, values: &[Value]) {
+    for (first, again) in duplicates(values, |v| v.text.clone()) {
         f.error(
             again.at(),
             format!(
-                "„{}” apare de două ori în „{}” (întâi la rândul {}); păstrează-l o singură dată.",
-                again.text, key.text, first.line
+                "„{}” apare de două ori în „{key}” (întâi la rândul {}); păstrează-l o singură dată.",
+                again.text, first.line
             ),
         );
     }
-    words
+}
+
+/// The entries of the exception table `t`, each a mapping of the keys `TIPAR`, `CONTEXTS`,
+/// `EXEMPLE` and `CONTRAEXEMPLE`: their patterns, the items of their contexts, their words, no
+/// value twice in a list, and no word both an example and a counterexample.
+fn entries(f: &mut File, seq: &MarkedSequenceNode, t: &Table) -> Vec<Entry> {
+    // an empty table would drop its exceptions without a word
+    if seq.is_empty() {
+        f.error((0, 0), "fișierul nu are nicio intrare.".into());
+    }
+    let mut entries = Vec::new();
+    for item in seq.iter() {
+        let Some(map) = item.as_mapping() else {
+            f.error(
+                node_at(item),
+                format!(
+                    "o intrare are cheile {TIPAR}, {}, {EXEMPLE} și {CONTRAEXEMPLE}.",
+                    CONTEXTS.join(", ")
+                ),
+            );
+            continue;
+        };
+        let (line, col) = map.keys().next().map_or(node_at(item), |k| value(k).at());
+        let optional: Vec<&'static str> = CONTEXTS.iter().copied().chain([CONTRAEXEMPLE]).collect();
+        let fields = f.fields(map, &[TIPAR, EXEMPLE], &optional, (line, col));
+        let mut list = |key: &str| match fields.get(key) {
+            Some((k, node)) => {
+                let values = f.list(k, node);
+                if node.as_sequence().is_some_and(|s| s.is_empty()) {
+                    f.error(k.at(), format!("„{key}” e o listă goală."));
+                }
+                twice(f, key, &values);
+                values
+            }
+            None => Vec::new(),
+        };
+        let entry = Entry {
+            line,
+            col,
+            tipar: list(TIPAR),
+            contexts: CONTEXTS.map(&mut list),
+            exemple: list(EXEMPLE),
+            contraexemple: list(CONTRAEXEMPLE),
+        };
+        // the excluding contexts need words that they exclude
+        let excludes = CONTEXTS
+            .iter()
+            .zip(&entry.contexts)
+            .any(|(k, items)| k.starts_with("non_") && !items.is_empty());
+        if excludes && !fields.contains_key(CONTRAEXEMPLE) {
+            f.error(
+                (line, col),
+                format!("lipsește cheia „{CONTRAEXEMPLE}”: non_ante și non_post cer cuvinte pe care le exclud."),
+            );
+        }
+        for p in &entry.tipar {
+            if f.pattern(p, TIPAR) && !p.text.contains(t.pair) {
+                f.error(
+                    p.at(),
+                    format!(
+                        "tiparul „{}” nu are perechea {}, singura pe care o decide tabelul acesta.",
+                        p.text, t.pair
+                    ),
+                );
+            }
+        }
+        for (key, items) in CONTEXTS.iter().zip(&entry.contexts) {
+            for item in items {
+                f.pattern(item, key);
+            }
+        }
+        for w in entry.exemple.iter().chain(&entry.contraexemple) {
+            if f.letters(w, false) {
+                f.inner_i(w);
+            }
+        }
+        for c in &entry.contraexemple {
+            if entry.exemple.iter().any(|e| e.text == c.text) {
+                f.error(
+                    c.at(),
+                    format!(
+                        "„{}” e și în {EXEMPLE}, și în {CONTRAEXEMPLE}; păstrează-l într-una singură.",
+                        c.text
+                    ),
+                );
+            }
+        }
+        entries.push(entry);
+    }
+    entries
 }
 
 /// Checks a syllabification of `word`: its letters are the word's, and no syllable is empty.

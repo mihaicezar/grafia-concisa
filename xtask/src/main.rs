@@ -4,7 +4,10 @@
 //!   - `data`: builds `web/grafia.dat` from the export of dexonline that `dexonline.lock` pins;
 //!   - `pin [DIR]`: packs the export in DIR (`data` by default) and pins it in `dexonline.lock`;
 //!   - `diff BASE [--max N]`: what the working tree changes in the output on every form,
-//!     against the commit BASE, in `data/snapshot/diff.md` (at most N rows per section).
+//!     against the commit BASE, in `data/snapshot/diff.md` (at most N rows per section);
+//!   - `reguli`: the checks of the rule files of `reguli/`: the loading checks
+//!     (`cargo run -p grafia-reguli`), then the rules checks of their examples
+//!     (`crates/core/tests/reguli.rs`).
 //!
 //! See README.md, *The data file* and *Updating dexonline*.
 mod diff;
@@ -21,7 +24,7 @@ use flate2::write::GzEncoder;
 use grafia_concisa::{DataFile, RULES_HASH};
 use wasm_bindgen_cli_support::Bindgen;
 
-const USAGE: &str = "usage: cargo xtask web | data | pin [DIR] | diff BASE [--max N]";
+const USAGE: &str = "usage: cargo xtask web | data | pin [DIR] | diff BASE [--max N] | reguli";
 
 fn main() -> Result<()> {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -36,8 +39,44 @@ fn main() -> Result<()> {
         ["pin", dir] => export::pin(root, Path::new(dir)),
         ["diff", base] => diff::diff(root, base, usize::MAX),
         ["diff", base, "--max", max] => diff::diff(root, base, max.parse().context(USAGE)?),
+        ["reguli"] => reguli(root),
         _ => bail!(USAGE),
     }
+}
+
+/// The checks of the rule files of `reguli/`: the loading checks, which print their messages
+/// (in CI also as annotations), then, if they pass, the rules checks of the examples, which do
+/// the same.
+fn reguli(root: &Path) -> Result<()> {
+    let cargo = env::var_os("CARGO").unwrap_or_else(|| "cargo".into());
+    let run = |args: &[&str]| -> Result<bool> {
+        let status = Command::new(&cargo)
+            .current_dir(root)
+            .args(args)
+            .status()
+            .context("running cargo")?;
+        Ok(status.success())
+    };
+    ensure!(
+        run(&["run", "-q", "-p", "grafia-reguli"])?,
+        "reguli/: the loading checks failed"
+    );
+    ensure!(
+        run(&[
+            "test",
+            "-q",
+            "-p",
+            "grafia-concisa",
+            "--test",
+            "reguli",
+            "--",
+            "--exact",
+            "reguli",
+            "--nocapture"
+        ])?,
+        "reguli/: the rules checks failed"
+    );
+    Ok(())
 }
 
 // The lines of web/sw.js that the build fills in.

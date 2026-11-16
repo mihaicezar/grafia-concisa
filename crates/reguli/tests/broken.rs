@@ -7,7 +7,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use grafia_reguli::{
-    LEME, LISTS, Level, Message, SILABISIRI, default_dir, files, list, load, load_texts, read_texts, rust, shown,
+    LEME, LISTS, Level, Message, SILABISIRI, TABLES, default_dir, files, list, load, load_texts, meta, read_texts,
+    rust, shown, table,
 };
 
 // (file, its text, the messages it gives, by line). The other files are those of reguli/.
@@ -108,6 +109,39 @@ const BROKEN: &[(&str, &str, &[&str])] = &[
     ("neconvertite.yaml", "nume_latine: [traian, oian, ăian, âian, eian, îian, uian]", &[]),
     // a-i.yaml
     ("a-i.yaml", "radacini_cu_a: [român, roman]", &["reguli/a-i.yaml:1:24: eroare: „roman” nu are â, deci nu e o rădăcină care își păstrează â."]),
+    // a table: a list of entries
+    ("hiat-oa.yaml", "tipar: [zoar$]", &["reguli/hiat-oa.yaml:1:6: eroare: fișierul e o listă de intrări, fiecare începând cu „- ”."]),
+    ("hiat-oa.yaml", "", &["reguli/hiat-oa.yaml: eroare: fișierul nu are nicio intrare."]),
+    ("hiat-oa.yaml", "\u{feff}\n  \n# nimic", &["reguli/hiat-oa.yaml: eroare: fișierul nu are nicio intrare."]),
+    ("hiat-oa.yaml", "# nimic", &["reguli/hiat-oa.yaml: eroare: fișierul nu are nicio intrare."]),
+    ("hiat-oa.yaml", "[]", &["reguli/hiat-oa.yaml: eroare: fișierul nu are nicio intrare."]),
+    ("hiat-oa.yaml", "- zoar$", &["reguli/hiat-oa.yaml:1:3: eroare: o intrare are cheile tipar, ante, non_ante, post, non_post, exemple și contraexemple."]),
+    ("hiat-oa.yaml", "- {}", &["reguli/hiat-oa.yaml:1:3: eroare: lipsește cheia „tipar”.", "reguli/hiat-oa.yaml:1:3: eroare: lipsește cheia „exemple”."]),
+    ("hiat-oa.yaml", "- {ante: [z]}", &["reguli/hiat-oa.yaml:1:4: eroare: lipsește cheia „tipar”.", "reguli/hiat-oa.yaml:1:4: eroare: lipsește cheia „exemple”."]),
+    ("hiat-oa.yaml", "- {tipar: [zoar$], exemple: [protozoar], rezultat: hiat}", &["reguli/hiat-oa.yaml:1:42: eroare: „rezultat” nu e o cheie cunoscută aici; cheile sunt tipar, exemple, ante, non_ante, post, non_post și contraexemple."]),
+    ("hiat-oa.yaml", "- {tipar: zoar$, exemple: [protozoar]}", &["reguli/hiat-oa.yaml:1:4: eroare: „tipar” e o listă de cuvinte: tipar: [cuvânt, cuvânt]."]),
+    ("hiat-oa.yaml", "- {tipar: [], exemple: [protozoar]}", &["reguli/hiat-oa.yaml:1:4: eroare: „tipar” e o listă goală."]),
+    ("hiat-oa.yaml", "- {tipar: [zoar$], exemple: [protozoar], ante: []}", &["reguli/hiat-oa.yaml:1:42: eroare: „ante” e o listă goală."]),
+    ("hiat-oa.yaml", "- {tipar: [zoar$, zoar$], exemple: [protozoar]}", &["reguli/hiat-oa.yaml:1:19: eroare: „zoar$” apare de două ori în „tipar” (întâi la rândul 1); păstrează-l o singură dată."]),
+    ("hiat-oa.yaml", "- {tipar: [zoar$], exemple: [protozoar, cazoar, protozoar]}", &["reguli/hiat-oa.yaml:1:49: eroare: „protozoar” apare de două ori în „exemple” (întâi la rândul 1); păstrează-l o singură dată."]),
+    // a pattern holds the table's pair, and ^, $ only at its ends
+    ("hiat-oa.yaml", "- {tipar: [zoar$, zear], exemple: [protozoar]}", &["reguli/hiat-oa.yaml:1:19: eroare: tiparul „zear” nu are perechea oa, singura pe care o decide tabelul acesta."]),
+    ("diftong-ia.yaml", "- {tipar: [chiar, chai], exemple: [chiar]}", &["reguli/diftong-ia.yaml:1:19: eroare: tiparul „chai” nu are perechea ia, singura pe care o decide tabelul acesta."]),
+    ("hiat-oa.yaml", "- {tipar: [zo^ar, z$oar, ^$], exemple: [protozoar]}", &["reguli/hiat-oa.yaml:1:12: eroare: „zo^ar”: într-un tipar, ^ (începutul cuvântului) stă doar la început, iar $ (sfârșitul cuvântului) doar la sfârșit.", "reguli/hiat-oa.yaml:1:19: eroare: „z$oar”: într-un tipar, ^ (începutul cuvântului) stă doar la început, iar $ (sfârșitul cuvântului) doar la sfârșit.", "reguli/hiat-oa.yaml:1:26: eroare: tiparul „^$” nu are perechea oa, singura pe care o decide tabelul acesta."]),
+    ("hiat-oa.yaml", "- {tipar: [zoaR, zoaş, 'zo ar'], exemple: [protozoar]}", &["reguli/hiat-oa.yaml:1:12: eroare: „zoaR” are majuscula „R”; scrie cuvintele cu litere mici.", "reguli/hiat-oa.yaml:1:18: eroare: „zoaş” are ş cu sedilă; scrie ș, cu virgulă.", "reguli/hiat-oa.yaml:1:24: eroare: „zo ar” are un spațiu; un cuvânt nu are spații."]),
+    ("hiat-oa.yaml", "- {tipar: [zoa\u{306}r], exemple: [protozoar]}", &["reguli/hiat-oa.yaml:1:12: eroare: „zoa\u{306}r” are o literă descompusă: o literă urmată de un semn diacritic separat; scrie-o ca un singur caracter."]),
+    // a context: ^ only at the start of an item of ante, $ only at the end of an item of post
+    ("hiat-oa.yaml", "- {tipar: [oar], ante: [z$, ^], non_ante: [m^], exemple: [protozoar], contraexemple: [mozoar]}", &["reguli/hiat-oa.yaml:1:25: eroare: „z$”: în ante, ^ (începutul cuvântului) stă doar la început, iar $ deloc, căci ante e înaintea tiparului.", "reguli/hiat-oa.yaml:1:44: eroare: „m^”: în non_ante, ^ (începutul cuvântului) stă doar la început, iar $ deloc, căci non_ante e înaintea tiparului."]),
+    ("hiat-oa.yaml", "- {tipar: [zoa], post: [^r, $], non_post: [r$, $$], exemple: [protozoar], contraexemple: [zoare]}", &["reguli/hiat-oa.yaml:1:25: eroare: „^r”: în post, $ (sfârșitul cuvântului) stă doar la sfârșit, iar ^ deloc, căci post e după tipar.", "reguli/hiat-oa.yaml:1:48: eroare: „$$”: în non_post, $ (sfârșitul cuvântului) stă doar la sfârșit, iar ^ deloc, căci non_post e după tipar."]),
+    ("hiat-oa.yaml", "- {tipar: [oar], ante: [z, ^z, ^], post: [$, e$, ă], exemple: [protozoar]}", &[]),
+    // an excluding context needs counterexamples, and no word is both
+    ("hiat-oa.yaml", "- {tipar: [oar$], non_ante: [m], exemple: [protozoar]}", &["reguli/hiat-oa.yaml:1:4: eroare: lipsește cheia „contraexemple”: non_ante și non_post cer cuvinte pe care le exclud."]),
+    ("hiat-oa.yaml", "- {tipar: [zoa], non_post: [ră], exemple: [protozoar], contraexemple: []}", &["reguli/hiat-oa.yaml:1:56: eroare: „contraexemple” e o listă goală."]),
+    ("hiat-oa.yaml", "- {tipar: [zoar$], exemple: [protozoar, cazoar], contraexemple: [cazoar, mozoară]}", &["reguli/hiat-oa.yaml:1:66: eroare: „cazoar” e și în exemple, și în contraexemple; păstrează-l într-una singură."]),
+    // the words of an entry
+    ("hiat-oa.yaml", "- {tipar: [zoar$], exemple: [protozoar, Cazoar], contraexemple: [mozoară, neînzoar]}", &["reguli/hiat-oa.yaml:1:41: eroare: „Cazoar” are majuscula „C”; scrie cuvintele cu litere mici.", "reguli/hiat-oa.yaml:1:75: avertisment: „neînzoar” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles."]),
+    // entries on several lines, each one's messages at its line
+    ("hiat-oa.yaml", "# oa\n- tipar: [zoar$]\n  exemple: [protozoar]\n\n- tipar: [zear]\n  exemple: [zear]\n- tipar: [coa]\n  non_post: [x]\n  exemple: [coagulat]", &["reguli/hiat-oa.yaml:5:11: eroare: tiparul „zear” nu are perechea oa, singura pe care o decide tabelul acesta.", "reguli/hiat-oa.yaml:7:3: eroare: lipsește cheia „contraexemple”: non_ante și non_post cer cuvinte pe care le exclud."]),
     // an empty value or element, at its key: it starts where the next one does
     ("necunoscute.yaml", "iesc: ['']", &["reguli/necunoscute.yaml:1:1: eroare: „iesc” are un element gol."]),
     ("a-i.yaml", "radacini_cu_a:\n  - român\n  -\n  - rumân", &["reguli/a-i.yaml:1:1: eroare: „radacini_cu_a” are un element gol."]),
@@ -125,9 +159,9 @@ const BROKEN: &[(&str, &str, &[&str])] = &[
     // files that are no YAML, or hidden, are left alone; a YAML file must be a rule file
     ("notes.txt", "x", &[]),
     (".ee.yaml", "x", &[]),
-    ("ee.yml", "x: y", &["reguli/ee.yml: eroare: „ee.yml” nu e un fișier de reguli; fișierele de reguli sunt silabisiri.yaml, invechite.yaml, ee.yaml, neconvertite.yaml, a-i.yaml și necunoscute.yaml."]),
+    ("ee.yml", "x: y", &["reguli/ee.yml: eroare: „ee.yml” nu e un fișier de reguli; fișierele de reguli sunt silabisiri.yaml, invechite.yaml, ee.yaml, neconvertite.yaml, a-i.yaml, necunoscute.yaml, diftong-ia.yaml, hiat-ea.yaml, hiat-ie.yaml și hiat-oa.yaml."]),
     // a file that is not a rule file
-    ("silabisri.yaml", "neant: ne-ant", &["reguli/silabisri.yaml: eroare: „silabisri.yaml” nu e un fișier de reguli; fișierele de reguli sunt silabisiri.yaml, invechite.yaml, ee.yaml, neconvertite.yaml, a-i.yaml și necunoscute.yaml."]),
+    ("silabisri.yaml", "neant: ne-ant", &["reguli/silabisri.yaml: eroare: „silabisri.yaml” nu e un fișier de reguli; fișierele de reguli sunt silabisiri.yaml, invechite.yaml, ee.yaml, neconvertite.yaml, a-i.yaml, necunoscute.yaml, diftong-ia.yaml, hiat-ea.yaml, hiat-ie.yaml și hiat-oa.yaml."]),
 ];
 
 /// The rule files of the workspace's reguli/, by name, as load() reads them.
@@ -152,7 +186,8 @@ fn reguli_loads() {
 }
 
 /// Each list of LISTS has a constant and a key of its own, in a file of files(), and its plus
-/// names a list of the same file.
+/// names a list of the same file. Each table of TABLES has a file of its own, of no list, and a
+/// constant of its own, and its pair is two vowels.
 #[test]
 fn lists() {
     assert_eq!(
@@ -163,9 +198,30 @@ fn lists() {
             "ee.yaml",
             "neconvertite.yaml",
             "a-i.yaml",
-            "necunoscute.yaml"
+            "necunoscute.yaml",
+            "diftong-ia.yaml",
+            "hiat-ea.yaml",
+            "hiat-ie.yaml",
+            "hiat-oa.yaml"
         ]
     );
+    for (i, t) in TABLES.iter().enumerate() {
+        assert!(
+            TABLES[..i].iter().all(|o| o.file != t.file && o.constant != t.constant),
+            "{t:?}"
+        );
+        assert!(
+            LISTS.iter().all(|l| l.file != t.file && l.constant != t.constant),
+            "{t:?}"
+        );
+        assert!(t.file != SILABISIRI && t.file != LEME.0, "{t:?}");
+        assert!(
+            t.pair.chars().count() == 2 && t.pair.chars().all(|c| "aeiou".contains(c)),
+            "{t:?}"
+        );
+        assert_eq!(table(t.file).map(|o| o.constant), Some(t.constant));
+    }
+    assert!(table("ee.yaml").is_none());
     for (i, l) in LISTS.iter().enumerate() {
         assert!(
             LISTS[..i]
@@ -287,7 +343,7 @@ const RUNS: &[Run] = &[
     (&[], true, &["reguli/: fără erori."], true),
     (&[("necunoscute.yaml", "iesc: [eîti]")], false, &["{dir}/necunoscute.yaml:1:8: avertisment: „eîti” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles.", "{dir}/: fără erori, 1 avertisment."], true),
     // the messages by file, in the order of files(), and the files that are no rule files last
-    (&[("zz.yaml", "x: y"), ("necunoscute.yaml", "iesc: [eşti, eîti]"), ("a-i.yaml", "radacini_cu_a: [roman]"), ("silabisiri.yaml", "neant: ne-an")], false, &["{dir}/silabisiri.yaml:1:8: eroare: „ne-an” nu are literele lui „neant”.", "{dir}/a-i.yaml:1:17: eroare: „roman” nu are â, deci nu e o rădăcină care își păstrează â.", "{dir}/necunoscute.yaml:1:8: eroare: „eşti” are ş cu sedilă; scrie ș, cu virgulă.", "{dir}/necunoscute.yaml:1:14: avertisment: „eîti” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles.", "{dir}/zz.yaml: eroare: „zz.yaml” nu e un fișier de reguli; fișierele de reguli sunt silabisiri.yaml, invechite.yaml, ee.yaml, neconvertite.yaml, a-i.yaml și necunoscute.yaml.", "{dir}/: 4 erori, 1 avertisment."], false),
+    (&[("zz.yaml", "x: y"), ("necunoscute.yaml", "iesc: [eşti, eîti]"), ("a-i.yaml", "radacini_cu_a: [roman]"), ("silabisiri.yaml", "neant: ne-an")], false, &["{dir}/silabisiri.yaml:1:8: eroare: „ne-an” nu are literele lui „neant”.", "{dir}/a-i.yaml:1:17: eroare: „roman” nu are â, deci nu e o rădăcină care își păstrează â.", "{dir}/necunoscute.yaml:1:8: eroare: „eşti” are ş cu sedilă; scrie ș, cu virgulă.", "{dir}/necunoscute.yaml:1:14: avertisment: „eîti” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles.", "{dir}/zz.yaml: eroare: „zz.yaml” nu e un fișier de reguli; fișierele de reguli sunt silabisiri.yaml, invechite.yaml, ee.yaml, neconvertite.yaml, a-i.yaml, necunoscute.yaml, diftong-ia.yaml, hiat-ea.yaml, hiat-ie.yaml și hiat-oa.yaml.", "{dir}/: 4 erori, 1 avertisment."], false),
     // in CI, each message is also an annotation
     (&[("a-i.yaml", "radacini_cu_a: [roman]"), ("necunoscute.yaml", "iesc: [eîti]")], true, &["{dir}/a-i.yaml:1:17: eroare: „roman” nu are â, deci nu e o rădăcină care își păstrează â.", "::error file={dir}/a-i.yaml,line=1,col=17::„roman” nu are â, deci nu e o rădăcină care își păstrează â.", "{dir}/necunoscute.yaml:1:8: avertisment: „eîti” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles.", "::warning file={dir}/necunoscute.yaml,line=1,col=8::„eîti” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles.", "{dir}/: 1 eroare, 1 avertisment."], false),
     // an OS's or an editor's files are left alone
@@ -354,7 +410,9 @@ fn annotations() {
     }
 }
 
-/// The Rust code of a small set of rule files: AE_OE holds the names in -oe of NAMES too.
+/// The Rust code of a small set of rule files: AE_OE holds the names in -oe of NAMES too; a
+/// table, its pair and its result, with each entry's patterns and contexts, and no word or
+/// comment; and the lines of the rules, apart.
 #[test]
 fn rust_code() {
     let mut texts = BTreeMap::new();
@@ -371,6 +429,24 @@ fn rust_code() {
         ("neconvertite.yaml", "nume_latine: [traian]"),
         ("a-i.yaml", "radacini_cu_a: [român, rumân]"),
         ("necunoscute.yaml", "iesc: [ești, asca]"),
+        (
+            "diftong-ia.yaml",
+            "# chiar
+- tipar: [chiar, ^biat]
+  non_post: [l]
+  exemple: [chiar, biată]
+  contraexemple: [biatlon]
+
+- tipar: [miaz]
+  ante: [^, a]
+  exemple: [amiază, miazănoapte]",
+        ),
+        (
+            "hiat-ea.yaml",
+            "- {tipar: [eal$], non_ante: [g, d], exemple: [real], contraexemple: [deal, mangeal]}",
+        ),
+        ("hiat-ie.yaml", "- {tipar: [gien], exemple: [igienă]}"),
+        ("hiat-oa.yaml", "- {tipar: [zoar$], post: [e, $], exemple: [protozoar]}"),
     ] {
         texts.insert(name.to_string(), text.to_string());
     }
@@ -391,8 +467,33 @@ pub const EE_NOT_MASCULINE: &[&str] = &["coree"];
 pub const NO_CONVERT: &[&str] = &["traian"];
 pub const A_ROOTS: &[&str] = &["român", "rumân"];
 pub const IESC_ENDINGS: &[&str] = &["ești", "asca"];
+pub static IA_DIPHTHONG: Table = Table { file: "diftong-ia.yaml", pair: ['i', 'a'], cut: false, entries: &[
+    Entry { tipar: &["chiar", "^biat"], ante: &[], non_ante: &[], post: &[], non_post: &["l"] },
+    Entry { tipar: &["miaz"], ante: &["^", "a"], non_ante: &[], post: &[], non_post: &[] },
+] };
+pub static EA_HIATUS: Table = Table { file: "hiat-ea.yaml", pair: ['e', 'a'], cut: true, entries: &[
+    Entry { tipar: &["eal$"], ante: &[], non_ante: &["g", "d"], post: &[], non_post: &[] },
+] };
+pub static IE_HIATUS: Table = Table { file: "hiat-ie.yaml", pair: ['i', 'e'], cut: true, entries: &[
+    Entry { tipar: &["gien"], ante: &[], non_ante: &[], post: &[], non_post: &[] },
+] };
+pub static OA_HIATUS: Table = Table { file: "hiat-oa.yaml", pair: ['o', 'a'], cut: true, entries: &[
+    Entry { tipar: &["zoar$"], ante: &[], non_ante: &[], post: &["e", "$"], non_post: &[] },
+] };
+"#;
+    let expected_meta = r#"// Generated by grafia-reguli from reguli/ (crates/core/codegen.rs): the lines of the rules, not in RULES_HASH.
+pub const SYLLABIFICATION_LINES: &[usize] = &[1, 2];
+pub static TABLES: [&Table; 4] = [&IA_DIPHTHONG, &EA_HIATUS, &IE_HIATUS, &OA_HIATUS];
+pub const ENTRY_LINES: [&[usize]; 4] = [
+    &[2, 7],
+    &[1],
+    &[1],
+    &[1],
+];
 "#;
     let (rules, messages) = load_texts(&texts);
     assert_eq!(strings(&messages), Vec::<String>::new());
-    assert_eq!(rust(&rules.expect("rules")), expected);
+    let rules = rules.expect("rules");
+    assert_eq!(rust(&rules), expected);
+    assert_eq!(meta(&rules), expected_meta);
 }

@@ -11,7 +11,7 @@ The tests are the review: a change to `crates/core`, `crates/reguli` or `reguli/
 
 ```
 cargo fmt --all --check
-cargo run -p grafia-reguli   # the loading checks of reguli/: no error, and no warning left unexplained
+cargo xtask reguli   # the loading checks of reguli/, then the rules checks of the tables: no error, and no warning left unexplained
 cargo xtask data   # web/grafia.dat, which the WASM tests read: README.md, *The data file*
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace --locked
@@ -41,7 +41,9 @@ For each survivor:
 
 ## The blind spot
 
-cargo-mutants does not mutate regex strings, the entries of constant lists (`IA_DIPHTHONG`, `EA_HIATUS`, `IE_HIATUS`, `OA_HIATUS`, `PREFIXES`, `IERE_DIPHTHONG`, ...), or the rule files of `reguli/` (`silabisiri.yaml`, `invechite.yaml`, `ee.yaml`, `neconvertite.yaml`, `a-i.yaml`, `necunoscute.yaml`). For each alternative, entry or word the diff adds or changes, check that a test line depends on it: a word that the entry alone decides, plus a negative word for each exception. A word that another rule already decides doesn't count (*reabilitat* is a hiatus by the -abil rule even without the prefix `re`).
+cargo-mutants does not mutate regex strings, the entries of constant lists (`PREFIXES`, `IERE_DIPHTHONG`, ...), or the rule files of `reguli/`. For each alternative, entry or word the diff adds or changes in them, check that a test line depends on it: a word that the entry alone decides, plus a negative word for each exception. A word that another rule already decides doesn't count (*reabilitat* is a hiatus by the -abil rule even without the prefix `re`).
+
+The exception tables (`diftong-ia.yaml`, `hiat-ea.yaml`, `hiat-ie.yaml`, `hiat-oa.yaml`) need no such check by hand: the rules checks (`cargo xtask reguli`) require, for each entry, a word of `exemple` that it alone decides per pattern and per item of `ante` and `post`, and a word of `contraexemple` per item of `non_ante` and `non_post`, and they decide each word by the rules.
 
 ## Rules
 
