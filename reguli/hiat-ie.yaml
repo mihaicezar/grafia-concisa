@@ -1,13 +1,12 @@
 # Neologismele în care ie e hiat (două silabe) după p, b, f, v, m, c, g, ch, gh: igienă, pieton.
-# Acolo ie e altfel diftong (fier, piept). Regulile consultă tabelul acesta pentru ie după una
-# dintre aceste consoane, în interiorul cuvântului, după -iere (copiere), -ier (plumier) și -iesc
-# (zapciesc) finale, și pe care nu l-au decis deja un prefix urmat de un cuvânt cunoscut, -ient
-# (efici-ent) sau bi- înainte de en (bi-enal).
+# Acolo ie e altfel diftong (fier, piept). Tabelul acesta e consultat de pasul „ie în
+# neologisme” din pasi.yaml, care spune unde se aplică.
 #
 # Fiecare intrare are:
 # - tipar: unul sau mai multe tipare, fiecare cu perechea ie; ^ e începutul cuvântului, $ sfârșitul;
 # - ante, non_ante: ce stă (sau ce nu stă) chiar înaintea tiparului; post, non_post: ce urmează
 #   (sau ce nu urmează) chiar după el; ^ în ante: tiparul începe cuvântul; $ în post: îl termină;
+#   o majusculă e o clasă de litere: C o consoană, V o vocală, și cele din clase.yaml (L, P);
 # - exemple: cuvinte pe care le decide intrarea;
 # - contraexemple: cuvinte cu literele unui tipar, pe care contextele sau ^, $ le exclud
 #   (obligatorii cu non_ante și non_post).

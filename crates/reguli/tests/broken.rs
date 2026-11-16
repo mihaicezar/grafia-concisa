@@ -7,9 +7,27 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use grafia_reguli::{
-    LEME, LISTS, Level, Message, SILABISIRI, TABLES, default_dir, files, list, load, load_texts, meta, read_texts,
-    rust, shown, table,
+    CLASE, LEME, LISTS, Level, Message, PASI, SILABISIRI, TABLES, default_dir, files, list, load, load_texts, meta,
+    read_texts, rust, shown, table,
 };
+
+/// The steps of a pasi.yaml that consult the four tables, on its lines 1 to 4.
+macro_rules! tables {
+    () => {
+        "- {pas: ea, tipar: [ea], tabel: hiat-ea.yaml, rezultat: hiat}
+- {pas: oa, tipar: [oa], tabel: hiat-oa.yaml, rezultat: hiat}
+- {pas: ia, tipar: [ia], ante: [C], tabel: diftong-ia.yaml, rezultat: diftong}
+- {pas: ie, tipar: [ie], ante: [L, P], tabel: hiat-ie.yaml, rezultat: hiat}
+"
+    };
+}
+
+/// A last step of pasi.yaml, which decides every pair.
+macro_rules! last {
+    () => {
+        "\n- {pas: restul, rezultat: diftong, exemple: [soare]}"
+    };
+}
 
 // (file, its text, the messages it gives, by line). The other files are those of reguli/.
 // Add a case = add a line.
@@ -156,12 +174,61 @@ const BROKEN: &[(&str, &str, &[&str])] = &[
     // without forms, the current lemma has at least the stem's letters: its stem is as long
     ("invechite.yaml", "leme:\n  - {lema: ra-chi-a-rea-să, actuala: rachier, tulpina: rachiare, fara_forme: true}\niare_pastrate: []", &["reguli/invechite.yaml:2:38: eroare: „rachier” are mai puțin de 8 litere, câte are tulpina „rachiare”: tulpina actuală e începutul lui, de aceeași lungime."]),
     ("invechite.yaml", "leme:\n  - {lema: ra-chi-a-rea-să, actuala: rachiere, tulpina: rachiare, fara_forme: true}\n  - {lema: ra-chi-a-rea-să-ă, actuala: rachier, tulpina: rachiare}\niare_pastrate: []", &[]),
+    // clase.yaml: a class is a capital other than C and V, with letters and digraphs
+    ("clase.yaml", "L: [p, b]\nP: [c, ch]\nCC: [x]\nC: [p]\nl: [p]", &["reguli/clase.yaml:3:1: eroare: „CC” nu e un nume de clasă: o clasă se numește cu o singură majusculă, alta decât C și V, care sunt date.", "reguli/clase.yaml:4:1: eroare: „C” nu e un nume de clasă: o clasă se numește cu o singură majusculă, alta decât C și V, care sunt date.", "reguli/clase.yaml:5:1: eroare: „l” nu e un nume de clasă: o clasă se numește cu o singură majusculă, alta decât C și V, care sunt date."]),
+    ("clase.yaml", "L: [p, b, p]\nP: [c, chh, Gh]", &["reguli/clase.yaml:1:11: eroare: „p” apare de două ori în „L” (întâi la rândul 1); păstrează-l o singură dată.", "reguli/clase.yaml:2:8: eroare: „chh” are mai mult de două litere; o clasă are litere și digrafe (ch, gh).", "reguli/clase.yaml:2:13: eroare: „Gh” are majuscula „G”; scrie cuvintele cu litere mici."]),
+    ("clase.yaml", "L: []\nP: c", &["reguli/clase.yaml:1:1: eroare: „L” e o listă goală.", "reguli/clase.yaml:2:1: eroare: „P” e o listă de cuvinte: P: [cuvânt, cuvânt]."]),
+    // a context may hold the classes C, V and those of clase.yaml, not a pattern
+    ("hiat-oa.yaml", "- {tipar: [oar], ante: [V, ^CC, LX], exemple: [protozoar]}", &["reguli/hiat-oa.yaml:1:33: eroare: „LX”: clasa „X” nu e definită; clasele sunt C, V și cele din clase.yaml (L, P)."]),
+    ("hiat-oa.yaml", "- {tipar: [Coar], exemple: [protozoar]}", &["reguli/hiat-oa.yaml:1:12: eroare: „Coar” are majuscula „C”; scrie cuvintele cu litere mici."]),
+    // pasi.yaml: a list of steps, each a mapping of its keys
+    ("pasi.yaml", "", &["reguli/pasi.yaml: eroare: fișierul nu are nicio intrare."]),
+    ("pasi.yaml", "[]", &["reguli/pasi.yaml: eroare: fișierul nu are nicio intrare.", "reguli/pasi.yaml: eroare: niciun pas nu consultă tabelul diftong-ia.yaml; adaugă un pas cu „tabel: diftong-ia.yaml”.", "reguli/pasi.yaml: eroare: niciun pas nu consultă tabelul hiat-ea.yaml; adaugă un pas cu „tabel: hiat-ea.yaml”.", "reguli/pasi.yaml: eroare: niciun pas nu consultă tabelul hiat-ie.yaml; adaugă un pas cu „tabel: hiat-ie.yaml”.", "reguli/pasi.yaml: eroare: niciun pas nu consultă tabelul hiat-oa.yaml; adaugă un pas cu „tabel: hiat-oa.yaml”."]),
+    // a step without its name still counts for the checks of the others: its table, the last step
+    ("pasi.yaml", concat!("- {tipar: [ea], tabel: hiat-ea.yaml, rezultat: hiat}\n", "- {pas: oa, tipar: [oa], tabel: hiat-oa.yaml, rezultat: hiat}\n- {pas: ia, tipar: [ia], tabel: diftong-ia.yaml, rezultat: diftong}\n- {pas: ie, tipar: [ie], tabel: hiat-ie.yaml, rezultat: hiat}", "\n- {rezultat: diftong, exemple: [soare]}"), &["reguli/pasi.yaml:1:4: eroare: lipsește cheia „pas”.", "reguli/pasi.yaml:5:4: eroare: lipsește cheia „pas”."]),
+    ("pasi.yaml", "pas: restul", &["reguli/pasi.yaml:1:4: eroare: fișierul e o listă de intrări, fiecare începând cu „- ”."]),
+    ("pasi.yaml", concat!(tables!(), "- restul", last!()), &["reguli/pasi.yaml:5:3: eroare: un pas are cheile pas, rezultat, tipar, ante, non_ante, post, non_post, prefixe, rest_cunoscut, non_prefixe, doar, tabel, exemple și contraexemple."]),
+    ("pasi.yaml", concat!(tables!(), "- {tipar: [ee], exemple: [idee]}", last!()), &["reguli/pasi.yaml:5:4: eroare: lipsește cheia „pas”.", "reguli/pasi.yaml:5:4: eroare: lipsește cheia „rezultat”."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: e-e, tipar: [ee], rezultat: [hiat], exemple: [idee], tabelul: x}", last!()), &["reguli/pasi.yaml:5:27: eroare: „rezultat” are un singur cuvânt, nu o listă.", "reguli/pasi.yaml:5:62: eroare: „tabelul” nu e o cheie cunoscută aici; cheile sunt pas, rezultat, tipar, ante, non_ante, post, non_post, prefixe, rest_cunoscut, non_prefixe, doar, tabel, exemple și contraexemple."]),
+    // the values of rezultat, doar and rest_cunoscut
+    ("pasi.yaml", concat!(tables!(), "- {pas: e-e, tipar: [ee], rezultat: hiatus, exemple: [idee]}", last!()), &["reguli/pasi.yaml:5:37: eroare: „rezultat” e hiat sau diftong, nu „hiatus”."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: ii, tipar: [ii$], doar: verbe, rezultat: hiat, exemple: [sfii], contraexemple: [copii]}", last!()), &["reguli/pasi.yaml:5:33: eroare: „doar” e verb, nu „verbe”."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: p, prefixe: [re], rest_cunoscut: patru, rezultat: hiat, exemple: [reabilitat], contraexemple: [neam]}\n- {pas: q, prefixe: [ne], rest_cunoscut: 0, rezultat: hiat, exemple: [neabonat], contraexemple: [neam]}", last!()), &["reguli/pasi.yaml:5:42: eroare: „rest_cunoscut” e un număr de litere, nu „patru”.", "reguli/pasi.yaml:6:42: eroare: „rest_cunoscut” e un număr de litere, nu „0”."]),
+    // what a key asks of the others
+    ("pasi.yaml", concat!(tables!(), "- {pas: p, prefixe: [re], rezultat: hiat, exemple: [reabilitat]}", last!()), &["reguli/pasi.yaml:5:12: eroare: lipsește cheia „rest_cunoscut”: după prefix urmează un cuvânt cunoscut."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: p, prefixe: [re], rest_cunoscut: 4, tipar: [ea], post: [l], rezultat: hiat, exemple: [reabilitat], contraexemple: [neam]}", last!()), &["reguli/pasi.yaml:5:12: eroare: un pas cu prefixe nu are tipar, ante, non_ante, post sau non_post: perechea e ultima vocală a prefixului și litera de după el."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: p, prefixe: [re], rest_cunoscut: 4, ante: [C], rezultat: hiat, exemple: [reabilitat], contraexemple: [neam]}", last!()), &["reguli/pasi.yaml:5:12: eroare: un pas cu prefixe nu are tipar, ante, non_ante, post sau non_post: perechea e ultima vocală a prefixului și litera de după el."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: ier, tipar: [ier, ab], rezultat: hiat, exemple: [plumier]}", last!()), &["reguli/pasi.yaml:5:27: eroare: tiparul „ab” nu are două vocale alăturate, deci nicio pereche pe care s-o decidă pasul."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: e-e, tipar: [ee], rest_cunoscut: 4, non_prefixe: [prea], rezultat: hiat, exemple: [idee], contraexemple: [preacurat]}", last!()), &["reguli/pasi.yaml:5:27: eroare: „rest_cunoscut” cere „prefixe”.", "reguli/pasi.yaml:5:45: eroare: „non_prefixe” cere „prefixe”."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: x, ante: [C], non_post: [l], rezultat: hiat, exemple: [idee], contraexemple: [ideal]}", last!()), &["reguli/pasi.yaml:5:12: eroare: „ante” cere un tipar: contextele stau în jurul lui.", "reguli/pasi.yaml:5:23: eroare: „non_post” cere un tipar: contextele stau în jurul lui."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: e-e, tipar: [ee], rezultat: hiat}", last!()), &["reguli/pasi.yaml:5:4: eroare: lipsește cheia „exemple”."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: ier, tipar: [ier], non_ante: [^C], rezultat: hiat, exemple: [plumier]}", last!()), &["reguli/pasi.yaml:5:4: eroare: lipsește cheia „contraexemple”: non_ante, non_post, non_prefixe, rest_cunoscut și doar cer cuvinte pe care le exclud."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: ii, tipar: [ii$], doar: verb, rezultat: hiat, exemple: [sfii]}", last!()), &["reguli/pasi.yaml:5:4: eroare: lipsește cheia „contraexemple”: non_ante, non_post, non_prefixe, rest_cunoscut și doar cer cuvinte pe care le exclud."]),
+    // patterns, contexts, prefixes and words
+    ("pasi.yaml", concat!(tables!(), "- {pas: ier, tipar: [ier, ^b, ^iar], rezultat: hiat, exemple: [plumier, iarbă]}", last!()), &["reguli/pasi.yaml:5:27: eroare: tiparul „^b” nu are două vocale alăturate, deci nicio pereche pe care s-o decidă pasul."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: lab, tipar: [ie], ante: [L, LAB, ^CV], post: [Q$], rezultat: diftong, exemple: [fier]}", last!()), &["reguli/pasi.yaml:5:37: eroare: „LAB”: clasa „A” nu e definită; clasele sunt C, V și cele din clase.yaml (L, P).", "reguli/pasi.yaml:5:55: eroare: „Q$”: clasa „Q” nu e definită; clasele sunt C, V și cele din clase.yaml (L, P)."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: p, prefixe: [Re, ne-], rest_cunoscut: 4, non_prefixe: [preş], rezultat: hiat, exemple: [reabilitat], contraexemple: [neam, neşant]}", last!()), &["reguli/pasi.yaml:5:22: eroare: „Re” are majuscula „R”; scrie cuvintele cu litere mici.", "reguli/pasi.yaml:5:26: eroare: „ne-” are o cratimă; cratimele despart doar silabele unei silabisiri.", "reguli/pasi.yaml:5:64: eroare: „preş” are ş cu sedilă; scrie ș, cu virgulă.", "reguli/pasi.yaml:5:132: eroare: „neşant” are ş cu sedilă; scrie ș, cu virgulă."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: p, prefixe: [re, re], rest_cunoscut: 4, rezultat: hiat, exemple: [reabilitat], contraexemple: [neam, reabilitat]}", last!()), &["reguli/pasi.yaml:5:26: eroare: „re” apare de două ori în „prefixe” (întâi la rândul 5); păstrează-l o singură dată.", "reguli/pasi.yaml:5:110: eroare: „reabilitat” e și în exemple, și în contraexemple; păstrează-l într-una singură."]),
+    // a table: one that exists, consulted by one step for its pair, its way, with no examples
+    ("pasi.yaml", concat!(tables!(), "- {pas: x, tipar: [ea], tabel: hiat-xx.yaml, rezultat: hiat}", last!()), &["reguli/pasi.yaml:5:32: eroare: „hiat-xx.yaml” nu e un tabel de excepții; tabelele sunt diftong-ia.yaml, hiat-ea.yaml, hiat-ie.yaml și hiat-oa.yaml."]),
+    ("pasi.yaml", concat!("- {pas: ea, tipar: [ee], tabel: hiat-ea.yaml, rezultat: diftong, exemple: [real]}\n", "- {pas: oa, tipar: [oa], tabel: hiat-oa.yaml, rezultat: hiat}\n- {pas: ia, tipar: [ia], tabel: diftong-ia.yaml, rezultat: diftong}\n- {pas: ie, tipar: [ie], tabel: hiat-ie.yaml, rezultat: hiat}", last!()), &["reguli/pasi.yaml:1:33: eroare: tabelul hiat-ea.yaml face perechea ea hiat, iar pasul are rezultat: diftong.", "reguli/pasi.yaml:1:33: eroare: niciun tipar al pasului nu are perechea ea, singura pe care o decide tabelul hiat-ea.yaml.", "reguli/pasi.yaml:1:66: eroare: un pas cu tabel nu are „exemple”: le au intrările tabelului."]),
+    ("pasi.yaml", concat!(tables!(), "- pas: ea2\n  tipar: [ea]\n  tabel: hiat-ea.yaml\n  rezultat: hiat", last!()), &["reguli/pasi.yaml:7:10: eroare: tabelul hiat-ea.yaml e consultat deja de pasul de la rândul 1; un tabel e consultat de un singur pas."]),
+    ("pasi.yaml", concat!("- {pas: ea, tipar: [ea], tabel: hiat-ea.yaml, rezultat: hiat}\n- {pas: ia, tipar: [ia], tabel: diftong-ia.yaml, rezultat: diftong}\n- {pas: ie, tipar: [ie], tabel: hiat-ie.yaml, rezultat: hiat}", last!()), &["reguli/pasi.yaml: eroare: niciun pas nu consultă tabelul hiat-oa.yaml; adaugă un pas cu „tabel: hiat-oa.yaml”."]),
+    // no name twice, and a last step with no condition
+    ("pasi.yaml", concat!(tables!(), "- {pas: restul, tipar: [ee], rezultat: hiat, exemple: [idee]}", last!()), &["reguli/pasi.yaml:6:9: eroare: pasul „restul” apare de două ori (întâi la rândul 5); dă-i alt nume."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: e-e, tipar: [ee], rezultat: hiat, exemple: [idee]}"), &["reguli/pasi.yaml:5:4: eroare: ultimul pas („e-e”) decide orice pereche nedecisă de cei dinainte, deci nu are tipar, prefixe, ante, non_ante, post, non_post, doar sau tabel."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: restul, prefixe: [re], rest_cunoscut: 4, rezultat: diftong, exemple: [reabilitat], contraexemple: [neam]}"), &["reguli/pasi.yaml:5:4: eroare: ultimul pas („restul”) decide orice pereche nedecisă de cei dinainte, deci nu are tipar, prefixe, ante, non_ante, post, non_post, doar sau tabel."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: restul, doar: verb, rezultat: diftong, exemple: [sfii], contraexemple: [copii]}"), &["reguli/pasi.yaml:5:4: eroare: ultimul pas („restul”) decide orice pereche nedecisă de cei dinainte, deci nu are tipar, prefixe, ante, non_ante, post, non_post, doar sau tabel."]),
+    ("pasi.yaml", concat!(tables!(), "- {pas: restul, ante: [C], rezultat: diftong, exemple: [soare]}"), &["reguli/pasi.yaml:5:4: eroare: ultimul pas („restul”) decide orice pereche nedecisă de cei dinainte, deci nu are tipar, prefixe, ante, non_ante, post, non_post, doar sau tabel.", "reguli/pasi.yaml:5:17: eroare: „ante” cere un tipar: contextele stau în jurul lui."]),
+    ("pasi.yaml", "- {pas: ea, tipar: [ea], tabel: hiat-ea.yaml, rezultat: hiat}\n- {pas: oa, tipar: [oa], tabel: hiat-oa.yaml, rezultat: hiat}\n- {pas: ia, tipar: [ia], tabel: diftong-ia.yaml, rezultat: diftong}\n- {pas: ie, tabel: hiat-ie.yaml, rezultat: hiat}", &["reguli/pasi.yaml:4:4: eroare: ultimul pas („ie”) decide orice pereche nedecisă de cei dinainte, deci nu are tipar, prefixe, ante, non_ante, post, non_post, doar sau tabel.", "reguli/pasi.yaml:4:20: eroare: niciun tipar al pasului nu are perechea ie, singura pe care o decide tabelul hiat-ie.yaml."]),
+    ("pasi.yaml", tables!(), &["reguli/pasi.yaml:4:4: eroare: ultimul pas („ie”) decide orice pereche nedecisă de cei dinainte, deci nu are tipar, prefixe, ante, non_ante, post, non_post, doar sau tabel."]),
+    ("pasi.yaml", concat!(tables!(), "- pas: e-e\n  tipar: [ee]\n  rezultat: hiat\n  exemple: [idee]", last!()), &[]),
     // files that are no YAML, or hidden, are left alone; a YAML file must be a rule file
     ("notes.txt", "x", &[]),
     (".ee.yaml", "x", &[]),
-    ("ee.yml", "x: y", &["reguli/ee.yml: eroare: „ee.yml” nu e un fișier de reguli; fișierele de reguli sunt silabisiri.yaml, invechite.yaml, ee.yaml, neconvertite.yaml, a-i.yaml, necunoscute.yaml, diftong-ia.yaml, hiat-ea.yaml, hiat-ie.yaml și hiat-oa.yaml."]),
+    ("ee.yml", "x: y", &["reguli/ee.yml: eroare: „ee.yml” nu e un fișier de reguli; fișierele de reguli sunt silabisiri.yaml, invechite.yaml, ee.yaml, neconvertite.yaml, a-i.yaml, necunoscute.yaml, clase.yaml, pasi.yaml, diftong-ia.yaml, hiat-ea.yaml, hiat-ie.yaml și hiat-oa.yaml."]),
     // a file that is not a rule file
-    ("silabisri.yaml", "neant: ne-ant", &["reguli/silabisri.yaml: eroare: „silabisri.yaml” nu e un fișier de reguli; fișierele de reguli sunt silabisiri.yaml, invechite.yaml, ee.yaml, neconvertite.yaml, a-i.yaml, necunoscute.yaml, diftong-ia.yaml, hiat-ea.yaml, hiat-ie.yaml și hiat-oa.yaml."]),
+    ("silabisri.yaml", "neant: ne-ant", &["reguli/silabisri.yaml: eroare: „silabisri.yaml” nu e un fișier de reguli; fișierele de reguli sunt silabisiri.yaml, invechite.yaml, ee.yaml, neconvertite.yaml, a-i.yaml, necunoscute.yaml, clase.yaml, pasi.yaml, diftong-ia.yaml, hiat-ea.yaml, hiat-ie.yaml și hiat-oa.yaml."]),
 ];
 
 /// The rule files of the workspace's reguli/, by name, as load() reads them.
@@ -199,6 +266,8 @@ fn lists() {
             "neconvertite.yaml",
             "a-i.yaml",
             "necunoscute.yaml",
+            "clase.yaml",
+            "pasi.yaml",
             "diftong-ia.yaml",
             "hiat-ea.yaml",
             "hiat-ie.yaml",
@@ -214,7 +283,7 @@ fn lists() {
             LISTS.iter().all(|l| l.file != t.file && l.constant != t.constant),
             "{t:?}"
         );
-        assert!(t.file != SILABISIRI && t.file != LEME.0, "{t:?}");
+        assert!(![SILABISIRI, LEME.0, CLASE, PASI].contains(&t.file), "{t:?}");
         assert!(
             t.pair.chars().count() == 2 && t.pair.chars().all(|c| "aeiou".contains(c)),
             "{t:?}"
@@ -229,7 +298,10 @@ fn lists() {
                 .all(|o| o.constant != l.constant && (o.file, o.key) != (l.file, l.key)),
             "{l:?}"
         );
-        assert!(l.file != SILABISIRI && (l.file, l.key) != LEME, "{l:?}");
+        assert!(
+            ![SILABISIRI, CLASE, PASI].contains(&l.file) && (l.file, l.key) != LEME,
+            "{l:?}"
+        );
         assert!(l.plus.is_none_or(|(key, _)| list(l.file, key).is_some()), "{l:?}");
     }
     assert!(list("ee.yaml", "ae_oe").is_some_and(|l| l.plus == Some(("nume", "oe"))));
@@ -343,7 +415,7 @@ const RUNS: &[Run] = &[
     (&[], true, &["reguli/: fără erori."], true),
     (&[("necunoscute.yaml", "iesc: [eîti]")], false, &["{dir}/necunoscute.yaml:1:8: avertisment: „eîti” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles.", "{dir}/: fără erori, 1 avertisment."], true),
     // the messages by file, in the order of files(), and the files that are no rule files last
-    (&[("zz.yaml", "x: y"), ("necunoscute.yaml", "iesc: [eşti, eîti]"), ("a-i.yaml", "radacini_cu_a: [roman]"), ("silabisiri.yaml", "neant: ne-an")], false, &["{dir}/silabisiri.yaml:1:8: eroare: „ne-an” nu are literele lui „neant”.", "{dir}/a-i.yaml:1:17: eroare: „roman” nu are â, deci nu e o rădăcină care își păstrează â.", "{dir}/necunoscute.yaml:1:8: eroare: „eşti” are ş cu sedilă; scrie ș, cu virgulă.", "{dir}/necunoscute.yaml:1:14: avertisment: „eîti” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles.", "{dir}/zz.yaml: eroare: „zz.yaml” nu e un fișier de reguli; fișierele de reguli sunt silabisiri.yaml, invechite.yaml, ee.yaml, neconvertite.yaml, a-i.yaml, necunoscute.yaml, diftong-ia.yaml, hiat-ea.yaml, hiat-ie.yaml și hiat-oa.yaml.", "{dir}/: 4 erori, 1 avertisment."], false),
+    (&[("zz.yaml", "x: y"), ("necunoscute.yaml", "iesc: [eşti, eîti]"), ("a-i.yaml", "radacini_cu_a: [roman]"), ("silabisiri.yaml", "neant: ne-an")], false, &["{dir}/silabisiri.yaml:1:8: eroare: „ne-an” nu are literele lui „neant”.", "{dir}/a-i.yaml:1:17: eroare: „roman” nu are â, deci nu e o rădăcină care își păstrează â.", "{dir}/necunoscute.yaml:1:8: eroare: „eşti” are ş cu sedilă; scrie ș, cu virgulă.", "{dir}/necunoscute.yaml:1:14: avertisment: „eîti” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles.", "{dir}/zz.yaml: eroare: „zz.yaml” nu e un fișier de reguli; fișierele de reguli sunt silabisiri.yaml, invechite.yaml, ee.yaml, neconvertite.yaml, a-i.yaml, necunoscute.yaml, clase.yaml, pasi.yaml, diftong-ia.yaml, hiat-ea.yaml, hiat-ie.yaml și hiat-oa.yaml.", "{dir}/: 4 erori, 1 avertisment."], false),
     // in CI, each message is also an annotation
     (&[("a-i.yaml", "radacini_cu_a: [roman]"), ("necunoscute.yaml", "iesc: [eîti]")], true, &["{dir}/a-i.yaml:1:17: eroare: „roman” nu are â, deci nu e o rădăcină care își păstrează â.", "::error file={dir}/a-i.yaml,line=1,col=17::„roman” nu are â, deci nu e o rădăcină care își păstrează â.", "{dir}/necunoscute.yaml:1:8: avertisment: „eîti” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles.", "::warning file={dir}/necunoscute.yaml,line=1,col=8::„eîti” are î în interiorul cuvântului; în grafia standard acolo se scrie â (câine), afară de compuse ca neînțeles.", "{dir}/: 1 eroare, 1 avertisment."], false),
     // an OS's or an editor's files are left alone
@@ -411,8 +483,9 @@ fn annotations() {
 }
 
 /// The Rust code of a small set of rule files: AE_OE holds the names in -oe of NAMES too; a
-/// table, its pair and its result, with each entry's patterns and contexts, and no word or
-/// comment; and the lines of the rules, apart.
+/// table, its pair and its result, with each entry's patterns and contexts; the classes; the
+/// steps, with their tables; no word, comment or name of a step; and the lines of the rules and
+/// the names of the steps, apart.
 #[test]
 fn rust_code() {
     let mut texts = BTreeMap::new();
@@ -447,6 +520,19 @@ fn rust_code() {
         ),
         ("hiat-ie.yaml", "- {tipar: [gien], exemple: [igienă]}"),
         ("hiat-oa.yaml", "- {tipar: [zoar$], post: [e, $], exemple: [protozoar]}"),
+        ("clase.yaml", "L: [p, b]  # labiale\nP: [c, ch]"),
+        (
+            "pasi.yaml",
+            "- {pas: e-e, tipar: [ee], rezultat: hiat, exemple: [idee]}
+- {pas: prefix, prefixe: [re, co], rest_cunoscut: 4, non_prefixe: [prea], rezultat: hiat, exemple: [reabilitat], contraexemple: [preacurat]}
+- {pas: ea, tipar: [ea], tabel: hiat-ea.yaml, rezultat: hiat}
+- {pas: oa, tipar: [oa], tabel: hiat-oa.yaml, rezultat: hiat}
+- {pas: ii, tipar: [ii$], ante: [C], doar: verb, rezultat: hiat, exemple: [sfii], contraexemple: [copii]}
+- {pas: ia, tipar: [ia], ante: [C], tabel: diftong-ia.yaml, rezultat: diftong}
+- {pas: ier, tipar: [ier], ante: [L, P], non_ante: [^C], post: [$], rezultat: hiat, exemple: [plumier], contraexemple: [fier]}
+- {pas: ie, tipar: [ie], ante: [L, P], tabel: hiat-ie.yaml, rezultat: hiat}
+- {pas: restul, rezultat: diftong, exemple: [soare]}",
+        ),
     ] {
         texts.insert(name.to_string(), text.to_string());
     }
@@ -480,6 +566,21 @@ pub static IE_HIATUS: Table = Table { file: "hiat-ie.yaml", pair: ['i', 'e'], cu
 pub static OA_HIATUS: Table = Table { file: "hiat-oa.yaml", pair: ['o', 'a'], cut: true, entries: &[
     Entry { tipar: &["zoar$"], ante: &[], non_ante: &[], post: &["e", "$"], non_post: &[] },
 ] };
+pub const CLASSES: &[(char, &[&str])] = &[
+    ('L', &["p", "b"]),
+    ('P', &["c", "ch"]),
+];
+pub static STEPS: [Step; 9] = [
+    Step { when: Entry { tipar: &["ee"], ante: &[], non_ante: &[], post: &[], non_post: &[] }, prefixe: &[], rest_cunoscut: 0, non_prefixe: &[], verb: false, tabel: None, cut: true },
+    Step { when: Entry { tipar: &[], ante: &[], non_ante: &[], post: &[], non_post: &[] }, prefixe: &["re", "co"], rest_cunoscut: 4, non_prefixe: &["prea"], verb: false, tabel: None, cut: true },
+    Step { when: Entry { tipar: &["ea"], ante: &[], non_ante: &[], post: &[], non_post: &[] }, prefixe: &[], rest_cunoscut: 0, non_prefixe: &[], verb: false, tabel: Some(&EA_HIATUS), cut: true },
+    Step { when: Entry { tipar: &["oa"], ante: &[], non_ante: &[], post: &[], non_post: &[] }, prefixe: &[], rest_cunoscut: 0, non_prefixe: &[], verb: false, tabel: Some(&OA_HIATUS), cut: true },
+    Step { when: Entry { tipar: &["ii$"], ante: &["C"], non_ante: &[], post: &[], non_post: &[] }, prefixe: &[], rest_cunoscut: 0, non_prefixe: &[], verb: true, tabel: None, cut: true },
+    Step { when: Entry { tipar: &["ia"], ante: &["C"], non_ante: &[], post: &[], non_post: &[] }, prefixe: &[], rest_cunoscut: 0, non_prefixe: &[], verb: false, tabel: Some(&IA_DIPHTHONG), cut: false },
+    Step { when: Entry { tipar: &["ier"], ante: &["L", "P"], non_ante: &["^C"], post: &["$"], non_post: &[] }, prefixe: &[], rest_cunoscut: 0, non_prefixe: &[], verb: false, tabel: None, cut: true },
+    Step { when: Entry { tipar: &["ie"], ante: &["L", "P"], non_ante: &[], post: &[], non_post: &[] }, prefixe: &[], rest_cunoscut: 0, non_prefixe: &[], verb: false, tabel: Some(&IE_HIATUS), cut: true },
+    Step { when: Entry { tipar: &[], ante: &[], non_ante: &[], post: &[], non_post: &[] }, prefixe: &[], rest_cunoscut: 0, non_prefixe: &[], verb: false, tabel: None, cut: false },
+];
 "#;
     let expected_meta = r#"// Generated by grafia-reguli from reguli/ (crates/core/codegen.rs): the lines of the rules, not in RULES_HASH.
 pub const SYLLABIFICATION_LINES: &[usize] = &[1, 2];
@@ -490,6 +591,8 @@ pub const ENTRY_LINES: [&[usize]; 4] = [
     &[1],
     &[1],
 ];
+pub const STEP_NAMES: [&str; 9] = ["e-e", "prefix", "ea", "oa", "ii", "ia", "ier", "ie", "restul"];
+pub const STEP_LINES: [usize; 9] = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 "#;
     let (rules, messages) = load_texts(&texts);
     assert_eq!(strings(&messages), Vec::<String>::new());

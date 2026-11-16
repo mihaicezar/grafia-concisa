@@ -41,9 +41,9 @@ For each survivor:
 
 ## The blind spot
 
-cargo-mutants does not mutate regex strings, the entries of constant lists (`PREFIXES`, `IERE_DIPHTHONG`, ...), or the rule files of `reguli/`. For each alternative, entry or word the diff adds or changes in them, check that a test line depends on it: a word that the entry alone decides, plus a negative word for each exception. A word that another rule already decides doesn't count (*reabilitat* is a hiatus by the -abil rule even without the prefix `re`).
+cargo-mutants does not mutate regex strings, the entries of constant lists (the endings of `ee.rs`, ...), or the rule files of `reguli/`. For each alternative, entry or word the diff adds or changes in them, check that a test line depends on it: a word that the entry alone decides, plus a negative word for each exception. A word that another rule already decides doesn't count.
 
-The exception tables (`diftong-ia.yaml`, `hiat-ea.yaml`, `hiat-ie.yaml`, `hiat-oa.yaml`) need no such check by hand: the rules checks (`cargo xtask reguli`) require, for each entry, a word of `exemple` that it alone decides per pattern and per item of `ante` and `post`, and a word of `contraexemple` per item of `non_ante` and `non_post`, and they decide each word by the rules.
+The steps of `pasi.yaml` and the exception tables (`diftong-ia.yaml`, `hiat-ea.yaml`, `hiat-ie.yaml`, `hiat-oa.yaml`) need no such check by hand: the rules checks (`cargo xtask reguli`) require, for each step and each entry, a word of `exemple` that it alone decides per pattern, per prefix and per item of `ante` and `post`, and a word of `contraexemple` per item of `non_ante`, `non_post` and `non_prefixe`, and they decide each word by the rules.
 
 ## Rules
 

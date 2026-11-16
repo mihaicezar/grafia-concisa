@@ -21,30 +21,35 @@ A word form may have more than one correct concise spelling. It always has one d
 
 A headword uses its own syllabification. Any other inflected form takes its cuts from its lemma's syllabification (see the derivation table below).
 
-A lemma's syllabification is Cezar's explicit one when listed (`silabisiri.yaml`: *neant* `ne-ant`, *coastă* `coas-tă`, *mielea* `mi-e-lea`, *înfieri* `în-fi-eri`, *răspieri* `răs-pieri`, ...; an entry may list several readings, the first being the default: *miază* `mia-ză` / `mi-a-ză`, *vier* `vier` / `vi-er`), otherwise dexonline's hyphenation completed by fallback rules. The word *ie* has only the reading `i-e` and stays *ie*, with no alternative. A form listed there takes all its spellings from there, whatever its lemma, the default first: *piei* `piei` / `pi-ei` is *pẹi* (← *piele*, *pieri*), then *piei* (← *pia*), although by its records *piei* ← *pia* `pi-a`, which dexonline backs, would be its only spelling.
+A lemma's syllabification is Cezar's explicit one when listed (`silabisiri.yaml`: *neant* `ne-ant`, *mielea* `mi-e-lea`, *înfieri* `în-fi-eri`, *răspieri* `răs-pieri`, ...; an entry may list several readings, the first being the default: *miază* `mia-ză` / `mi-a-ză`, *vier* `vier` / `vi-er`), otherwise dexonline's hyphenation completed by fallback rules. The word *ie* has only the reading `i-e` and stays *ie*, with no alternative. A form listed there takes all its spellings from there, whatever its lemma, the default first: *piei* `piei` / `pi-ei` is *pẹi* (← *piele*, *pieri*), then *piei* (← *pia*), although by its records *piei* ← *pia* `pi-a`, which dexonline backs, would be its only spelling.
 
 - **dexonline hyphenation.** Only the first variant is used. It may be complete (`fa-mi-li-e`), a word end (`-li-e`), a word start (`a-ce-tal-`) or a word interior (`-pioa-`). Inside the span it covers, its cuts always prevail over the rules. A hyphenation that does not fit the word is ignored.
-- **Fallback rules.** Everywhere else, the rules place only cuts between two vowels, since grafia concisă uses no other cuts. The rules are known to be incomplete and will be refined:
+- **Fallback rules.** Everywhere else, the rules place only cuts between two vowels, since grafia concisă uses no other cuts. They are the steps of `pasi.yaml`, tried in order for each pair of vowels: the first that applies decides. A step that consults an exception table applies only where an entry of the table applies too; otherwise the next step is tried. Below, L is a labial (p, b, f, v, m) and P a palatal (c, g, ch, gh), the classes of `clase.yaml`. The rules are known to be incomplete and will be refined:
 
-| Vowels | Context | Cut | Examples |
-|---|---|---|---|
-| ie | in -ient, -ienț/-ient + a/ă/e/i | hiatus | *client*, *ambient*, *experiență*, *clientelă* (dexonline: *farniente* `far-nien-te`) |
-| ia, ea | before -bil, after a consonant | hiatus | *fiabil*, *agreabil* (not *debreiabil*: after a vowel, like *de-bre-ia*) |
-| e-e | anywhere | hiatus | *idee* → *ide-e* (the -eẹ/aẹ/oẹ switch reads it as *e-ie*) |
-| e-a, i-a, i-e, o-a | after a prefix (re-, pre-, ne-, tele-, co-, semi-, anti-, multi-, auto-, micro-, macro-, foto-, pseudo-, bio-, neo-, radio-, aero-, agro-, electro-, hidro-, termo-, geo-, proto-, socio-, psiho-, stereo-) when the rest is a known word: a form of a lowercase dexonline lexeme with frequency ≥ 0.9, of at least 4 letters | hiatus | *re-abilitat*, *ne-adevărat*, *auto-analiză* (not *neam*, *neagră*, *autoare*; *prea-curat* is *prea* + *curat*); *co-activ* (the false hits of co- are fixed in `silabisiri.yaml`: *coastă*, *coardă*, *coacere*, *coacăț*) |
-| i-e | prefix bi- before en | hiatus | *bienal* (not *biet*) |
-| i-i | word-final, after a consonant, in a verb infinitive | hiatus | *sfi-i*, *pri-i*, so *sfiește*, *priască* keep i-e/i-a (not the plural *copii*) |
-| ea | neologism endings and stems (`hiat-ea.yaml`): final -eal (not after g/d/b), -linear/-hlear/-balnear, -laureat-/-lineat-/-nucleat- and similar (whatever follows), nuclear-, creat-, reac(t/ț)-, steat-, meandr-, aleat-, beatif-, reali-/ideali-/boreal (not in -răboreală/-stoboreală)/cereal | hiatus | *real*, *leal*, *interliceal*, *boreal*, *hiperboreală*, *nuclear*, *denuclearizat*, *linear*, *alineat*, *anucleată*, *laureată*, *delineator*, *creator*, *pancreatic*, *reactor*, *reacție*, *steatoză*, *meandru*, *aleator*, *beatific*, *realizat*, *cereale* (not *deal*, *Ardeal*, *mangeal*, *beat*, *asear*, *greșeală*, *răboreală*, *cleat*, *procleat*, *pleată*, *soreată*) |
-| oa | neologism stems and endings (`hiat-oa.yaml`): coagul-, coabit-, coaliț-/coaliz-, final -zoar | hiatus | *coagulat*, *coabita*, *coaliție*, *coalizat*, *protozoar*, *cazoar* (not *mozoară*) |
-| ie, ia | word start, or after a vowel (ă, î included) | diphthong | *iarbă*, *femeie*, *tăia*, *tăiere*, *înmuiere* |
-| ie, ia | word-final, after a consonant | hiatus | *familie*, *vie*, *istoria* |
-| ia | medial, after a consonant (the -ia\* endings) | hiatus | *apropiat*, *pian*, *social*, *specializat*, *glaciar*, *variare* |
-| ia | same, in native stems (`diftong-ia.yaml`) | diphthong | *chiar*, *piatră*, *biată*, *viață*, *amiază*, *ghiață*, *ghiarele*, *maghiar*, *Caragiale*, *chiajna*, *obială* (not *liturghiar*, *eleghiacesc*, *schiagramă*, *Gorghias*, *Miaulis*, *microbial*) |
-| ia | final -iare after p/b/f/v/m or c/g/ch/gh, in a word that is no long infinitive (see below) | diphthong | *fiare* (like *fiere*) |
-| ie | medial, after p/b/f/v/m or c/g/ch/gh | diphthong | *fier*, *piept*, *pieptene* |
-| ie | same, in neologism stems and endings (`hiat-ie.yaml`: gien, pieton, cviet, societ, soviet, vien, miel + o/in/it/ie, -ietor/-ietoare, bier neither word-initial nor after z/s), in final -ier/-ieră/-iereasă (and the forms of -iereasă) after a vowel and a consonant, final -iesc (adjectives) and final -iere/-ierea/-ieri/-ierii/-ierile/-ierilor (long infinitives; after a vowel it is a diphthong, see above: *tăiere*) | hiatus | *igienă*, *pieton*, *sovietism*, *cvietism*, *vienez*, *mielită*, *poliomielită*, *așchietor*, *bărbierit*, *corăbierie*, *bărbier*, *plumier*, *banchier*, *genunchier*, *legumieră*, *rachiereasă*, *pompiereasă*, *zapciesc*, *surugiesc*, *copiere*, *apreciere*, *veghiere*, *învierea*, *aprecierilor* (not *miel*, *mielușor*, *zbiera*, *fier*, *zbier*; not *miere*, *înmiere*, *fiere*, *piere* and their forms (*mierea*, *pieri*): `rules::IERE_DIPHTHONG`) |
-| ie | medial, after another consonant | hiatus | *prieten*, *cartier* |
-| anything else (ea, oa, ...) | anywhere | diphthong | *seară*, *soare* |
+| Step | Vowels | Context | Cut | Examples |
+|---|---|---|---|---|
+| e-e | e-e | anywhere | hiatus | *idee* → *ide-e* (the -eẹ/aẹ/oẹ switch reads it as *e-ie*), *aceea* |
+| nu e prefix | o-a | the word starts like a prefix followed by a known word, but has no prefix: *coard*, *coast*, *coacere*, *coacăț* (co- + *ardă*, *astă*, ...); a word with neo-, pseudo- or another prefix would go here too | diphthong | *coardă*, *coastă*, *coacere*, *coacăț*, *coacăță* (not *coactiv*) |
+| prefix și un cuvânt cunoscut | the prefix's last vowel and the next | after a prefix (re-, pre-, ne-, tele-, co-, semi-, anti-, multi-, auto-, micro-, macro-, foto-, pseudo-, bio-, neo-, radio-, aero-, agro-, electro-, hidro-, termo-, geo-, proto-, socio-, psiho-, stereo-) when the rest is a known word: a form of a lowercase dexonline lexeme with frequency ≥ 0.9, of at least 4 letters; not when the word starts with the prefix *prea-*, a prefix of its own, followed by a known word | hiatus | *re-abilitat*, *ne-adevărat*, *auto-analiză*, *co-activ*, *pre-aviz*, *pre-încălzi* (pre- + *încălzi*) (not *neam*, *neagră*, *autoare*; *preacurat* is prea- + *curat*, one syllable) |
+| -ient | ie | in -ient, -ienț, followed by a, ă, e, i or the word's end | hiatus | *client*, *ambient*, *experiență*, *clientelă* (dexonline: *farniente* `far-nien-te`) |
+| -abil | ia, ea | before -bil, after a consonant | hiatus | *fiabil*, *agreabil* (not *debreiabil*: after a vowel, like *de-bre-ia*) |
+| bi-en | ie | word-initial *bien* | hiatus | *bienal* (not *biet*) |
+| ea în neologisme | ea | neologism endings and stems (`hiat-ea.yaml`): final -eal (not after g/d/b), -linear/-hlear/-balnear, -laureat-/-lineat-/-nucleat- and similar (whatever follows), nuclear-, creat-, reac(t/ț)-, steat-, meandr-, aleat-, beatif-, reali-/ideali-/boreal (not in -răboreală/-stoboreală)/cereal | hiatus | *real*, *leal*, *interliceal*, *boreal*, *hiperboreală*, *nuclear*, *denuclearizat*, *linear*, *alineat*, *anucleată*, *laureată*, *delineator*, *creator*, *pancreatic*, *reactor*, *reacție*, *steatoză*, *meandru*, *aleator*, *beatific*, *realizat*, *cereale* (not *deal*, *Ardeal*, *mangeal*, *beat*, *asear*, *greșeală*, *răboreală*, *cleat*, *procleat*, *pleată*, *soreată*) |
+| oa în neologisme | oa | neologism stems and endings (`hiat-oa.yaml`): coagul-, coabit-, coaliț-/coaliz-, final -zoar | hiatus | *coagulat*, *coabita*, *coaliție*, *coalizat*, *protozoar*, *cazoar* (not *mozoară*) |
+| -ii final la verbe | i-i | word-final, after a consonant, in a verb infinitive | hiatus | *sfi-i*, *pri-i*, so *sfiește*, *priască* keep i-e/i-a (not the plural *copii*) |
+| ie, ia la început sau după vocală | ie, ia | word start, or after a vowel (ă, â, î included) | diphthong | *iarbă*, *femeie*, *tăia*, *tăiere*, *înmuiere* |
+| ie, ia final după consoană | ie, ia | word-final, after a consonant | hiatus | *familie*, *vie*, *istoria* |
+| -iare care nu e infinitiv lung | ia | final -iare after L or P, in a word that is no long infinitive (see below) | diphthong | *fiare* (like *fiere*), *ghiare* (like *ghiară*) |
+| tulpini native cu ia | ia | after a consonant, in native stems (`diftong-ia.yaml`) | diphthong | *chiar*, *piatră*, *biată*, *viață*, *amiază*, *ghiață*, *ghiarele*, *maghiar*, *Caragiale*, *chiajna*, *obială* (not *liturghiar*, *eleghiacesc*, *schiagramă*, *Gorghias*, *Miaulis*, *microbial*) |
+| ia după consoană | ia | medial, after a consonant (the -ia\* endings) | hiatus | *apropiat*, *pian*, *social*, *specializat*, *glaciar*, *variare* |
+| -iere nativ | ie | *miere*, *înmiere*, *fiere*, *piere*, and their forms in -ierea, -ieri, -ierii, -ierile, -ierilor | diphthong | *miere*, *mierea*, *înmiere*, *fiere*, *pieri* |
+| -iere, infinitive lungi | ie | final -iere, -ierea, -ieri, -ierii, -ierile, -ierilor after L or P (long infinitives; after a vowel it is a diphthong, see above: *tăiere*) | hiatus | *copiere*, *apreciere*, *veghiere*, *învierea*, *aprecierilor* |
+| -ier, -ieră, -iereasă | ie | final -ier, -ieră, -iereasă and the forms of -iereasă, after L or P, in a word of more than one syllable | hiatus | *bărbier*, *plumier*, *banchier*, *genunchier*, *legumieră*, *rachiereasă*, *pompiereasă* (not *fier*, *zbier*) |
+| -iesc | ie | final -iesc (adjectives) after L or P | hiatus | *fiesc*, *zapciesc*, *surugiesc* |
+| ie în neologisme | ie | after L or P, in neologism stems and endings (`hiat-ie.yaml`): gien, pieton, cviet, societ, soviet, vien, miel + o/in/it/ie, -ietor/-ietoare, bier neither word-initial nor after z/s | hiatus | *igienă*, *pieton*, *sovietism*, *cvietism*, *vienez*, *mielită*, *poliomielită*, *așchietor*, *bărbierit*, *corăbierie* (not *miel*, *mielușor*, *zbiera*) |
+| ie după labială sau palatală | ie | after L or P | diphthong | *fier*, *piept*, *pieptene* |
+| ie după altă consoană | ie | after another consonant | hiatus | *prieten*, *cartier* |
+| restul | anything else (ea, oa, ...) | anywhere | diphthong | *seară*, *soare* |
 
 When several records produce the same form, the default spelling is chosen by priority (the other spellings become alternatives, see *Homographs*):
 1. Any record beats one of a long infinitive in -iare (see below).
@@ -195,7 +200,7 @@ Any other word, unknown ones included, goes through the character map (*femeẹ*
 
 ## Rule files
 
-The hand lists of the rules and the exception tables of the fallback rules are YAML files in `reguli/`, which a linguist edits. They are compiled into the core when it is built, so the apps read no YAML. A list is cited by its file and key: `ee.yaml: nume`; a table by its file: `hiat-ea.yaml`.
+The hand lists of the rules, the steps of the fallback rules and their exception tables are YAML files in `reguli/`, which a linguist edits. They are compiled into the core when it is built, so the apps read no YAML. A list is cited by its file and key: `ee.yaml: nume`; a table by its file: `hiat-ea.yaml`; a step by its name: the step „-ient” of `pasi.yaml`.
 
 | File | Key | Holds | Each word |
 |---|---|---|---|
@@ -209,8 +214,37 @@ The hand lists of the rules and the exception tables of the fallback rules are Y
 | `neconvertite.yaml` | `nume_latine` | the Latin names left as they are (see *Text not converted*) | ends in a vowel + -ian |
 | `a-i.yaml` | `radacini_cu_a` | the roots whose words keep â (see *Optional rule: â → î*) | holds â |
 | `necunoscute.yaml` | `iesc` | the endings of an -esc adjective after i (see *Unknown words*) | |
+| `clase.yaml` | (a capital) | the classes of letters of the contexts, `L: [p, b, f, v, m]` (see below) | a letter or a digraph |
 
-Each exception table is a file of its own, a list of entries. The step of the fallback rules that consults it is in the fallback table (see *Syllabification source*):
+The steps of the fallback rules are `pasi.yaml`, a list of steps, in order (see the fallback table, under *Syllabification source*). The first step that applies to a pair of vowels decides it. A step's keys:
+
+| Key | Required | Meaning |
+|---|---|---|
+| `pas` | yes | its name, which the messages and the trace give |
+| `tipar`, `ante`, `non_ante`, `post`, `non_post` | no | its patterns and their contexts, as in an exception table (below), each pattern holding two vowels side by side; a step with no `tipar` and no `prefixe` applies to every pair |
+| `prefixe` | no | the word starts with one of these, and the pair is the prefix's last vowel and the next letter; not with `tipar` or a context |
+| `rest_cunoscut` | with `prefixe` | the rest of the word, after the prefix, is a known word (see the fallback table) of at least this many letters |
+| `non_prefixe` | no, with `prefixe` | not when the word starts with one of these, followed by a known word (of any length) |
+| `doar` | no | `verb`: only in a verb infinitive (dexonline model V or VT) |
+| `tabel` | no | an exception table: the step applies only where one of its entries applies too; otherwise the next step is tried |
+| `rezultat` | yes | `hiat` (two syllables) or `diftong` (one; for vowels that make no digraph, simply no cut) |
+| `exemple` | unless `tabel` | the words the step decides; a step with `tabel` has none, since the entries of its table have them |
+| `contraexemple` | with `non_ante`, `non_post`, `non_prefixe`, `rest_cunoscut` or `doar`; never with `tabel` | words that hold the letters of a pattern, or start with a prefix, but which a condition excludes |
+
+```yaml
+- pas: -ier, -ieră, -iereasă
+  tipar: [ier]
+  ante: [L, P]
+  non_ante: [^C, ^CC]   # nu în cuvintele de o silabă
+  post: [$, ă$, easă$, easa$, ese$, esei$, esele$, eselor$]
+  rezultat: hiat
+  exemple: [plumier, bărbier, banchier, legumieră, rachiereasă, ...]
+  contraexemple: [fier, zbier]
+```
+
+In a context of a step or of an entry of a table, a capital is a class of letters: C a consonant (any letter that is not a vowel), V a vowel (a, ă, â, e, i, î, o, u), and those of `clase.yaml`, each named by a single capital other than C and V, with its letters and digraphs (L: p, b, f, v, m; P: c, g, ch, gh). A class matches one of its letters or digraphs, so `^CC` is two consonants from the word's start. A pattern holds letters only.
+
+Each exception table is a file of its own, a list of entries. The step of `pasi.yaml` that consults it names it in its `tabel`, and has the table's pair in a pattern and its result:
 
 | File | Pair | Its entries make the pair |
 |---|---|---|
@@ -224,9 +258,9 @@ An entry applies to a pair of vowels when one of its patterns holds both vowels,
 | Key | Required | Meaning |
 |---|---|---|
 | `tipar` | yes | one or more patterns, each holding the table's pair: letters, with `^` at its start for the word's start and `$` at its end for the word's end |
-| `ante` | no | just before the pattern is one of these: letters (`gr`), `^` alone (the pattern starts the word), or `^` and letters (the word starts with them, then the pattern: `^gor`) |
+| `ante` | no | just before the pattern is one of these: letters and classes (`gr`, `C`), `^` alone (the pattern starts the word), or `^` and letters or classes (the word starts with them, then the pattern: `^gor`, `^CC`) |
 | `non_ante` | no | just before the pattern is none of these, written as in `ante` |
-| `post` | no | just after the pattern is one of these: letters (`in`), `$` alone (the pattern ends the word), or letters and `$` (they end the word: `e$`) |
+| `post` | no | just after the pattern is one of these: letters and classes (`in`, `CV`), `$` alone (the pattern ends the word), or letters or classes and `$` (they end the word: `e$`) |
 | `non_post` | no | just after the pattern is none of these, written as in `post` |
 | `exemple` | yes | the words the entry decides |
 | `contraexemple` | with `non_ante` or `non_post` | words that hold the letters of a pattern, but which its contexts, or its `^` or `$`, exclude |
@@ -240,26 +274,30 @@ An entry applies to a pair of vowels when one of its patterns holds both vowels,
 ```
 
 The format:
-- YAML 1.2, in UTF-8, with or without a byte order mark. A file maps its keys to their values (`silabisiri.yaml` maps words), and every key is required, except in a table, which is a list of entries, each mapping its keys to their values. A list is written `[a, b]`, or one `- a` per line. Every value is text: `n`, `no`, `on` and `true` are words, not booleans.
-- Keys are lowercase ASCII with `_`. Words are written in lower case, in the standard orthography: NFC, ș/ț with a comma below, â inside words.
-- Order is kept where it matters: the syllabifications of a word and the lemmas of `leme`, the first being the default; the entries of a table, the first that applies deciding.
-- `#` starts a comment. Comments explain; they never change a spelling, and the data file's rules don't include them, nor the examples and counterexamples of the tables (see *Data*).
+- YAML 1.2, in UTF-8, with or without a byte order mark. A file maps its keys to their values (`silabisiri.yaml` maps words, `clase.yaml` classes), and every key is required, except in a table or in `pasi.yaml`, a list of entries or steps, each mapping its keys to their values. A list is written `[a, b]`, or one `- a` per line. Every value is text: `n`, `no`, `on` and `true` are words, not booleans.
+- Keys are lowercase ASCII with `_`, except the classes of `clase.yaml`, a capital each. Words are written in lower case, in the standard orthography: NFC, ș/ț with a comma below, â inside words.
+- Order is kept where it matters: the syllabifications of a word and the lemmas of `leme`, the first being the default; the steps of `pasi.yaml` and the entries of a table, the first that applies deciding.
+- `#` starts a comment. Comments explain; they never change a spelling, and the data file's rules don't include them, nor the examples and counterexamples of the steps and of the tables, nor the names of the steps (see *Data*).
 - Anchors (`&`), tags (`!`) and a second document (`---`, `...`) are not used.
 
 The loading checks run when the core is built, which an error stops, and with `cargo run -p grafia-reguli`, which in CI also shows each message on its line of the pull request. A message gives the file, the line and the column, in Romanian: `reguli/ee.yaml:3:30: eroare: „zoş” are ş cu sedilă; scrie ș, cu virgulă.` They check:
-- the YAML syntax; the keys, none unknown, repeated or missing; the type of each value (a list, a word, `true` or `false`), and that none is empty, an empty value being reported at its key; that `silabisiri.yaml` and the tables are not empty; and that each YAML file of `reguli/` is a rule file (the other files, hidden or not in .yaml/.yml, such as .DS_Store or an editor's backup, are left alone);
-- the characters: an error for ş/ţ with a cedilla, ã, a decomposed letter, a capital, a space, a hyphen outside a syllabification, a `^` or a `$` other than those of a pattern or a context above, and any other character outside the Romanian alphabet; a warning for î inside a word (*neînțeles* is right);
-- no word twice in a list, no syllabification twice for a word, no lemma twice in `leme`; in an entry of a table, no pattern, item or word twice in its list, and no word both in `exemple` and in `contraexemple`;
-- each word as the table of the lists says, and each pattern of a table holding the table's pair.
+- the YAML syntax; the keys, none unknown, repeated or missing; the type of each value (a list, a word, `true` or `false`), and that none is empty, an empty value being reported at its key; that `silabisiri.yaml`, `pasi.yaml` and the tables are not empty; and that each YAML file of `reguli/` is a rule file (the other files, hidden or not in .yaml/.yml, such as .DS_Store or an editor's backup, are left alone);
+- the characters: an error for ş/ţ with a cedilla, ã, a decomposed letter, a capital other than a class of a context, a space, a hyphen outside a syllabification, a `^` or a `$` other than those of a pattern or a context above, and any other character outside the Romanian alphabet; a warning for î inside a word (*neînțeles* is right);
+- no word twice in a list, no syllabification twice for a word, no lemma twice in `leme`; in an entry of a table or a step, no pattern, prefix, item or word twice in its list, and no word both in `exemple` and in `contraexemple`; no letter twice in a class;
+- each word as the table of the lists says, and each pattern of a table holding the table's pair;
+- the classes: each named by a single capital other than C and V, with letters and digraphs of at most two letters; a capital of a context is C, V or a class of `clase.yaml`;
+- the steps: `rezultat` is `hiat` or `diftong`, `doar` is `verb`, `rest_cunoscut` a number of letters; `prefixe` asks for `rest_cunoscut` and takes no `tipar` and no context, `rest_cunoscut` and `non_prefixe` ask for `prefixe`, and a context asks for a `tipar`; each pattern of a step holds two vowels side by side; `exemple` is required unless `tabel`, and `contraexemple` with `non_ante`, `non_post`, `non_prefixe`, `rest_cunoscut` or `doar`; no name twice;
+- the tables of the steps: a step with `tabel` names a table, holds its pair in a pattern, has its result, and has no `exemple` or `contraexemple`; each table is named by exactly one step;
+- the last step: it has no `tipar`, `prefixe`, context, `doar` or `tabel`, so that every pair is decided.
 
-The rules checks run with the tests, `cargo test`, and with `cargo xtask reguli`, which runs the loading checks first; in CI they too show each message on its line. They decide the pairs of vowels of each example and counterexample of a table by the fallback rules alone, with no explicit syllabification and no dexonline, and check that:
-- each word of `exemple` has a pair that the entry decides, not an earlier step or entry: `reguli/diftong-ia.yaml:27:13: eroare: „ghiare” nu e decis de intrarea aceasta, ci de pasul „-iare care nu e infinitiv lung”; alege un cuvânt pe care îl decide ea.`;
-- each word of `contraexemple` has a pair that the letters of a pattern hold, and the entry applies to none of these pairs, which the rules all cut the other way;
-- each pattern, and each item of `ante` and `post`, decides a word of `exemple`, and each item of `non_ante` and `non_post` excludes a word of `contraexemple`.
+The rules checks run with the tests, `cargo test`, and with `cargo xtask reguli`, which runs the loading checks first; in CI they too show each message on its line. They decide the pairs of vowels of each example and counterexample of a step or of an entry of a table by the fallback rules alone, with no explicit syllabification and no dexonline (the examples of a step with `doar: verb` as verb infinitives, every other word as no verb), and check that:
+- each word of `exemple` has a pair that the entry or the step decides, not an earlier step or entry: `reguli/diftong-ia.yaml:27:13: eroare: „ghiare” nu e decis de intrarea aceasta, ci de pasul „-iare care nu e infinitiv lung” (pasi.yaml:100); alege un cuvânt pe care îl decide ea.`;
+- each word of `contraexemple` has a pair that the letters of a pattern hold, or that follows a prefix, and the entry or the step applies to none of these pairs, which the rules all cut the other way;
+- each pattern, each prefix, and each item of `ante` and `post` decides a word of `exemple`, and each item of `non_ante`, `non_post` and `non_prefixe` excludes a word of `contraexemple`.
 
 ## Data
 
-The word data comes in one file, `grafia.dat` (its layout is in `crates/core/src/datafile.rs`). Besides five tables, it holds the format version, the date of the dexonline data it was built from (the day of dexonline's latest change to a lexeme or a definition), the rules it was built with, and a checksum, checked when the file is opened. The rules are `RULES_HASH`, a hash of the code of the files of `crates/core/src/rules/` and of `build.rs`, and of the code the rule files compile to (their values, not their comments, nor the examples of the tables; see *Rule files*), without comments or whitespace: the web app's build refuses a data file built with other rules. The tables are each keyed on a normalized word:
+The word data comes in one file, `grafia.dat` (its layout is in `crates/core/src/datafile.rs`). Besides five tables, it holds the format version, the date of the dexonline data it was built from (the day of dexonline's latest change to a lexeme or a definition), the rules it was built with, and a checksum, checked when the file is opened. The rules are `RULES_HASH`, a hash of the code of the files of `crates/core/src/rules/` and of `build.rs`, and of the code the rule files compile to (their values, not their comments, nor the examples of the steps and of the tables, nor the names of the steps; see *Rule files*), without comments or whitespace: the web app's build refuses a data file built with other rules. The tables are each keyed on a normalized word:
 - `forms`: a form → `concise`, its concise spelling; `concise_ee`, its spelling with the -eẹ/aẹ/oẹ rule when that differs from `concise`; `alternatives`, a homograph's other spellings; and `current`, an obsolete form's current form (see *Obsolete forms*).
 - `eu_lemmas`: every normalized lemma in -eu, for unknown plurals in -eele/-eelor (see *Unknown words*).
 - `ea_lemmas`: every normalized lemma in -ea, for unknown genitives in -eei (see *Unknown words*).

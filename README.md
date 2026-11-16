@@ -21,7 +21,7 @@ The project is one Rust core that every platform calls. It was first written in 
 | Part | Where | What | Status |
 |---|---|---|---|
 | Core | `crates/core` (crate `grafia-concisa`) | the rules, conversion and reverse conversion, the database builder, the data file | done |
-| Rule files | `reguli/`, `crates/reguli` (crate `grafia-reguli`) | the hand lists of the rules and the exception tables of the fallback rules, in YAML files a linguist edits, which the core's build compiles in ([`rule-files-plan.md`](rule-files-plan.md)) | stage 3 |
+| Rule files | `reguli/`, `crates/reguli` (crate `grafia-reguli`) | the hand lists of the rules, the steps of the fallback rules and their exception tables, in YAML files a linguist edits, which the core's build compiles in ([`rule-files-plan.md`](rule-files-plan.md)) | stage 4 |
 | Data file | `web/grafia.dat` (built, not committed) | the word database: [`fst`](https://crates.io/crates/fst) maps read in place, 0.8 MB (0.56 MB gzipped) | done |
 | Pipeline | `crates/pipeline` (binary `grafia-pipeline`) | loads dexonline into MariaDB, exports its records, and builds `grafia.dat` | done |
 | Web app | `crates/wasm`, `web/`, `xtask/` | the core in WASM, in a static page that works offline, on GitHub Pages | done |
@@ -64,7 +64,7 @@ cargo run --release -p grafia-pipeline -- seed              # small dev data fil
 The tests must pass before every commit, and the WASM tests too when a commit changes `crates/` or `dexonline.lock`. CI runs both on every push.
 - **The rules** are tested by tables in [`crates/core/tests/tables.rs`](crates/core/tests/tables.rs): a new case is one line. The tables that need a database run twice, on the built tables in memory and through the data file.
 - **The loading checks of the rule files** are tested by a table of broken files, each with the messages it gives, in [`crates/reguli/tests/broken.rs`](crates/reguli/tests/broken.rs).
-- **The exception tables of the rule files** test themselves: each entry of `reguli/diftong-ia.yaml`, `hiat-ea.yaml`, ... has its examples and counterexamples, which [`crates/core/tests/reguli.rs`](crates/core/tests/reguli.rs) decides by the rules, as the spec's *Rule files* says; the same file tests these checks, and the trace of the syllabification, by tables.
+- **The fallback rules of the rule files** test themselves: each step of `reguli/pasi.yaml` and each entry of `diftong-ia.yaml`, `hiat-ea.yaml`, ... has its examples and counterexamples, which [`crates/core/tests/reguli.rs`](crates/core/tests/reguli.rs) decides by the rules, as the spec's *Rule files* says; the same file tests these checks, and the trace of the syllabification, by tables.
 - **The WASM tests** ([`crates/wasm/tests/node.rs`](crates/wasm/tests/node.rs)) run the engine under Node on `web/grafia.dat`, the data file the site ships, which `cargo xtask data` builds: the answers as the page receives them, the switches, the date of the data, and a bad file. `cargo test --target wasm32-unknown-unknown` runs them with `wasm-bindgen-test-runner` (set in [`.cargo/config.toml`](.cargo/config.toml)); `cargo test --workspace` skips them.
 - **The page** has no automated test. After a change to `web/`, check it in a browser, as in step 4 of *Deploying*.
 
@@ -139,7 +139,7 @@ How these are turned into spellings is in the spec. The records are read in a fi
 
 ### Rule changes
 
-`web/grafia.dat` holds the rules' output for every word. It records the rules it was built with, `RULES_HASH`: a hash of the code of the files of `crates/core/src/rules/` and of `build.rs`, and of the values of the rule files of `reguli/` (not the examples of their tables), without comments or whitespace. `cargo xtask web` refuses a data file built with other rules, so after any change to the code of these files or to a value of a rule file, even one that changes no spelling, run `cargo xtask data` again; a change to their comments, or to the examples of a table, alone doesn't need it. No data file is committed: CI builds it on every push, from the pinned export and with the rules of the commit.
+`web/grafia.dat` holds the rules' output for every word. It records the rules it was built with, `RULES_HASH`: a hash of the code of the files of `crates/core/src/rules/` and of `build.rs`, and of the values of the rule files of `reguli/` (not the examples of their steps and tables, nor the names of the steps), without comments or whitespace. `cargo xtask web` refuses a data file built with other rules, so after any change to the code of these files or to a value of a rule file, even one that changes no spelling, run `cargo xtask data` again; a change to their comments, to the examples of a step or a table, or to the name of a step, alone doesn't need it. No data file is committed: CI builds it on every push, from the pinned export and with the rules of the commit.
 
 `cargo xtask diff BASE` lists, in Romanian, the words whose output the working tree changes against the commit BASE (`main`, for a branch):
 - it writes the snapshots of BASE, in a worktree (`target/diff-base`), and of the working tree into `data/snapshot/before` and `data/snapshot/after`, on the pinned export, or each on its own export when `dexonline.lock` changed;

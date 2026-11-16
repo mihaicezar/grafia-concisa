@@ -1,13 +1,12 @@
 # Rădăcinile native în care ia e diftong (o silabă): chiar, piatră, viață.
-# După o consoană, în interiorul cuvântului, ia e altfel hiat (apropiat, pian, social). Regulile
-# consultă tabelul acesta pentru ia după o consoană, care nu e la sfârșitul cuvântului și nu e
-# în -iare final după p, b, f, v, m, c, g, ch, gh (fiare, ca fiere), și pe care nu l-au decis
-# deja un prefix urmat de un cuvânt cunoscut (anti-alcoolic) sau -abil (fi-abil).
+# După o consoană, ia e altfel hiat (apropiat, pian, social). Tabelul acesta e consultat de pasul
+# „tulpini native cu ia” din pasi.yaml, care spune unde se aplică.
 #
 # Fiecare intrare are:
 # - tipar: unul sau mai multe tipare, fiecare cu perechea ia; ^ e începutul cuvântului, $ sfârșitul;
 # - ante, non_ante: ce stă (sau ce nu stă) chiar înaintea tiparului; post, non_post: ce urmează
 #   (sau ce nu urmează) chiar după el; ^ în ante: tiparul începe cuvântul; $ în post: îl termină;
+#   o majusculă e o clasă de litere: C o consoană, V o vocală, și cele din clase.yaml (L, P);
 # - exemple: cuvinte pe care le decide intrarea;
 # - contraexemple: cuvinte cu literele unui tipar, pe care contextele sau ^, $ le exclud
 #   (obligatorii cu non_ante și non_post).

@@ -159,134 +159,22 @@ const SYLLABIFY: &[(&str, &str, &str, &str, &str)] = &[
     ("geognostă", "-o-gnost", "geognostă", "rules", ""), // a word end that is not the word's end: ignored
     ("soarele", "soa-re", "soarele", "rules", ""),    // another word's complete hyphenation: ignored
     ("acetaldehidă", "a-", "a-cetaldehidă", "partial", ""), // a word start found again later
-    ("soare", "", "soare", "rules", ""),              // oa, ea: diphthong
-    ("seară", "", "seară", "rules", ""),
-    ("iarbă", "", "iarbă", "rules", ""),      // ie/ia at word start
-    ("femeie", "", "femeie", "rules", ""),    // ie/ia after a vowel
-    ("familie", "", "famili-e", "rules", ""), // final, after a consonant
-    ("vie", "", "vi-e", "rules", ""),
-    ("fier", "", "fier", "rules", ""), // medial, after p/b/f/v/m
-    ("piept", "", "piept", "rules", ""),
-    ("client", "", "cli-ent", "rules", ""), // medial, other consonant
-    ("social", "", "soci-al", "rules", ""),
-    ("idee", "", "ide-e", "rules", ""), // e-e: hiatus
-    ("aceea", "", "ace-ea", "rules", ""),
-    ("ambient", "", "ambi-ent", "rules", ""), // -ient, -ienț...: hiatus
-    ("experiență", "", "experi-ență", "rules", ""),
-    ("clientelă", "", "cli-entelă", "rules", ""),
-    ("farniente", "far-nien-te", "far-nien-te", "dexonline", ""), // dexonline prevails
-    ("sfii", "", "sfi-i", "rules", "V"),                          // final -ii in a verb: hiatus
-    ("prii", "", "pri-i", "rules", "V"),
-    ("mlădii", "", "mlădi-i", "rules", "V"),
-    ("copii", "", "copii", "rules", ""),    // ...not in other words
-    ("bienal", "", "bi-enal", "rules", ""), // prefix bi-
-    ("bianual", "", "bi-anual", "rules", ""),
-    ("biet", "", "biet", "rules", ""),
-    ("fiabil", "", "fi-abil", "rules", ""), // -iabil, -eabil: hiatus
-    ("agreabil", "", "agre-abil", "rules", ""),
-    ("debreiabil", "", "debreiabil", "rules", ""), // -iabil after a vowel: like its verb (de-bre-ia)
-    ("copiere", "", "copi-ere", "rules", ""),      // final -iere: hiatus...
-    ("veghiere", "", "veghi-ere", "rules", ""),
-    ("miere", "", "miere", "rules", ""), // ...except IERE_DIPHTHONG
-    ("înmiere", "", "înmiere", "rules", ""),
-    ("xerocopiere", "", "xerocopi-ere", "rules", ""),
-    ("învierea", "", "învi-erea", "rules", ""), // articulated: -ierea
-    ("mierea", "", "mierea", "rules", ""),
-    ("copierilor", "", "copi-erilor", "rules", ""), // ...and all its endings
-    ("pieri", "", "pieri", "rules", ""),            // (piere: IERE_DIPHTHONG)
-    ("schierea", "", "schi-erea", "rules", ""),
-    ("tăiere", "", "tăiere", "rules", ""), // vowel + -iere: diphthong
-    ("înmuiere", "", "înmuiere", "rules", ""),
-    ("bărbier", "", "bărbi-er", "rules", ""), // except final -ier/-ieră after
-    ("plumier", "", "plumi-er", "rules", ""), // a vowel and a consonant...
-    ("legumieră", "", "legumi-eră", "rules", ""),
-    ("rachiereasă", "", "rachi-ereasă", "rules", ""), // rachier + -easă
-    ("pompiereasă", "", "pompi-ereasă", "rules", ""),
-    ("pompiereasa", "", "pompi-ereasa", "rules", ""),
-    ("rachieresele", "", "rachi-eresele", "rules", ""), // and the forms of -iereasă
-    ("rachierese", "", "rachi-erese", "rules", ""),
-    ("rachieresei", "", "rachi-eresei", "rules", ""),
-    ("rachiereselor", "", "rachi-ereselor", "rules", ""),
-    ("boiereasă", "", "boiereasă", "rules", ""), // after a vowel: diphthong
-    ("zbier", "", "zbier", "rules", ""),         // (not fier, zbier)
-    ("zapciesc", "", "zapci-esc", "rules", ""),  // ...and adjectives in -iesc
-    ("surugiesc", "", "surugi-esc", "rules", ""),
-    ("ciocoiesc", "", "ciocoiesc", "rules", ""), // (after a vowel: diphthong)
-    ("apropiat", "", "apropi-at", "rules", ""),  // medial ia after a consonant:
-    ("pian", "", "pi-an", "rules", ""),          // hiatus (-ia* endings)
-    ("deviant", "", "devi-ant", "rules", ""),
-    ("fiare", "", "fiare", "rules", ""),      // final -iare after p/b/f/v/m, c/g
-    ("variare", "", "vari-are", "rules", ""), // ...but not after other consonants
-    ("specializat", "", "speci-alizat", "rules", ""),
+    ("familie", "", "famili-e", "rules", ""),         // the rules place only cuts between two vowels
+    ("farniente", "far-nien-te", "far-nien-te", "dexonline", ""), // dexonline prevails (-ient)
     ("miază", "mi-a-ză", "mia-ză", "manual", ""),
-    ("cartier", "", "carti-er", "rules", ""),       // -tier: after t anyway
-    ("reabilitat", "", "re-abilitat", "rules", ""), // prefix + known word
-    ("autoanaliză", "", "auto-analiză", "rules", ""),
-    ("neam", "", "neam", "rules", ""), // rest too short
-    ("autoare", "", "autoare", "rules", ""),
-    ("preacurat", "", "preacurat", "rules", ""), // prea- + curat, not pre- + acurat
-    ("preaviz", "", "pre-aviz", "rules", ""),
-    ("reazem", "", "reazem", "rules", ""),    // rest not a known word
-    ("coace", "", "coace", "rules", ""),      // rest too short
-    ("coactiv", "", "co-activ", "rules", ""), // co- prefix
-    ("neant", "", "ne-ant", "manual", ""),    // SYLLABIFICATIONS beat all
+    ("neant", "", "ne-ant", "manual", ""), // SYLLABIFICATIONS beat all
+    ("neant", "neant", "ne-ant", "manual", ""),
     ("mielea", "", "mi-e-lea", "manual", ""),
     ("răspieri", "", "răs-pieri", "manual", ""),
-    ("coastă", "", "coas-tă", "manual", ""),
-    ("coastă", "co-as-tă", "coas-tă", "manual", ""),
-    ("coardă", "", "coar-dă", "manual", ""),
-    ("coacere", "", "coa-ce-re", "manual", ""),
-    ("coacăț", "", "coa-căț", "manual", ""),
-    ("coacăță", "", "coa-că-ță", "manual", ""),
     ("înfieri", "", "în-fi-eri", "manual", ""),
     ("viere", "", "vi-ere", "rules", ""), // the noun (a via); the boar's vocative derives from vier
-    // the exception tables of reguli/: each entry is tested by its exemple and contraexemple
-    // (tests/reguli.rs); these words test something more
+    ("coastă", "co-as-tă", "co-as-tă", "dexonline", ""), // a step of the rules: dexonline prevails
+    // the steps of pasi.yaml and the entries of the exception tables: each is tested by its
+    // exemple and contraexemple (tests/reguli.rs); these words test something more
     ("caragialian", "", "caragiali-an", "rules", ""), // diftong-ia.yaml: only the stem's ia
-    ("ghiare", "", "ghiare", "rules", ""),            // like ghiară, by -iare, before the table
-    // medial ie after each labial or palatal consonant: diphthong
-    ("vierme", "", "vierme", "rules", ""),
-    ("măcieș", "", "măcieș", "rules", ""),
-    ("megieșa", "", "megieșa", "rules", ""),
-    ("chiem", "", "chiem", "rules", ""),
-    ("ghieț", "", "ghieț", "rules", ""),
-    ("brîie", "", "brîie", "rules", ""),      // after î: diphthong
-    ("fiere", "", "fiere", "rules", ""),      // IERE_DIPHTHONG
-    ("copieri", "", "copi-eri", "rules", ""), // IERE_ENDINGS
-    ("copierii", "", "copi-erii", "rules", ""),
-    ("copierile", "", "copi-erile", "rules", ""),
-    // -ient + a/ă/e/i, and -ienț
-    ("consciență", "", "consci-ență", "rules", ""),
-    ("ambienta", "", "ambi-enta", "rules", ""),
-    ("eficientă", "", "efici-entă", "rules", ""),
-    ("ambiente", "", "ambi-ente", "rules", ""),
-    ("eficientiza", "", "efici-entiza", "rules", ""),
-    // PREFIXES, each before a known word
-    ("reabonat", "", "re-abonat", "rules", ""),
-    ("neabonat", "", "ne-abonat", "rules", ""),
-    ("teleactualitate", "", "tele-actualitate", "rules", ""),
-    ("semiegiptean", "", "semi-egiptean", "rules", ""),
-    ("antiaerian", "", "anti-aeri-an", "rules", ""),
-    ("antioxidant", "", "anti-oxidant", "rules", ""), // (anti-, multi- + ia/ie: a hiatus anyway)
-    ("multianual", "", "multi-anual", "rules", ""),
-    ("multiorganic", "", "multi-organic", "rules", ""),
-    ("microagent", "", "micro-agent", "rules", ""),
-    ("macroagregat", "", "macro-agregat", "rules", ""),
-    ("fotoactualitate", "", "foto-actualitate", "rules", ""),
-    ("pseudoafix", "", "pseudo-afix", "rules", ""),
-    ("bioacumulat", "", "bio-acumulat", "rules", ""),
-    ("neoaristotelic", "", "neo-aristotelic", "rules", ""),
-    ("radioaliniament", "", "radio-alini-ament", "rules", ""),
+    ("brîie", "", "brîie", "rules", ""),              // î is a vowel (V) too: ie after it, a diphthong
+    ("antiaerian", "", "anti-aeri-an", "rules", ""),  // a prefix, then the rest's own pairs
     ("aeroamfibie", "", "aero-amfibi-e", "rules", ""),
-    ("agroalimentar", "", "agro-alimentar", "rules", ""),
-    ("electroacustic", "", "electro-acustic", "rules", ""),
-    ("hidroagregat", "", "hidro-agregat", "rules", ""),
-    ("termoacustic", "", "termo-acustic", "rules", ""),
-    ("geoacustic", "", "geo-acustic", "rules", ""),
-    ("protoistorie", "", "proto-istori-e", "rules", ""),
-    ("socioafectiv", "", "socio-afectiv", "rules", ""),
-    ("psihoanalitic", "", "psiho-analitic", "rules", ""),
-    ("stereoautograf", "", "stereo-autograf", "rules", ""),
 ];
 
 // Homographs: extra records for the test DB (form, lemma, hyphenation, number[, V])...

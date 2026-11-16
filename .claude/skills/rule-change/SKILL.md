@@ -24,8 +24,8 @@ Add one line per example word of the decision, and one per counter-example ("not
 
 | The rule is about | Table |
 |---|---|
-| an entry of an exception table (`reguli/diftong-ia.yaml`, `hiat-ea.yaml`, `hiat-ie.yaml`, `hiat-oa.yaml`) | its `exemple` and `contraexemple`, in the rule file itself |
-| the rest of the fallback syllabifier, a list or a regex of the code (`PREFIXES`, `IERE_DIPHTHONG`, ...) | `SYLLABIFY` |
+| a step of the fallback rules (`reguli/pasi.yaml`), or an entry of an exception table (`diftong-ia.yaml`, `hiat-ea.yaml`, `hiat-ie.yaml`, `hiat-oa.yaml`) | its `exemple` and `contraexemple`, in the rule file itself |
+| dexonline's syllabification, an explicit one, or how they combine with the fallback rules | `SYLLABIFY` |
 | a syllabified word to its concise spelling | `WORDS` |
 | a form's cuts derived from its lemma | `DERIVED` |
 | the -ee rule | `EE_RULE`, `EE_WORDS` |
@@ -34,14 +34,14 @@ Add one line per example word of the decision, and one per counter-example ("not
 | homographs and the default spelling | `HOMOGRAPH_RECORDS` + `HOMOGRAPHS` |
 | unknown words with the -ee switch | `UNKNOWN_EE` |
 
-Each new regex alternative or list entry gets its own positive line, and a negative line when it has an exception (a lookaround, a "not X"). Mutation testing can't see regexes or list entries, so these lines are the only guard. An entry of a table needs a word of `exemple` per pattern and per item of `ante` and `post`, and one of `contraexemple` per item of `non_ante` and `non_post`: the rules checks (`crates/core/tests/reguli.rs`, or `cargo xtask reguli`) report the missing ones, and the words the entry doesn't decide as written.
+Each new regex alternative or list entry gets its own positive line, and a negative line when it has an exception (a lookaround, a "not X"). Mutation testing can't see regexes or list entries, so these lines are the only guard. A step or an entry of a table needs a word of `exemple` per pattern, per prefix and per item of `ante` and `post`, and one of `contraexemple` per item of `non_ante`, `non_post` and `non_prefixe`: the rules checks (`crates/core/tests/reguli.rs`, or `cargo xtask reguli`) report the missing ones, and the words the step or the entry doesn't decide as written.
 
 Run `cargo test --workspace`. At least one new line, or one new word of a table, must fail. If all pass, they don't test the change: find a word whose output the decision changes, or ask Cezar for one.
 
 ## 3. Rule files or code (green)
 
-- A word of a hand list changes in its rule file of `reguli/`, never in Rust: the explicit syllabifications (`silabisiri.yaml`), the obsolete lemmas and the -iare lemmas kept (`invechite.yaml`), the lists of the -eẹ/aẹ/oẹ rule (`ee.yaml`), the Latin names (`neconvertite.yaml`), the roots that keep â (`a-i.yaml`), the -iesc endings (`necunoscute.yaml`), and the entries of the exception tables, with their words (`diftong-ia.yaml`, `hiat-ea.yaml`, `hiat-ie.yaml`, `hiat-oa.yaml`). The format is in the spec's *Rule files*; comments are in Romanian. Run `cargo xtask reguli`: it reports what is wrong, by line.
-- Anything else changes `crates/core` only. A new list of words is one line of `LISTS` in `crates/reguli/src/lib.rs` (its file, key, constant and the shape of its words), plus the core code that reads its constant; a new table, one line of `TABLES` there, plus the step of `rule_cut` that consults it; a new check of the rule files also changes `crates/reguli`, with a line of `BROKEN` in its `tests/broken.rs` per new message.
+- A word of a hand list changes in its rule file of `reguli/`, never in Rust: the explicit syllabifications (`silabisiri.yaml`), the obsolete lemmas and the -iare lemmas kept (`invechite.yaml`), the lists of the -eẹ/aẹ/oẹ rule (`ee.yaml`), the Latin names (`neconvertite.yaml`), the roots that keep â (`a-i.yaml`), the -iesc endings (`necunoscute.yaml`), the steps of the fallback rules, in order, with their words (`pasi.yaml`), the classes of letters of their contexts (`clase.yaml`), and the entries of the exception tables, with their words (`diftong-ia.yaml`, `hiat-ea.yaml`, `hiat-ie.yaml`, `hiat-oa.yaml`). The format is in the spec's *Rule files*; comments are in Romanian. Run `cargo xtask reguli`: it reports what is wrong, by line.
+- Anything else changes `crates/core` only. A new list of words is one line of `LISTS` in `crates/reguli/src/lib.rs` (its file, key, constant and the shape of its words), plus the core code that reads its constant; a new table, one line of `TABLES` there, plus the step of `pasi.yaml` that consults it; a new key of a step changes `crates/reguli` (its reading and its checks) and the core's `Step` (`rules/tables.rs`); a new check of the rule files also changes `crates/reguli`, with a line of `BROKEN` in its `tests/broken.rs` per new message.
 - Keep the constants' names: the spec cites them as `rules::X`, the lists of `reguli/` by file and key (`ee.yaml: nume`), and the tables by file (`hiat-ea.yaml`).
 - If the rule needs a new record flag, add it to the query in `crates/pipeline/src/records.rs`, and document it in `crates/core/src/build.rs` (module documentation), in `build --help` (`crates/pipeline/src/main.rs`) and in the spec's *Data* section.
 - Run `cargo test --workspace`. It passes.

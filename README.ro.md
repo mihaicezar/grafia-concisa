@@ -23,30 +23,35 @@ O formă poate avea mai multe grafii concise corecte. Are întotdeauna una impli
 
 Un cuvânt-titlu își folosește propria despărțire. Orice altă formă flexionară își ia tăieturile din despărțirea lemei (vezi tabelul de deducție de mai jos).
 
-Despărțirea unei leme este cea explicită a lui Cezar, dacă există (`silabisiri.yaml`: *neant* `ne-ant`, *coastă* `coas-tă`, *mielea* `mi-e-lea`, *înfieri* `în-fi-eri`, *răspieri* `răs-pieri`, ...; o intrare poate avea mai multe citiri, iar prima e cea implicită: *miază* `mia-ză` / `mi-a-ză`, *vier* `vier` / `vi-er`). Altfel este despărțirea din dexonline, completată de regulile de rezervă. Cuvântul *ie* are doar citirea `i-e` și rămâne *ie*, fără alternativă. O formă trecută acolo își ia toate grafiile de acolo, oricare i-ar fi lema, cu cea implicită prima: *piei* `piei` / `pi-ei` e *pẹi* (← *piele*, *pieri*), apoi *piei* (← *pia*), deși după înregistrările ei *piei* ← *pia* `pi-a`, susținut de dexonline, i-ar fi singura grafie.
+Despărțirea unei leme este cea explicită a lui Cezar, dacă există (`silabisiri.yaml`: *neant* `ne-ant`, *mielea* `mi-e-lea`, *înfieri* `în-fi-eri`, *răspieri* `răs-pieri`, ...; o intrare poate avea mai multe citiri, iar prima e cea implicită: *miază* `mia-ză` / `mi-a-ză`, *vier* `vier` / `vi-er`). Altfel este despărțirea din dexonline, completată de regulile de rezervă. Cuvântul *ie* are doar citirea `i-e` și rămâne *ie*, fără alternativă. O formă trecută acolo își ia toate grafiile de acolo, oricare i-ar fi lema, cu cea implicită prima: *piei* `piei` / `pi-ei` e *pẹi* (← *piele*, *pieri*), apoi *piei* (← *pia*), deși după înregistrările ei *piei* ← *pia* `pi-a`, susținut de dexonline, i-ar fi singura grafie.
 
 - **Despărțirea din dexonline.** Se folosește doar prima variantă. Poate fi completă (`fa-mi-li-e`), un final de cuvânt (`-li-e`), un început de cuvânt (`a-ce-tal-`) sau un interior de cuvânt (`-pioa-`). În porțiunea pe care o acoperă, tăieturile ei au întotdeauna prioritate față de reguli. O despărțire care nu se potrivește cu cuvântul e ignorată.
-- **Regulile de rezervă.** În rest, regulile pun doar tăieturi între două vocale, pentru că grafia concisă nu folosește altele. Regulile sunt incomplete și vor fi îmbunătățite:
+- **Regulile de rezervă.** În rest, regulile pun doar tăieturi între două vocale, pentru că grafia concisă nu folosește altele. Ele sunt pașii din `pasi.yaml`, încercați în ordine pentru fiecare pereche de vocale: primul care se aplică decide. Un pas care consultă un tabel de excepții se aplică doar unde se aplică și o intrare a tabelului; altfel se încearcă pasul următor. Mai jos, L e o labială (p, b, f, v, m), iar P o palatală (c, g, ch, gh), clasele din `clase.yaml`. Regulile sunt incomplete și vor fi îmbunătățite:
 
-| Vocale | Context | Tăietură | Exemple |
-|---|---|---|---|
-| ie | în -ient, -ienț/-ient + a/ă/e/i | hiat | *client*, *ambient*, *experiență*, *clientelă* (dexonline: *farniente* `far-nien-te`) |
-| ia, ea | înainte de -bil, după o consoană | hiat | *fiabil*, *agreabil* (nu *debreiabil*: după o vocală, ca *de-bre-ia*) |
-| e-e | oriunde | hiat | *idee* → *ide-e* (comutatorul -eẹ/aẹ/oẹ îl citește *e-ie*) |
-| e-a, i-a, i-e, o-a | după un prefix (re-, pre-, ne-, tele-, co-, semi-, anti-, multi-, auto-, micro-, macro-, foto-, pseudo-, bio-, neo-, radio-, aero-, agro-, electro-, hidro-, termo-, geo-, proto-, socio-, psiho-, stereo-), când restul e un cuvânt cunoscut: o formă a unei leme dexonline scrise cu literă mică, cu frecvența ≥ 0,9 și de cel puțin 4 litere | hiat | *re-abilitat*, *ne-adevărat*, *auto-analiză* (nu *neam*, *neagră*, *autoare*; *prea-curat* e *prea* + *curat*); *co-activ* (potrivirile greșite ale lui co- sunt corectate în `silabisiri.yaml`: *coastă*, *coardă*, *coacere*, *coacăț*) |
-| i-e | prefixul bi- înainte de en | hiat | *bienal* (nu *biet*) |
-| i-i | la final, după o consoană, într-un infinitiv verbal | hiat | *sfi-i*, *pri-i*, deci *sfiește*, *priască* își păstrează i-e/i-a (nu pluralul *copii*) |
-| ea | terminații și rădăcini neologice (`hiat-ea.yaml`): -eal final (nu după g/d/b), -linear/-hlear/-balnear, -laureat-/-lineat-/-nucleat- și altele asemănătoare (orice ar urma), nuclear-, creat-, reac(t/ț)-, steat-, meandr-, aleat-, beatif-, reali-/ideali-/boreal (nu în -răboreală/-stoboreală)/cereal | hiat | *real*, *leal*, *interliceal*, *boreal*, *hiperboreală*, *nuclear*, *denuclearizat*, *linear*, *alineat*, *anucleată*, *laureată*, *delineator*, *creator*, *pancreatic*, *reactor*, *reacție*, *steatoză*, *meandru*, *aleator*, *beatific*, *realizat*, *cereale* (nu *deal*, *Ardeal*, *mangeal*, *beat*, *asear*, *greșeală*, *răboreală*, *cleat*, *procleat*, *pleată*, *soreată*) |
-| oa | rădăcini și terminații neologice (`hiat-oa.yaml`): coagul-, coabit-, coaliț-/coaliz-, -zoar final | hiat | *coagulat*, *coabita*, *coaliție*, *coalizat*, *protozoar*, *cazoar* (nu *mozoară*) |
-| ie, ia | la început de cuvânt sau după o vocală (inclusiv ă, î) | diftong | *iarbă*, *femeie*, *tăia*, *tăiere*, *înmuiere* |
-| ie, ia | la final de cuvânt, după consoană | hiat | *familie*, *vie*, *istoria* |
-| ia | în interior, după consoană (terminațiile -ia\*) | hiat | *apropiat*, *pian*, *social*, *specializat*, *glaciar*, *variare* |
-| ia | la fel, dar în rădăcini native (`diftong-ia.yaml`) | diftong | *chiar*, *piatră*, *biată*, *viață*, *amiază*, *ghiață*, *ghiarele*, *maghiar*, *Caragiale*, *chiajna*, *obială* (nu *liturghiar*, *eleghiacesc*, *schiagramă*, *Gorghias*, *Miaulis*, *microbial*) |
-| ia | -iare final după p/b/f/v/m sau c/g/ch/gh, într-un cuvânt care nu e infinitiv lung (vezi mai jos) | diftong | *fiare* (ca *fiere*) |
-| ie | în interior, după p/b/f/v/m sau c/g/ch/gh | diftong | *fier*, *piept*, *pieptene* |
-| ie | la fel, dar în rădăcini și terminații neologice (`hiat-ie.yaml`: gien, pieton, cviet, societ, soviet, vien, miel + o/in/it/ie, -ietor/-ietoare, bier care nu e nici la început de cuvânt, nici după z/s), în -ier/-ieră/-iereasă (și formele lui -iereasă) final după o vocală și o consoană, -iesc final (adjective) și -iere/-ierea/-ieri/-ierii/-ierile/-ierilor final (infinitive lungi; după o vocală e diftong, vezi mai sus: *tăiere*) | hiat | *igienă*, *pieton*, *sovietism*, *cvietism*, *vienez*, *mielită*, *poliomielită*, *așchietor*, *bărbierit*, *corăbierie*, *bărbier*, *plumier*, *banchier*, *genunchier*, *legumieră*, *rachiereasă*, *pompiereasă*, *zapciesc*, *surugiesc*, *copiere*, *apreciere*, *veghiere*, *învierea*, *aprecierilor* (nu *miel*, *mielușor*, *zbiera*, *fier*, *zbier*; nu *miere*, *înmiere*, *fiere*, *piere* și formele lor (*mierea*, *pieri*): `rules::IERE_DIPHTHONG`) |
-| ie | în interior, după altă consoană | hiat | *prieten*, *cartier* |
-| orice altceva (ea, oa, ...) | oriunde | diftong | *seară*, *soare* |
+| Pas | Vocale | Context | Tăietură | Exemple |
+|---|---|---|---|---|
+| e-e | e-e | oriunde | hiat | *idee* → *ide-e* (comutatorul -eẹ/aẹ/oẹ îl citește *e-ie*), *aceea* |
+| nu e prefix | o-a | cuvântul începe ca un prefix urmat de un cuvânt cunoscut, dar nu are prefix: *coard*, *coast*, *coacere*, *coacăț* (co- + *ardă*, *astă*, ...); aici ar intra și un cuvânt cu neo-, pseudo- sau alt prefix | diftong | *coardă*, *coastă*, *coacere*, *coacăț*, *coacăță* (nu *coactiv*) |
+| prefix și un cuvânt cunoscut | ultima vocală a prefixului și următoarea | după un prefix (re-, pre-, ne-, tele-, co-, semi-, anti-, multi-, auto-, micro-, macro-, foto-, pseudo-, bio-, neo-, radio-, aero-, agro-, electro-, hidro-, termo-, geo-, proto-, socio-, psiho-, stereo-), când restul e un cuvânt cunoscut: o formă a unei leme dexonline scrise cu literă mică, cu frecvența ≥ 0,9 și de cel puțin 4 litere; nu și când cuvântul începe cu prefixul *prea-*, un prefix aparte, urmat de un cuvânt cunoscut | hiat | *re-abilitat*, *ne-adevărat*, *auto-analiză*, *co-activ*, *pre-aviz*, *pre-încălzi* (pre- + *încălzi*) (nu *neam*, *neagră*, *autoare*; *preacurat* e prea- + *curat*, o silabă) |
+| -ient | ie | în -ient, -ienț, urmat de a, ă, e, i sau de sfârșitul cuvântului | hiat | *client*, *ambient*, *experiență*, *clientelă* (dexonline: *farniente* `far-nien-te`) |
+| -abil | ia, ea | înainte de -bil, după o consoană | hiat | *fiabil*, *agreabil* (nu *debreiabil*: după o vocală, ca *de-bre-ia*) |
+| bi-en | ie | *bien* la început de cuvânt | hiat | *bienal* (nu *biet*) |
+| ea în neologisme | ea | terminații și rădăcini neologice (`hiat-ea.yaml`): -eal final (nu după g/d/b), -linear/-hlear/-balnear, -laureat-/-lineat-/-nucleat- și altele asemănătoare (orice ar urma), nuclear-, creat-, reac(t/ț)-, steat-, meandr-, aleat-, beatif-, reali-/ideali-/boreal (nu în -răboreală/-stoboreală)/cereal | hiat | *real*, *leal*, *interliceal*, *boreal*, *hiperboreală*, *nuclear*, *denuclearizat*, *linear*, *alineat*, *anucleată*, *laureată*, *delineator*, *creator*, *pancreatic*, *reactor*, *reacție*, *steatoză*, *meandru*, *aleator*, *beatific*, *realizat*, *cereale* (nu *deal*, *Ardeal*, *mangeal*, *beat*, *asear*, *greșeală*, *răboreală*, *cleat*, *procleat*, *pleată*, *soreată*) |
+| oa în neologisme | oa | rădăcini și terminații neologice (`hiat-oa.yaml`): coagul-, coabit-, coaliț-/coaliz-, -zoar final | hiat | *coagulat*, *coabita*, *coaliție*, *coalizat*, *protozoar*, *cazoar* (nu *mozoară*) |
+| -ii final la verbe | i-i | la final, după o consoană, într-un infinitiv verbal | hiat | *sfi-i*, *pri-i*, deci *sfiește*, *priască* își păstrează i-e/i-a (nu pluralul *copii*) |
+| ie, ia la început sau după vocală | ie, ia | la început de cuvânt sau după o vocală (inclusiv ă, â, î) | diftong | *iarbă*, *femeie*, *tăia*, *tăiere*, *înmuiere* |
+| ie, ia final după consoană | ie, ia | la final de cuvânt, după consoană | hiat | *familie*, *vie*, *istoria* |
+| -iare care nu e infinitiv lung | ia | -iare final după L sau P, într-un cuvânt care nu e infinitiv lung (vezi mai jos) | diftong | *fiare* (ca *fiere*), *ghiare* (ca *ghiară*) |
+| tulpini native cu ia | ia | după o consoană, în rădăcini native (`diftong-ia.yaml`) | diftong | *chiar*, *piatră*, *biată*, *viață*, *amiază*, *ghiață*, *ghiarele*, *maghiar*, *Caragiale*, *chiajna*, *obială* (nu *liturghiar*, *eleghiacesc*, *schiagramă*, *Gorghias*, *Miaulis*, *microbial*) |
+| ia după consoană | ia | în interior, după consoană (terminațiile -ia\*) | hiat | *apropiat*, *pian*, *social*, *specializat*, *glaciar*, *variare* |
+| -iere nativ | ie | *miere*, *înmiere*, *fiere*, *piere* și formele lor în -ierea, -ieri, -ierii, -ierile, -ierilor | diftong | *miere*, *mierea*, *înmiere*, *fiere*, *pieri* |
+| -iere, infinitive lungi | ie | -iere, -ierea, -ieri, -ierii, -ierile, -ierilor final după L sau P (infinitive lungi; după o vocală e diftong, vezi mai sus: *tăiere*) | hiat | *copiere*, *apreciere*, *veghiere*, *învierea*, *aprecierilor* |
+| -ier, -ieră, -iereasă | ie | -ier, -ieră, -iereasă final și formele lui -iereasă, după L sau P, într-un cuvânt de mai mult de o silabă | hiat | *bărbier*, *plumier*, *banchier*, *genunchier*, *legumieră*, *rachiereasă*, *pompiereasă* (nu *fier*, *zbier*) |
+| -iesc | ie | -iesc final (adjective) după L sau P | hiat | *fiesc*, *zapciesc*, *surugiesc* |
+| ie în neologisme | ie | după L sau P, în rădăcini și terminații neologice (`hiat-ie.yaml`): gien, pieton, cviet, societ, soviet, vien, miel + o/in/it/ie, -ietor/-ietoare, bier care nu e nici la început de cuvânt, nici după z/s | hiat | *igienă*, *pieton*, *sovietism*, *cvietism*, *vienez*, *mielită*, *poliomielită*, *așchietor*, *bărbierit*, *corăbierie* (nu *miel*, *mielușor*, *zbiera*) |
+| ie după labială sau palatală | ie | după L sau P | diftong | *fier*, *piept*, *pieptene* |
+| ie după altă consoană | ie | după altă consoană | hiat | *prieten*, *cartier* |
+| restul | orice altceva (ea, oa, ...) | oriunde | diftong | *seară*, *soare* |
 
 Când mai multe înregistrări dau aceeași formă, grafia implicită se alege după prioritate (celelalte grafii devin variante, vezi *Omografe*):
 1. Orice înregistrare bate una a unui infinitiv lung în -iare (vezi mai jos).
@@ -197,7 +202,7 @@ Orice alt cuvânt, inclusiv cele necunoscute, trece prin înlocuirea de caracter
 
 ## Fișierele de reguli
 
-Listele făcute de mână ale regulilor și tabelele de excepții ale regulilor de rezervă sunt fișiere YAML din `reguli/`, pe care le editează un lingvist. Ele sunt compilate în nucleu când e construit, așa că aplicațiile nu citesc YAML. O listă e numită după fișierul și cheia ei: `ee.yaml: nume`; un tabel, după fișierul lui: `hiat-ea.yaml`.
+Listele făcute de mână ale regulilor, pașii regulilor de rezervă și tabelele lor de excepții sunt fișiere YAML din `reguli/`, pe care le editează un lingvist. Ele sunt compilate în nucleu când e construit, așa că aplicațiile nu citesc YAML. O listă e numită după fișierul și cheia ei: `ee.yaml: nume`; un tabel, după fișierul lui: `hiat-ea.yaml`; un pas, după numele lui: pasul „-ient” din `pasi.yaml`.
 
 | Fișier | Cheie | Ce conține | Fiecare cuvânt |
 |---|---|---|---|
@@ -211,8 +216,37 @@ Listele făcute de mână ale regulilor și tabelele de excepții ale regulilor 
 | `neconvertite.yaml` | `nume_latine` | numele latine lăsate cum sunt (vezi *Text neconvertit*) | se termină într-o vocală + -ian |
 | `a-i.yaml` | `radacini_cu_a` | rădăcinile ale căror cuvinte își păstrează â (vezi *Regula opțională â → î*) | are â |
 | `necunoscute.yaml` | `iesc` | terminațiile unui adjectiv în -esc după i (vezi *Cuvinte necunoscute*) | |
+| `clase.yaml` | (o majusculă) | clasele de litere ale contextelor, `L: [p, b, f, v, m]` (vezi mai jos) | o literă sau un digraf |
 
-Fiecare tabel de excepții e un fișier separat, o listă de intrări. Pasul regulilor de rezervă care îl consultă e în tabelul regulilor de rezervă (vezi *Sursa despărțirii în silabe*):
+Pașii regulilor de rezervă sunt `pasi.yaml`, o listă de pași, în ordine (vezi tabelul regulilor de rezervă, la *Sursa despărțirii în silabe*). Primul pas care se aplică unei perechi de vocale o decide. Cheile unui pas:
+
+| Cheie | Obligatorie | Ce înseamnă |
+|---|---|---|
+| `pas` | da | numele lui, pe care îl dau mesajele și urma despărțirii |
+| `tipar`, `ante`, `non_ante`, `post`, `non_post` | nu | tiparele lui și contextele lor, ca într-un tabel de excepții (mai jos), fiecare tipar cu două vocale alăturate; un pas fără `tipar` și fără `prefixe` se aplică oricărei perechi |
+| `prefixe` | nu | cuvântul începe cu unul dintre acestea, iar perechea e ultima vocală a prefixului și litera de după el; nu cu `tipar` sau cu un context |
+| `rest_cunoscut` | cu `prefixe` | restul cuvântului, după prefix, e un cuvânt cunoscut (vezi tabelul regulilor de rezervă) de cel puțin atâtea litere |
+| `non_prefixe` | nu, cu `prefixe` | nu și când cuvântul începe cu unul dintre acestea, urmat de un cuvânt cunoscut (de orice lungime) |
+| `doar` | nu | `verb`: doar într-un infinitiv verbal (modelul dexonline V sau VT) |
+| `tabel` | nu | un tabel de excepții: pasul se aplică doar unde se aplică și una dintre intrările lui; altfel se încearcă pasul următor |
+| `rezultat` | da | `hiat` (două silabe) sau `diftong` (una; pentru vocalele care nu fac un digraf, pur și simplu nicio tăietură) |
+| `exemple` | dacă nu are `tabel` | cuvintele pe care le decide pasul; un pas cu `tabel` nu are, căci le au intrările tabelului lui |
+| `contraexemple` | cu `non_ante`, `non_post`, `non_prefixe`, `rest_cunoscut` sau `doar`; niciodată cu `tabel` | cuvinte care au literele unui tipar, sau încep cu un prefix, dar pe care o condiție le exclude |
+
+```yaml
+- pas: -ier, -ieră, -iereasă
+  tipar: [ier]
+  ante: [L, P]
+  non_ante: [^C, ^CC]   # nu în cuvintele de o silabă
+  post: [$, ă$, easă$, easa$, ese$, esei$, esele$, eselor$]
+  rezultat: hiat
+  exemple: [plumier, bărbier, banchier, legumieră, rachiereasă, ...]
+  contraexemple: [fier, zbier]
+```
+
+Într-un context al unui pas sau al unei intrări dintr-un tabel, o majusculă e o clasă de litere: C o consoană (orice literă care nu e vocală), V o vocală (a, ă, â, e, i, î, o, u) și cele din `clase.yaml`, fiecare numită cu o singură majusculă, alta decât C și V, cu literele și digrafele ei (L: p, b, f, v, m; P: c, g, ch, gh). O clasă se potrivește cu una dintre literele sau digrafele ei, așa că `^CC` înseamnă două consoane de la începutul cuvântului. Un tipar are doar litere.
+
+Fiecare tabel de excepții e un fișier separat, o listă de intrări. Pasul din `pasi.yaml` care îl consultă îl numește în `tabel`, are perechea tabelului într-un tipar și are rezultatul lui:
 
 | Fișier | Pereche | Intrările lui fac perechea |
 |---|---|---|
@@ -226,9 +260,9 @@ O intrare se aplică unei perechi de vocale când unul dintre tiparele ei conți
 | Cheie | Obligatorie | Ce înseamnă |
 |---|---|---|
 | `tipar` | da | unul sau mai multe tipare, fiecare cu perechea tabelului: litere, cu `^` la început pentru începutul cuvântului și `$` la sfârșit pentru sfârșitul lui |
-| `ante` | nu | chiar înaintea tiparului stă unul dintre acestea: litere (`gr`), `^` singur (tiparul începe cuvântul) sau `^` și litere (cuvântul începe cu ele, apoi vine tiparul: `^gor`) |
+| `ante` | nu | chiar înaintea tiparului stă unul dintre acestea: litere și clase (`gr`, `C`), `^` singur (tiparul începe cuvântul) sau `^` și litere ori clase (cuvântul începe cu ele, apoi vine tiparul: `^gor`, `^CC`) |
 | `non_ante` | nu | chiar înaintea tiparului nu stă niciunul dintre acestea, scrise ca în `ante` |
-| `post` | nu | chiar după tipar urmează unul dintre acestea: litere (`in`), `$` singur (tiparul termină cuvântul) sau litere și `$` (ele termină cuvântul: `e$`) |
+| `post` | nu | chiar după tipar urmează unul dintre acestea: litere și clase (`in`, `CV`), `$` singur (tiparul termină cuvântul) sau litere ori clase și `$` (ele termină cuvântul: `e$`) |
 | `non_post` | nu | chiar după tipar nu urmează niciunul dintre acestea, scrise ca în `post` |
 | `exemple` | da | cuvintele pe care le decide intrarea |
 | `contraexemple` | cu `non_ante` sau `non_post` | cuvinte care au literele unui tipar, dar pe care contextele lui, sau `^` ori `$` al lui, le exclud |
@@ -242,26 +276,30 @@ O intrare se aplică unei perechi de vocale când unul dintre tiparele ei conți
 ```
 
 Formatul:
-- YAML 1.2, în UTF-8, cu sau fără marcaj de ordine a octeților (BOM). Un fișier asociază cheilor lui valorile lor (`silabisiri.yaml` asociază cuvinte), iar fiecare cheie e obligatorie, afară de un tabel, care e o listă de intrări, fiecare asociind cheilor ei valorile lor. O listă se scrie `[a, b]` sau câte un `- a` pe rând. Orice valoare e text: `n`, `no`, `on` și `true` sunt cuvinte, nu valori booleene.
-- Cheile sunt ASCII cu litere mici și `_`. Cuvintele se scriu cu litere mici, în ortografia standard: NFC, ș/ț cu virgulă, â în interiorul cuvintelor.
-- Ordinea se păstrează acolo unde contează: silabisirile unui cuvânt și lemele din `leme`, prima fiind cea implicită; intrările unui tabel, prima care se aplică fiind cea care decide.
-- `#` începe un comentariu. Comentariile explică; nu schimbă nicio grafie, iar regulile fișierului de date nu le cuprind, și nici exemplele și contraexemplele tabelelor (vezi *Date*).
+- YAML 1.2, în UTF-8, cu sau fără marcaj de ordine a octeților (BOM). Un fișier asociază cheilor lui valorile lor (`silabisiri.yaml` asociază cuvinte, `clase.yaml` clase), iar fiecare cheie e obligatorie, afară de un tabel sau de `pasi.yaml`, care sunt liste de intrări sau de pași, fiecare asociind cheilor ei valorile lor. O listă se scrie `[a, b]` sau câte un `- a` pe rând. Orice valoare e text: `n`, `no`, `on` și `true` sunt cuvinte, nu valori booleene.
+- Cheile sunt ASCII cu litere mici și `_`, afară de clasele din `clase.yaml`, câte o majusculă. Cuvintele se scriu cu litere mici, în ortografia standard: NFC, ș/ț cu virgulă, â în interiorul cuvintelor.
+- Ordinea se păstrează acolo unde contează: silabisirile unui cuvânt și lemele din `leme`, prima fiind cea implicită; pașii din `pasi.yaml` și intrările unui tabel, primul care se aplică fiind cel care decide.
+- `#` începe un comentariu. Comentariile explică; nu schimbă nicio grafie, iar regulile fișierului de date nu le cuprind, și nici exemplele și contraexemplele pașilor și ale tabelelor, nici numele pașilor (vezi *Date*).
 - Ancorele (`&`), etichetele (`!`) și un al doilea document (`---`, `...`) nu se folosesc.
 
 Verificările la încărcare rulează când e construit nucleul, pe care o eroare îl oprește, și cu `cargo run -p grafia-reguli`, care în CI arată și fiecare mesaj pe rândul lui din pull request. Un mesaj dă fișierul, rândul și coloana, în română: `reguli/ee.yaml:3:30: eroare: „zoş” are ş cu sedilă; scrie ș, cu virgulă.` Ele verifică:
-- sintaxa YAML; cheile, niciuna necunoscută, repetată sau lipsă; tipul fiecărei valori (o listă, un cuvânt, `true` sau `false`) și că niciuna nu e goală, o valoare goală fiind raportată la cheia ei; că `silabisiri.yaml` și tabelele nu sunt goale; și că fiecare fișier YAML din `reguli/` e un fișier de reguli (celelalte fișiere, ascunse sau care nu sunt .yaml/.yml, ca .DS_Store sau copia de rezervă a unui editor, sunt lăsate în pace);
-- caracterele: o eroare pentru ş/ţ cu sedilă, ã, o literă descompusă, o majusculă, un spațiu, o cratimă în afara unei silabisiri, un `^` sau un `$` altul decât cele ale unui tipar sau ale unui context de mai sus și orice alt caracter din afara alfabetului românesc; un avertisment pentru î în interiorul unui cuvânt (*neînțeles* e corect);
-- niciun cuvânt de două ori într-o listă, nicio silabisire de două ori la un cuvânt, nicio lemă de două ori în `leme`; într-o intrare a unui tabel, niciun tipar, element sau cuvânt de două ori în lista lui și niciun cuvânt și în `exemple`, și în `contraexemple`;
-- fiecare cuvânt așa cum spune tabelul listelor și fiecare tipar al unui tabel cu perechea tabelului.
+- sintaxa YAML; cheile, niciuna necunoscută, repetată sau lipsă; tipul fiecărei valori (o listă, un cuvânt, `true` sau `false`) și că niciuna nu e goală, o valoare goală fiind raportată la cheia ei; că `silabisiri.yaml`, `pasi.yaml` și tabelele nu sunt goale; și că fiecare fișier YAML din `reguli/` e un fișier de reguli (celelalte fișiere, ascunse sau care nu sunt .yaml/.yml, ca .DS_Store sau copia de rezervă a unui editor, sunt lăsate în pace);
+- caracterele: o eroare pentru ş/ţ cu sedilă, ã, o literă descompusă, o majusculă care nu e o clasă a unui context, un spațiu, o cratimă în afara unei silabisiri, un `^` sau un `$` altul decât cele ale unui tipar sau ale unui context de mai sus și orice alt caracter din afara alfabetului românesc; un avertisment pentru î în interiorul unui cuvânt (*neînțeles* e corect);
+- niciun cuvânt de două ori într-o listă, nicio silabisire de două ori la un cuvânt, nicio lemă de două ori în `leme`; într-o intrare a unui tabel sau într-un pas, niciun tipar, prefix, element sau cuvânt de două ori în lista lui și niciun cuvânt și în `exemple`, și în `contraexemple`; nicio literă de două ori într-o clasă;
+- fiecare cuvânt așa cum spune tabelul listelor și fiecare tipar al unui tabel cu perechea tabelului;
+- clasele: fiecare numită cu o singură majusculă, alta decât C și V, cu litere și digrafe de cel mult două litere; o majusculă a unui context e C, V sau o clasă din `clase.yaml`;
+- pașii: `rezultat` e `hiat` sau `diftong`, `doar` e `verb`, `rest_cunoscut` un număr de litere; `prefixe` cere `rest_cunoscut` și nu primește `tipar` sau vreun context, `rest_cunoscut` și `non_prefixe` cer `prefixe`, iar un context cere un `tipar`; fiecare tipar al unui pas are două vocale alăturate; `exemple` e obligatoriu dacă pasul nu are `tabel`, iar `contraexemple` cu `non_ante`, `non_post`, `non_prefixe`, `rest_cunoscut` sau `doar`; niciun nume de două ori;
+- tabelele pașilor: un pas cu `tabel` numește un tabel, are perechea lui într-un tipar, are rezultatul lui și nu are `exemple` sau `contraexemple`; fiecare tabel e numit de exact un pas;
+- ultimul pas: nu are `tipar`, `prefixe`, context, `doar` sau `tabel`, ca orice pereche să fie decisă.
 
-Verificările regulilor rulează cu testele, `cargo test`, și cu `cargo xtask reguli`, care rulează întâi verificările la încărcare; și ele arată în CI fiecare mesaj pe rândul lui. Ele despart în silabe perechile de vocale ale fiecărui exemplu și contraexemplu al unui tabel doar după regulile de rezervă, fără silabisiri explicite și fără dexonline, și verifică:
-- că fiecare cuvânt din `exemple` are o pereche pe care o decide intrarea, nu un pas sau o intrare dinaintea ei: `reguli/diftong-ia.yaml:27:13: eroare: „ghiare” nu e decis de intrarea aceasta, ci de pasul „-iare care nu e infinitiv lung”; alege un cuvânt pe care îl decide ea.`;
-- că fiecare cuvânt din `contraexemple` are o pereche cuprinsă de literele unui tipar, căreia intrarea nu i se aplică și pe care regulile o despart invers;
-- că fiecare tipar și fiecare element din `ante` și `post` decide un cuvânt din `exemple`, iar fiecare element din `non_ante` și `non_post` exclude un cuvânt din `contraexemple`.
+Verificările regulilor rulează cu testele, `cargo test`, și cu `cargo xtask reguli`, care rulează întâi verificările la încărcare; și ele arată în CI fiecare mesaj pe rândul lui. Ele despart în silabe perechile de vocale ale fiecărui exemplu și contraexemplu al unui pas sau al unei intrări dintr-un tabel doar după regulile de rezervă, fără silabisiri explicite și fără dexonline (exemplele unui pas cu `doar: verb` ca infinitive verbale, orice alt cuvânt ca nefiind verb), și verifică:
+- că fiecare cuvânt din `exemple` are o pereche pe care o decide intrarea sau pasul, nu un pas sau o intrare dinainte: `reguli/diftong-ia.yaml:27:13: eroare: „ghiare” nu e decis de intrarea aceasta, ci de pasul „-iare care nu e infinitiv lung” (pasi.yaml:100); alege un cuvânt pe care îl decide ea.`;
+- că fiecare cuvânt din `contraexemple` are o pereche cuprinsă de literele unui tipar, sau care urmează unui prefix, căreia intrarea sau pasul nu i se aplică și pe care regulile o despart invers;
+- că fiecare tipar, fiecare prefix și fiecare element din `ante` și `post` decide un cuvânt din `exemple`, iar fiecare element din `non_ante`, `non_post` și `non_prefixe` exclude un cuvânt din `contraexemple`.
 
 ## Date
 
-Datele despre cuvinte vin într-un singur fișier, `grafia.dat` (structura lui e în `crates/core/src/datafile.rs`). Pe lângă cinci tabele, conține versiunea formatului, ziua la care sunt datele dexonline din care a fost construit (ziua ultimei modificări a unui lexem sau a unei definiții în dexonline), regulile cu care a fost construit și o sumă de control, verificată la deschiderea fișierului. Regulile sunt `RULES_HASH`, o sumă (hash) a codului din fișierele din `crates/core/src/rules/` și din `build.rs` și a codului în care sunt compilate fișierele de reguli (valorile lor, nu comentariile și nici exemplele tabelelor; vezi *Fișierele de reguli*), fără comentarii și spații: construirea aplicației web refuză un fișier de date construit cu alte reguli. Fiecare tabel are cheia un cuvânt normalizat:
+Datele despre cuvinte vin într-un singur fișier, `grafia.dat` (structura lui e în `crates/core/src/datafile.rs`). Pe lângă cinci tabele, conține versiunea formatului, ziua la care sunt datele dexonline din care a fost construit (ziua ultimei modificări a unui lexem sau a unei definiții în dexonline), regulile cu care a fost construit și o sumă de control, verificată la deschiderea fișierului. Regulile sunt `RULES_HASH`, o sumă (hash) a codului din fișierele din `crates/core/src/rules/` și din `build.rs` și a codului în care sunt compilate fișierele de reguli (valorile lor, nu comentariile, nici exemplele pașilor și ale tabelelor, nici numele pașilor; vezi *Fișierele de reguli*), fără comentarii și spații: construirea aplicației web refuză un fișier de date construit cu alte reguli. Fiecare tabel are cheia un cuvânt normalizat:
 - `forms`: o formă → `concise`, grafia ei concisă; `concise_ee`, grafia ei cu regula -eẹ/aẹ/oẹ, când diferă de `concise`; `alternatives`, celelalte grafii ale unui omograf; și `current`, forma actuală a unei forme învechite (vezi *Forme învechite*).
 - `eu_lemmas`: toate lemele normalizate în -eu, pentru pluralele necunoscute în -eele/-eelor (vezi *Cuvinte necunoscute*).
 - `ea_lemmas`: toate lemele normalizate în -ea, pentru genitivele necunoscute în -eei (vezi *Cuvinte necunoscute*).

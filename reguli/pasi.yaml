@@ -1,0 +1,170 @@
+# Regulile de rezervă: ele despart o pereche de vocale alăturate (ie, ia, ea, oa, ee, ii...) pe
+# care n-o despart nici silabisirile din silabisiri.yaml, nici dexonline. Pașii sunt încercați în
+# ordine, iar primul care se aplică decide: hiat (două silabe) sau diftong (o silabă; pentru
+# vocalele care nu fac un digraf, pur și simplu nicio despărțire).
+#
+# Fiecare pas are:
+# - pas: numele lui, pe care îl dau mesajele și urma despărțirii unui cuvânt;
+# - tipar: unul sau mai multe tipare, fiecare cu o pereche de vocale; ^ e începutul cuvântului,
+#   $ sfârșitul; un pas fără tipar și fără prefixe se aplică oricărei perechi;
+# - ante, non_ante: ce stă (sau ce nu stă) chiar înaintea tiparului; post, non_post: ce urmează
+#   (sau ce nu urmează) chiar după el; ^ în ante: tiparul începe cuvântul; $ în post: îl termină;
+#   o majusculă e o clasă de litere: C o consoană, V o vocală, și cele din clase.yaml (L, P);
+# - prefixe: cuvântul începe cu unul dintre ele, iar perechea e ultima vocală a prefixului și
+#   litera de după el; rest_cunoscut: restul cuvântului e un cuvânt cunoscut (o formă a unei leme
+#   din dexonline scrise cu literă mică, cu frecvența de cel puțin 0,9), de cel puțin atâtea
+#   litere; non_prefixe: nu și când cuvântul începe cu unul dintre acestea, urmat de un cuvânt
+#   cunoscut;
+# - doar: verb: doar la infinitivul unui verb;
+# - tabel: un tabel de excepții; pasul se aplică doar unde se aplică și o intrare a tabelului,
+#   altfel se încearcă pasul următor;
+# - rezultat: hiat sau diftong;
+# - exemple: cuvinte pe care le decide pasul (ale unui pas cu tabel sunt în intrările tabelului);
+#   la un pas cu doar: verb, sunt infinitive de verbe;
+# - contraexemple: cuvinte cu literele unui tipar, sau cu un prefix, pe care o condiție le exclude
+#   (obligatorii cu non_ante, non_post, non_prefixe, rest_cunoscut și doar).
+# Ultimul pas nu are nicio condiție, așa că orice pereche e decisă. cargo test verifică fiecare
+# exemplu și contraexemplu.
+
+- pas: e-e
+  tipar: [ee]
+  rezultat: hiat
+  exemple: [idee, aceea]   # comutatorul -eẹ/aẹ/oẹ citește -ee final ca e-ie
+
+# Cuvintele care încep ca un prefix urmat de un cuvânt cunoscut, dar n-au prefix: co- + ardă,
+# astă, acere, acăț. La fel se trece aici un cuvânt cu neo-, pseudo- sau alt prefix.
+- pas: nu e prefix
+  tipar: [^coard, ^coast, ^coacere, ^coacăț]
+  rezultat: diftong
+  exemple: [coardă, coastă, coacere, coacăț, coacăță]
+
+- pas: prefix și un cuvânt cunoscut
+  prefixe: [re, pre, ne, tele, co, semi, anti, multi, auto, micro, macro, foto, pseudo, bio, neo,
+            radio, aero, agro, electro, hidro, termo, geo, proto, socio, psiho, stereo]
+  rest_cunoscut: 4
+  non_prefixe: [prea]   # prea- e alt prefix decât pre-: preacurat e o silabă, preîncălzi e pre-încălzi
+  rezultat: hiat
+  exemple: [reabilitat, reabonat, preaviz, neabonat, teleactualitate, coactiv, semiegiptean,
+            antiaerian, antioxidant, multianual, multiorganic, autoanaliză, microagent,
+            macroagregat, fotoactualitate, pseudoafix, bioacumulat, neoaristotelic,
+            radioaliniament, aeroamfibie, agroalimentar, electroacustic, hidroagregat,
+            termoacustic, geoacustic, protoistorie, socioafectiv, psihoanalitic, stereoautograf]
+  contraexemple: [neam, autoare, coace, reazem, preacurat]   # rest prea scurt sau necunoscut; prea
+
+- pas: -ient
+  tipar: [ient, ienț]
+  post: [a, ă, e, i, $]
+  rezultat: hiat
+  exemple: [client, ambient, clientelă, ambienta, eficientă, ambiente, eficientiza, experiență, consciență]   # nu farniente: far-nien-te în dexonline
+
+- pas: -abil
+  tipar: [iabil, eabil]
+  ante: [C]
+  rezultat: hiat
+  exemple: [fiabil, agreabil]
+  contraexemple: [debreiabil]   # după o vocală, ca verbul: de-bre-ia
+
+- pas: bi-en
+  tipar: [^bien]
+  rezultat: hiat
+  exemple: [bienal]
+
+- pas: ea în neologisme
+  tipar: [ea]
+  tabel: hiat-ea.yaml
+  rezultat: hiat
+
+- pas: oa în neologisme
+  tipar: [oa]
+  tabel: hiat-oa.yaml
+  rezultat: hiat
+
+- pas: -ii final la verbe
+  tipar: [ii$]
+  ante: [C]
+  doar: verb
+  rezultat: hiat
+  exemple: [sfii, prii, mlădii]   # deci sfiește, sfiască își păstrează hiatul
+  contraexemple: [copii]
+
+- pas: ie, ia la început sau după vocală
+  tipar: [ie, ia]
+  ante: [^, V]
+  rezultat: diftong
+  exemple: [iarbă, femeie, tăia, tăiere, înmuiere, boiereasă, ciocoiesc, brâie]
+
+- pas: ie, ia final după consoană
+  tipar: [ie$, ia$]
+  ante: [C]
+  rezultat: hiat
+  exemple: [familie, vie, istoria]
+
+- pas: -iare care nu e infinitiv lung
+  tipar: [iare$]
+  ante: [L, P]
+  rezultat: diftong
+  exemple: [fiare, ghiare]   # ca fiere, ghiară; infinitivele lungi în -iare se scriu -iere
+
+- pas: tulpini native cu ia
+  tipar: [ia]
+  ante: [C]
+  tabel: diftong-ia.yaml
+  rezultat: diftong
+
+- pas: ia după consoană
+  tipar: [ia]
+  ante: [C]
+  rezultat: hiat
+  exemple: [apropiat, pian, social, specializat, glaciar, variare, deviant, bianual]
+
+- pas: -iere nativ
+  tipar: [^mier, ^înmier, ^fier, ^pier]
+  post: [e$, ea$, i$, ii$, ile$, ilor$]
+  rezultat: diftong
+  exemple: [miere, mierea, mierii, mierile, mierilor, înmiere, fiere, pieri]
+
+- pas: -iere, infinitive lungi
+  tipar: [ier]
+  ante: [L, P]
+  post: [e$, ea$, i$, ii$, ile$, ilor$]
+  rezultat: hiat
+  exemple: [copiere, xerocopiere, apreciere, veghiere, învierea, schierea, copieri, copierii,
+            copierile, copierilor, aprecierilor]
+
+- pas: -ier, -ieră, -iereasă
+  tipar: [ier]
+  ante: [L, P]
+  non_ante: [^C, ^CC]   # nu în cuvintele de o silabă
+  post: [$, ă$, easă$, easa$, ese$, esei$, esele$, eselor$]
+  rezultat: hiat
+  exemple: [plumier, bărbier, banchier, legumieră, rachiereasă, pompiereasă, pompiereasa,
+            rachierese, rachieresei, rachieresele, rachiereselor]
+  contraexemple: [fier, zbier]
+
+- pas: -iesc
+  tipar: [iesc$]
+  ante: [L, P]
+  rezultat: hiat
+  exemple: [fiesc, zapciesc, surugiesc]   # adjectivele în -iesc
+
+- pas: ie în neologisme
+  tipar: [ie]
+  ante: [L, P]
+  tabel: hiat-ie.yaml
+  rezultat: hiat
+
+- pas: ie după labială sau palatală
+  tipar: [ie]
+  ante: [L, P]
+  rezultat: diftong
+  exemple: [fier, piept, pieptene, biet, vierme, măcieș, megieșa, chiem, ghieț]
+
+- pas: ie după altă consoană
+  tipar: [ie]
+  ante: [C]
+  rezultat: hiat
+  exemple: [prieten, cartier]
+
+- pas: restul
+  rezultat: diftong
+  exemple: [soare, seară]

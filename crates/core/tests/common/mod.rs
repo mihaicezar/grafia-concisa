@@ -32,4 +32,6 @@ pub const KNOWN: &[&str] = &[
     "afectiv",
     "analitic",
     "autograf",
+    "încălzi",
+    "ncălzi", // in dexonline's known words too: pre + încălzi is no prea + ncălzi
 ];
